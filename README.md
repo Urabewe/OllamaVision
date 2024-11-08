@@ -30,19 +30,20 @@ Right now the screenshot function is not fully built. With that, you can use the
 # Use:
 1. Simple! Once installed and you're in SwarmUI go to the "Utilities" tab.
 2. You should now see another tab named "OllamaVision" click on that. Welcome to OllamaVision!
-3. Now, in the upper right corcer we will see a button that says connect. Click that and it will automatically connect to Ollama and pull the list of available vision models you have installed.
+3. Now, in the upper right corner we will see a button that says connect. Click that and it will automatically connect to Ollama and pull the list of available vision models you have installed.
  ![Connect Button](https://github.com/user-attachments/assets/4fe2ee77-7bdb-4484-8ed8-5c92df32a95b)
   
 4. Select the vision model you want to use in the dropdown list provided.
+   
  ![Model Dropdown](https://github.com/user-attachments/assets/e51d1d58-e0a8-4e67-ad86-5842b85c3c7a)
 
-5. If you are using an image on your drive, click upload and choose the image.
+6. If you are using an image on your drive, click upload and choose the image.
  ![upload](https://github.com/user-attachments/assets/aa15e377-9541-491c-a7e3-a65c0296ebda)
 
-6. If you are pasting an image/screenshot unfortunately until I get everything fleshed out you will have to press the "Press here to paste with CTRL+V from clipboard..." button when you first load up. Once you press it you can paste into the extension without pressing again unless you restart.
+7. If you are pasting an image/screenshot unfortunately until I get everything fleshed out you will have to press the "Press here to paste with CTRL+V from clipboard..." button when you first load up. Once you press it you can paste into the extension without pressing again unless you restart.
  ![paste](https://github.com/user-attachments/assets/b9bf7439-c613-48eb-a62a-03b040e28c64)
 
-7. Now, simply press "Analyze Image"
+8. Now, simply press "Analyze Image"
  ![analyze](https://github.com/user-attachments/assets/e2a85465-9b11-40d5-a8c3-cdfd4b906349)
 
 9. You will see the status bar turn blue and "Image sent, waiting on resonse from Ollama..."
