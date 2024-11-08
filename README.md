@@ -56,9 +56,25 @@ Right now the screenshot function is not fully built. With that, you can use the
    
 If you see this, be patient. Ollama is looking at your image and will respond soon. Depending on your hardware setup it could take quite a long time to get a response or you'll get one right away. This all depends on your setup and how quickly Ollama works on your computer.
 
+10. You should eventually see your image description pop up and you can now press "Send output to prompt" which will send your description to the "Generate" tab.
+
+![Send output to prompt](https://github.com/user-attachments/assets/919abe49-709a-4eaa-a106-27206932c00f)
+
+11. From here you can edit your prompt or run with it to see what the AI will give you.
+
+
 # Things to consider:
 Each AI is different, try different ones to find one that you like. I may try to tweak the output for images overtime for more accuracy and consistency. As it is, I've been getting pretty good results.
 If you're using a 7B model and it's slow, try a 3B and look for GGUF versions.
+
+# Example:
+
+Image pulled as a screenshot and pasted plus the AI OllamaVision generated prompt:
+
+![Rainbow IceCream](https://github.com/user-attachments/assets/6c43fd01-7062-447e-b083-fdf983fd0ace)
+
+
+
 
 
 I will add more to this README as time goes on. This is purely a fun project I never actually expected to release let alone actually work! So, I hope you all enjoy it. Please feel free to leave feedback good or bad and any bugs you may find. Got a suggestion for layout or features? I can look at those as well but I make no promises.
