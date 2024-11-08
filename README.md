@@ -71,10 +71,17 @@ The AI is not going to always describe things accurately. It will get things wro
 
 # Example:
 
-Image pulled as a screenshot and pasted plus the AI OllamaVision generated prompt:
+### Original Image:
 
-![Rainbow IceCream](https://github.com/user-attachments/assets/6c43fd01-7062-447e-b083-fdf983fd0ace)
+![Rock in ocean](https://github.com/user-attachments/assets/46c53b49-8ded-4c02-8843-f2d13e12b0b1)
 
+### AI prompt from OllamaVision:
+
+A striking view of a large rock formation standing majestically in the ocean. The rock, with its light brown color and rough texture, towers over the surrounding water, creating a sense of grandeur. It is located on the right side of the frame, positioned at an angle that adds depth to the scene. The ocean beneath it is a darker shade of blue, hinting at its vastness. Small waves are visible around the rock formation, suggesting a gentle breeze might be present. The sky above mirrors this color with its pale blue hue and scattered clouds, completing the serene setting. This image captures not just objects but also their interplay - the rock against the ocean, the ocean against the sky, all under the vast expanse of the cloud-filled sky. It's a harmonious blend of earth and water under an open sky.
+
+### AI Generated Image using AI OllamaVision prompt:
+
+![Final image from prompt](https://github.com/user-attachments/assets/141df931-53e2-4aa3-b4ae-47978dbacad3)
 
 
 
