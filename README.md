@@ -50,7 +50,7 @@ Right now the screenshot function is not fully built. With that, you can use the
 
 ![analyze](https://github.com/user-attachments/assets/e2a85465-9b11-40d5-a8c3-cdfd4b906349)
 
-9. You will see the status bar turn blue and "Image sent, waiting on resonse from Ollama..."
+9. You will see the status bar turn blue and "Image sent, waiting for response from Ollama..."
 
 ![Ollama is analyzing](https://github.com/user-attachments/assets/70e259d7-28fa-4a58-bfa2-0e77b08a8d05)
    
