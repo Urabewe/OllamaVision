@@ -84,7 +84,12 @@ A striking view of a large rock formation standing majestically in the ocean. Th
 ![Final image from prompt](https://github.com/user-attachments/assets/141df931-53e2-4aa3-b4ae-47978dbacad3)
 
 
+# TODO:
+Clean up the UI, add some graphics, get some better coloring. Remove redundant "connected" status icon.
+Fully implement the screenshot tool allowing quick and easy region selection and instant pasting into extension.
+House Cleaning and tweaking of the AI prompt outputs. Though pretty good already I should be able to make it better.
 
 
-I will add more to this README as time goes on. This is purely a fun project I never actually expected to release let alone actually work! So, I hope you all enjoy it. Please feel free to leave feedback good or bad and any bugs you may find. Got a suggestion for layout or features? I can look at those as well but I make no promises.
+
+This was never meant to ever be anything more than a fun project. Honestly, I never expected it to work. Hope you all enjoy it!
 
