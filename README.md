@@ -3,7 +3,7 @@ An extension for SwarmUI that allows you to connect to Ollama to use vision mode
 
 This extension is for [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) a Web-UI frontend for ComfyUI. If you haven't already, go there and install now. If you're here I would imagine you already have it running.
 
-This extension connects to [Ollama](https://ollama.com/) as a backend for image analysis. You will need to install this and download a LLAVA based Vision model such as llama3.2-vision. Ollama's website has a full, extensive library of models to choose from. I have been using [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3) with a lot of success. Though I would suggest trying a few models based on your specs. For the use of this extension a 3B model will do just fine.
+This extension connects to [Ollama](https://ollama.com/) as a backend for image analysis. You will need to install this and download a LLAVA based Vision model such as llama3.2-vision. Ollama's website has a full, extensive library of models to choose from. I have been using [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3) with a lot of success. I have reports of [MoondreamV2](https://ollama.com/library/moondream) working well also which is even smaller at 1.8b. Though I would suggest trying a few models based on your specs. For the use of this extension a 3B or smaller model will do just fine.
 
 This is the BETA version, as of right now there is not a built in screenshot tool. You will have to use either Windows built-in snip tool "Windows+Shift+S" to grab a screenshot or another tool of your choice. You can then paste it into the extension directly. Any image you have saved in the clipboard can be pasted to the extension. I.E. "right click, copy image, paste into OllamaVision".  You can also choose any file you might have saved on your drive(s).  
 
@@ -14,7 +14,7 @@ This is the BETA version, as of right now there is not a built in screenshot too
 
 This extension will add a new tab in SwarmUI under the "Utilities" section called "OllamaVision". Inside of this tab is a utility that will allow you to use Ollama and LLAVA Vision models to analyze images, give a brief description of that image, then allow you to send that output/description straight to the "Generate" tab to use/edit as a prompt for image generation. 
 
-The extension is based around ease of use. Just click connect, choose your model, paste/upload your image, then press analyze. That's it. The extension itself does not load any models it only sends and recieves data from Ollama so there is no extra overhead. Extremely small at around 30kb, it's lightweight and functional. 
+The extension is based around ease of use. Just click connect, choose your model, paste/upload your image, then press analyze. That's it. The extension itself does not load any models it only sends and recieves data from Ollama so there is no extra overhead. There is also an option to unload models if needed. This is meant to be a lightweight frontend for Ollama vision models. 
 
 # To use the screenshot option:
 
@@ -33,33 +33,58 @@ Right now the screenshot function is not fully built. With that, you can use the
 2. You should now see another tab named "OllamaVision" click on that. Welcome to OllamaVision!
 3. Now, in the upper right corner we will see a button that says connect. Click that and it will automatically connect to Ollama and pull the list of available vision models you have installed.
 
-![Connect Button](https://github.com/user-attachments/assets/4fe2ee77-7bdb-4484-8ed8-5c92df32a95b)
+![Red Connect status](https://github.com/user-attachments/assets/74619aa0-a906-43f3-be41-299270131066)
+
+![Connected](https://github.com/user-attachments/assets/1f86a0a0-bd5d-474e-8c97-cd21141b3cfa)
+
   
-4. Select the vision model you want to use in the dropdown list provided.
+4. Select the vision model you want to use in the dropdown list provided. If you don't see your vision model then it doesn't have llava or vision in the name. Either go into "Settings" and enable "Show All Ollama Models" or rename your model to include vision or llama to keep it separate from the rest. Moondream will require you to rename or enable all.
    
-![Model Dropdown](https://github.com/user-attachments/assets/e51d1d58-e0a8-4e67-ad86-5842b85c3c7a)
+![Show All](https://github.com/user-attachments/assets/fc3b91a2-adb8-4e1c-be79-91dc3f3bc4a2)
+
+![Show just visioni](https://github.com/user-attachments/assets/ad0bcd40-c9a3-43ae-8088-c2570c91402d)
+
+![Show All](https://github.com/user-attachments/assets/f518df66-9d9c-4848-b15b-9a2c648adf67)
+
 
 6. If you are using an image on your drive, click upload and choose the image.
 
-![upload](https://github.com/user-attachments/assets/aa15e377-9541-491c-a7e3-a65c0296ebda)
+![Upload Image](https://github.com/user-attachments/assets/ab046ca0-4c8f-41d5-b39f-5fd61052a0ee)
 
-7. If you are pasting an image/screenshot unfortunately until I get everything fleshed out you will have to press the "Press here to paste with CTRL+V from clipboard..." button when you first load up. Once you press it you can paste into the extension without pressing again unless you restart.
 
-![paste](https://github.com/user-attachments/assets/b9bf7439-c613-48eb-a62a-03b040e28c64)
 
-8. Now, simply press "Analyze Image"
+7. To paste an image/screenshot from your clipboard click on the "Paste" button
 
-![analyze](https://github.com/user-attachments/assets/e2a85465-9b11-40d5-a8c3-cdfd4b906349)
+![Paste](https://github.com/user-attachments/assets/06c3d7d9-bb9c-42eb-a256-e5cfc2f870a4)
 
-9. You will see the status bar turn blue and "Image sent, waiting for response from Ollama..."
 
-![Ollama is analyzing](https://github.com/user-attachments/assets/70e259d7-28fa-4a58-bfa2-0e77b08a8d05)
+8. You can use the default prompt response type or change the response to another setting by choosing a built-in preset or making your own.
+
+![Configure button](https://github.com/user-attachments/assets/8899c384-e121-464b-ae21-c1496b633254)
+
+![Modal window](https://github.com/user-attachments/assets/375a8dff-5f07-4761-a4e5-895fdca2eb83)
+
+In this window you can select a preset, make your own temporary use preset by just typing in the box, make and save a preset, manage/delete user presets. Should be pretty straight forward.
+
+
+
+9. Now, simply press "Analyze Image"
+
+![Analyze](https://github.com/user-attachments/assets/43afffb8-a075-4c6f-808a-80ed618e65e5)
+
+
+10. You will see the status bar turn blue and "Image sent, waiting for response from Ollama..."
+
+![Ollama is analyzing](https://github.com/user-attachments/assets/6ed8c4c6-ea4c-4b8f-a92c-542b2f2da7c8)
+
    
 If you see this, be patient. Ollama is looking at your image and will respond soon. Depending on your hardware setup it could take quite a long time to get a response or you'll get one right away. This all depends on your setup and how quickly Ollama works on your computer.
 
+
 10. You should eventually see your image description pop up and you can now press "Send output to prompt" which will send your description to the "Generate" tab.
 
-![Send output to prompt](https://github.com/user-attachments/assets/919abe49-709a-4eaa-a106-27206932c00f)
+![Send output to prompt](https://github.com/user-attachments/assets/b1b12087-2c24-437c-b838-80540144614c)
+
 
 11. From here you can edit your prompt or run with it to see what the AI will give you.
 
