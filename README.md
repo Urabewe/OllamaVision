@@ -9,7 +9,8 @@ This is the BETA version, as of right now there is not a built in screenshot too
 
 # OllamaVision - An AI based image analysis extension for SwarmUI
 
-![OllamaVision screenshot after image analysis](https://github.com/user-attachments/assets/b26b8409-8bcb-4b13-a6f7-50bb0f695f27)
+![Ollama Extension Screen](https://github.com/user-attachments/assets/972e63e8-2b48-43e2-8a74-2462dca15d14)
+
 
 This extension will add a new tab in SwarmUI under the "Utilities" section called "OllamaVision". Inside of this tab is a utility that will allow you to use Ollama and LLAVA Vision models to analyze images, give a brief description of that image, then allow you to send that output/description straight to the "Generate" tab to use/edit as a prompt for image generation. 
 
