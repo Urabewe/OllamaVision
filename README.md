@@ -5,7 +5,7 @@ This extension is for [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) a W
 
 This extension connects to [Ollama](https://ollama.com/) as a backend for image analysis. You will need to install this and download a LLAVA based Vision model such as llama3.2-vision. Ollama's website has a full, extensive library of models to choose from. I have been using [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3) with a lot of success. I have reports of [MoondreamV2](https://ollama.com/library/moondream) working well also which is even smaller at 1.8b. Though I would suggest trying a few models based on your specs. For the use of this extension a 3B or smaller model will do just fine.
 
-This is the BETA version, as of right now there is not a built in screenshot tool. You will have to use either Windows built-in snip tool "Windows+Shift+S" to grab a screenshot or another tool of your choice. You can then paste it into the extension directly. Any image you have saved in the clipboard can be pasted to the extension. I.E. "right click, copy image, paste into OllamaVision".  You can also choose any file you might have saved on your drive(s).  
+This is a BETA release. Some features have not been incorporated yet, some aren't fully built, some may never come to be. For now, this should be more than stable enough to get you some very nice image descriptions. Since this is a BETA please, leave any comments about issues, concerns, possible improvements, etc. Anything will help me further this project along. 
 
 # OllamaVision - An AI based image analysis extension for SwarmUI
 
@@ -13,25 +13,24 @@ This is the BETA version, as of right now there is not a built in screenshot too
 
 
 
-This extension will add a new tab in SwarmUI under the "Utilities" section called "OllamaVision". Inside of this tab is a utility that will allow you to use Ollama and LLAVA Vision models to analyze images, give a brief description of that image, then allow you to send that output/description straight to the "Generate" tab to use/edit as a prompt for image generation. 
+This extension will add a new tab in SwarmUI under the "Utilities" section called "OllamaVision". Inside of this tab is a utility that will allow you to use Ollama and LLAVA Vision models to analyze images, give a brief description of that image, then allow you to send that output/description straight to the "Generate" tab to use/edit as a prompt for image generation. With it's ability to change prompt response types we can get a varied amount of information from a single image. With presets for "Artistic Style", "Facial Features", "Color Palette" and more we can gleam a lot of info to create wonderful images.
 
-The extension is based around ease of use. Just click connect, choose your model, paste/upload your image, then press analyze. That's it. The extension itself does not load any models it only sends and recieves data from Ollama so there is no extra overhead. There is also an option to unload models if needed. This is meant to be a lightweight frontend for Ollama vision models. 
+The extension is based around ease of use. Just click connect, choose your model, run with default prompt or another preset, upload/paste your image, then press analyze. That's it. The extension itself does not load any models it only sends and recieves data from Ollama so there is no extra overhead. There is also an option to unload models from memory so there is 0 impact on image generation. This is meant to be a lightweight frontend for Ollama vision models. 
 
-# To use the screenshot option:
-
-Right now the screenshot function is not fully built. With that, you can use the built in tool in Windows. Press "Windows+Shift+S", select an area of the screen to capture or the whole screen, this will save to clipboard, then inside of the extension press "Paste with CTRL+V" button, then press CTRL+V to load your image. You can also right click on an image in your browser, copy image, then paste it in as well. Pretty much, any image in your clipboard, you can use inside of OllamaVision. This feature will be fully developed at a later date. The goal is for the extension to have it's very own screenshot function built-in and will auto paste the image into the extension while still giving you the ability to paste in yourself.
 
 # Installation:
 
 1. Open a command prompt to your /SwarmUI/src/Extensions folder.
 2. Enter `git clone https://github.com/Urabewe/OllamaVision.git` and press enter
 3. This will clone this repo to the Extensions folder for installation.
-4. Go to /SwarmUI/ main directory and run "windows-update.bat" (note this is UNTESTED on anything Linux, if anyone can help with this let me know please) this will install the extension into SwarmUI
+4. Go to /SwarmUI/ main directory and run "windows-update.bat" (NOTE: This is UNTESTED on anything Linux, if anyone can help with this let me know, please.) this will install the extension into SwarmUI
 5. Launch SwarmUI and the extension will be installed and should be ready to use.
 
 # Use:
 1. Simple! Once installed and you're in SwarmUI go to the "Utilities" tab.
-2. You should now see another tab named "OllamaVision" click on that. Welcome to OllamaVision!
+2. You should now see another tab named "OllamaVision", click on that. Welcome to OllamaVision!
+
+   
 3. Now, in the upper right corner we will see a button that says connect. Click that and it will automatically connect to Ollama and pull the list of available vision models you have installed.
 
 ![Red Connect status](https://github.com/user-attachments/assets/74619aa0-a906-43f3-be41-299270131066)
@@ -48,18 +47,18 @@ Right now the screenshot function is not fully built. With that, you can use the
 ![Show All](https://github.com/user-attachments/assets/f518df66-9d9c-4848-b15b-9a2c648adf67)
 
 
-6. If you are using an image on your drive, click upload and choose the image.
+5. If you are using an image on your drive, click upload and choose the image.
 
 ![Upload Image](https://github.com/user-attachments/assets/ab046ca0-4c8f-41d5-b39f-5fd61052a0ee)
 
 
 
-7. To paste an image/screenshot from your clipboard click on the "Paste" button
+6. To paste an image/screenshot from your clipboard click on the "Paste" button
 
 ![Paste](https://github.com/user-attachments/assets/06c3d7d9-bb9c-42eb-a256-e5cfc2f870a4)
 
 
-8. You can use the default prompt response type or change the response to another setting by choosing a built-in preset or making your own.
+7. You can use the default prompt response type or change the response to another setting by choosing a built-in preset or making your own.
 
 ![Configure button](https://github.com/user-attachments/assets/8899c384-e121-464b-ae21-c1496b633254)
 
@@ -69,12 +68,12 @@ In this window you can select a preset, make your own temporary use preset by ju
 
 
 
-9. Now, simply press "Analyze Image"
+8. Now, simply press "Analyze Image"
 
 ![Analyze](https://github.com/user-attachments/assets/43afffb8-a075-4c6f-808a-80ed618e65e5)
 
 
-10. You will see the status bar turn blue and "Image sent, waiting for response from Ollama..."
+9. You will see the status bar turn blue and "Image sent, waiting for response from Ollama..."
 
 ![Ollama is analyzing](https://github.com/user-attachments/assets/6ed8c4c6-ea4c-4b8f-a92c-542b2f2da7c8)
 
@@ -88,6 +87,14 @@ If you see this, be patient. Ollama is looking at your image and will respond so
 
 
 11. From here you can edit your prompt or run with it to see what the AI will give you.
+
+
+#EXAMPLES:
+Here are some images with their source image, along with the description made, and the generated output from that prompt. These are examples of the facial features preset and the color palette preset since they are probably the most unique out of all of them.
+
+Source image used for analysis:
+![Source Image](https://github.com/user-attachments/assets/f70ea77f-6c72-42fb-8ba3-4c4b16e284f4) the prompt from AI for color palette 'This image features a vibrant array of rainbow-colored umbrellas suspended in the air, creating a visually stunning display against the backdrop of a clear blue sky. The color palette consists of the following hues: red, orange, yellow, green, blue, and purple. Each umbrella is distinctly colored, with no discernible pattern being used. There are numerous umbrellas in each color, but an exact count cannot be determined from this perspective. The umbrellas appear to be evenly spaced throughout the frame, creating a sense of harmony and balance within the composition.'
+
 
 
 # Things to consider:
