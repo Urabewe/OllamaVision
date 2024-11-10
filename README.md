@@ -1,7 +1,7 @@
 # OllamaVision
 An extension for SwarmUI that allows you to connect to Ollama to use vision models for image analysis to create image prompts.
 
-![OllamaVision](https://github.com/user-attachments/assets/a0cd466a-85d2-47e8-8184-0f2240270a2f =512x512)
+<img src="https://github.com/user-attachments/assets/a0cd466a-85d2-47e8-8184-0f2240270a2f" width="512")
 
 
 This extension is for [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) a Web-UI frontend for ComfyUI. If you haven't already, go there and install now. If you're here I would imagine you already have it running.
