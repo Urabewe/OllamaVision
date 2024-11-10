@@ -604,7 +604,7 @@ window.ollamaVision = {
                                     Show all Ollama models
                                 </label>
                                 <small class="form-text text-muted d-block mt-1">
-                                    By default, only models with 'vision', 'llava', or 'moondream' in their names are shown. 
+                                    By default, only models with 'vision' or 'llava' in their names are shown. 
                                     Enable this to show all available models.
                                 </small>
                             </div>
