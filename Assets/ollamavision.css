@@ -1,0 +1,314 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap');
+
+.glass-btn {
+    width: 100%;
+    padding: 10px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    outline: none;
+    position: relative;
+}
+
+.glass-btn:hover {
+    box-shadow: 0 0 15px 5px rgba(0, 123, 255, 0.5);
+    border-color: rgba(0, 123, 255, 0.5);
+}
+
+.glass-btn.btn {
+    border: none;
+}
+
+.glass-btn span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 15px 15px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    padding: 10px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    overflow: hidden;
+    color: #fff;
+    font-weight: 400;
+    z-index: 1;
+    transition: 0.5s;
+    backdrop-filter: blur(15px);
+}
+
+.glass-btn:not(:disabled):hover span {
+    letter-spacing: 3px;
+}
+
+.glass-btn span::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.15), transparent);
+    transform: skewX(45deg) translate(0);
+    transition: 0.5s;
+    filter: blur(0px);
+}
+
+.glass-btn:not(:disabled):hover span::before {
+    transform: skewX(45deg) translate(200px);
+}
+
+.glass-btn::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translatex(-50%);
+    bottom: -5px;
+    width: 30px;
+    height: 10px;
+    background: #1646c9;
+    border-radius: 10px;
+    transition: 0.5s;
+    transition-delay: 0.5;
+}
+
+.glass-btn:not(:disabled):hover::before {
+    bottom: 0;
+    height: 50%;
+    width: 80%;
+    border-radius: 30px;
+}
+
+.glass-btn::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translatex(-50%);
+    top: -5px;
+    width: 30px;
+    height: 10px;
+    background: #1646c9;
+    border-radius: 10px;
+    transition: 0.5s;
+    transition-delay: 0.5;
+}
+
+.glass-btn:not(:disabled):hover::after {
+    top: 0;
+    height: 50%;
+    width: 80%;
+    border-radius: 30px;
+}
+
+.glass-btn::before,
+.glass-btn::after {
+    background: #1646c9;
+    box-shadow: 0 0 5px #1646c9, 0 0 15px #1646c9, 0 0 30px #1646c9,
+        0 0 60px #1646c9;
+}
+
+.glass-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.glass-btn:disabled span {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.stroke-btn {
+  width: auto;  /* Changed from 100% since this is a smaller button */
+  height: 40px;  /* Reduced height to match other UI elements */
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #198754;  /* Bootstrap success green */
+  outline: none;
+  transition: 1s ease-in-out;
+  position: relative;
+  padding: 0 20px;  /* Add padding for text */
+}
+
+.stroke-btn svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  fill: none;
+  stroke: #198754;  /* Green stroke */
+  stroke-dasharray: 150 480;
+  stroke-dashoffset: 150;
+  transition: 1s ease-in-out;
+  width: 100%;
+  height: 100%;
+}
+
+.stroke-btn:hover {
+  transition: 1s ease-in-out;
+  background: #dc3545;  /* Bootstrap danger red */
+  border-color: #dc3545;
+}
+
+.stroke-btn:hover svg {
+  stroke: #dc3545;  /* Red stroke on hover */
+  stroke-dashoffset: -480;
+}
+
+.stroke-btn span {
+  color: #198754;  /* Green text */
+  font-size: 14px;  /* Smaller font size */
+  font-weight: 100;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stroke-btn:hover span {
+  color: white;  /* White text on hover */
+}
+
+.config-btn, .response-type-btn {
+    background: #1646c9;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1;
+    min-height: 32px;
+    text-align: center;
+}
+
+.config-btn:hover, .response-type-btn:hover {
+    background: #ee6c4d;
+    transform: translateY(-1px);
+}
+
+.config-btn i, .response-type-btn i {
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.config-btn span, .response-type-btn span {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.btn-primary {
+    background: #1646c9;
+    border-color: #1646c9;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #ee6c4d;
+    border-color: #ee6c4d;
+    transform: translateY(-1px);
+}
+
+/* Separate style for connect button */
+.connect-btn {
+    background: #dc3545 !important;  /* Red for disconnected */
+    border-color: #dc3545 !important;
+    color: white !important;
+    transition: all 0.3s ease;
+}
+
+.connect-btn.connected {
+    background: #198754 !important;  /* Green for connected */
+    border-color: #198754 !important;
+    color: white !important;  /* Ensuring text is white for better contrast */
+    text-shadow: 0 0 1px rgba(0,0,0,0.3);  /* Optional: adds slight shadow for better readability */
+}
+
+/* Style for image source buttons */
+.btn-primary {
+    background: #1646c9;
+    border-color: #1646c9;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #17b890;
+    border-color: #17b890;
+    transform: translateY(-1px);
+}
+
+/* Separate style for connect button */
+.connect-btn {
+    background: #1646c9;
+    border-color: #1646c9;
+    transition: all 0.3s ease;
+}
+
+.connect-btn.connected {
+    background: #198754;
+    border-color: #198754;
+}
+
+/* Update the response type button hover state as well */
+.response-type-btn:hover {
+    background: #ee6c4d;  /* New hover color */
+    transform: translateY(-1px);
+}
+
+/* Update the hover color for the image source buttons */
+#screenshot-btn:hover, #upload-btn:hover {
+    background-color: #17b890;
+}
+
+.analyze-btn {
+    width: 75%;
+    padding: 15px 30px;
+    background-color: #050801;
+    color: #03e9f4;
+    font-weight: bold;
+    border: 1px solid #03e9f4;
+    border-radius: 5px;
+    letter-spacing: 4px;
+    overflow: hidden;
+    transition: 0.5s;
+    cursor: pointer;
+    font-family: 'Raleway', sans-serif;
+    font-size: 1.2em;
+}
+
+.analyze-btn:hover {
+    background: #169CB7;
+    color: #050801;
+    box-shadow: 0 0 5px #17B890,
+                0 0 10px #17B890,
+                0 0 15px #17B890,
+                0 0 25px #17B890;
+    -webkit-box-reflect: below 1px linear-gradient(transparent, #0005);
+}
+
+.analyze-btn:disabled {
+    background-color: #1a1a1a;
+    color: #666;
+    border-color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+    -webkit-box-reflect: none;
+}
