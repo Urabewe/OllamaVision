@@ -114,6 +114,29 @@ This image features a vibrant array of rainbow-colored umbrellas suspended in th
 ![0125-This image features a vibrant array of r-OfficialStableDiffusionjuggernautXL_jug-2027845308](https://github.com/user-attachments/assets/0c8a872b-a584-4c5b-9102-d1aa15ae5747)
 
 
+### Original Image:
+
+![Yeah that's right, a stock photo. Wonders of screenshots!](https://github.com/user-attachments/assets/c5949e86-a9ea-4e56-99fa-5de38fc64b84)
+
+### AI Prompt using Facial Features:
+
+Eyes: Brown
+Eyebrows: Thick and well-groomed
+Nose: Straight and moderately sized
+Mouth: Shaped like a smile with full teeth showing
+Chin: Rounded in shape
+Skin tone: Light brown
+Facial hair: Well-groomed beard on face
+Hair color: Brown
+Ears: Small, located just below the jawline
+Freckles: Numerous across face and neck
+Moles: 2 small moles under eyes
+
+### Generated Image:
+
+![0114-Eyes BrownEyebrows Thick and well-gro-OfficialStableDiffusionjuggernautXL_jug-382224176](https://github.com/user-attachments/assets/870048ff-8fb2-4b1b-9949-dfb190f495b1)
+
+
 
 # Things to consider:
 Each AI is different, try different ones to find one that you like. I may try to tweak the output for images overtime for more accuracy and consistency. As it is, I've been getting pretty good results.
