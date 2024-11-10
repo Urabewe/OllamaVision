@@ -1,11 +1,15 @@
 # OllamaVision
 An extension for SwarmUI that allows you to connect to Ollama to use vision models for image analysis to create image prompts.
 
+![OllamaVision](https://github.com/user-attachments/assets/a0cd466a-85d2-47e8-8184-0f2240270a2f)
+
+
 This extension is for [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) a Web-UI frontend for ComfyUI. If you haven't already, go there and install now. If you're here I would imagine you already have it running.
 
 This extension connects to [Ollama](https://ollama.com/) as a backend for image analysis. You will need to install this and download a LLAVA based Vision model such as llama3.2-vision. Ollama's website has a full, extensive library of models to choose from. I have been using [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3) with a lot of success. I have reports of [MoondreamV2](https://ollama.com/library/moondream) working well also which is even smaller at 1.8b. Though I would suggest trying a few models based on your specs. For the use of this extension a 3B or smaller model will do just fine.
 
-This is a BETA release. Some features have not been incorporated yet, some aren't fully built, some may never come to be. For now, this should be more than stable enough to get you some very nice image descriptions. Since this is a BETA please, leave any comments about issues, concerns, possible improvements, etc. Anything will help me further this project along. 
+This is a BETA release. Some features have not been incorporated yet, some aren't fully built, some may never come to be. For now, this should be more than stable enough to get you some very nice image descriptions. Since this is a BETA please, leave any comments about issues, concerns, possible improvements, etc. Anything will help me further this project along. OTB right now, you're good to go. With memory offload even lowvram users can enjoy image description and image generation without having to spare ease of use.
+
 
 # OllamaVision - An AI based image analysis extension for SwarmUI
 
@@ -89,13 +93,19 @@ If you see this, be patient. Ollama is looking at your image and will respond so
 11. From here you can edit your prompt or run with it to see what the AI will give you.
 
 
-#EXAMPLES:
+# EXAMPLES:
 Here are some images with their source image, along with the description made, and the generated output from that prompt. These are examples of the facial features preset and the color palette preset since they are probably the most unique out of all of them.
 
-##Source image:
+### Original Image:
+
 ![Source Image](https://github.com/user-attachments/assets/f70ea77f-6c72-42fb-8ba3-4c4b16e284f4) 
 
-The prompt from AI for color palette 'This image features a vibrant array of rainbow-colored umbrellas suspended in the air, creating a visually stunning display against the backdrop of a clear blue sky. The color palette consists of the following hues: red, orange, yellow, green, blue, and purple. Each umbrella is distinctly colored, with no discernible pattern being used. There are numerous umbrellas in each color, but an exact count cannot be determined from this perspective. The umbrellas appear to be evenly spaced throughout the frame, creating a sense of harmony and balance within the composition.'
+
+### AI prompt using Color Palette:
+
+This image features a vibrant array of rainbow-colored umbrellas suspended in the air, creating a visually stunning display against the backdrop of a clear blue sky. The color palette consists of the following hues: red, orange, yellow, green, blue, and purple. Each umbrella is distinctly colored, with no discernible pattern being used. There are numerous umbrellas in each color, but an exact count cannot be determined from this perspective. The umbrellas appear to be evenly spaced throughout the frame, creating a sense of harmony and balance within the composition.
+
+
 
 
 
@@ -105,27 +115,12 @@ If you're using a 7B model and it's slow, try a 3B and look for GGUF versions.
 
 The AI is not going to always describe things accurately. It will get things wrong and it will give you some crazy stuff sometimes. Most of the time though you get a nice descritption that you can use right away or, with a few small tweaks, make better. You can even change things in the description to alter the final image to your liking. Lots of possibilities.
 
-# Example:
-
-### Original Image:
-
-![Rock in ocean](https://github.com/user-attachments/assets/46c53b49-8ded-4c02-8843-f2d13e12b0b1)
-
-### AI prompt from OllamaVision:
-
-A striking view of a large rock formation standing majestically in the ocean. The rock, with its light brown color and rough texture, towers over the surrounding water, creating a sense of grandeur. It is located on the right side of the frame, positioned at an angle that adds depth to the scene. The ocean beneath it is a darker shade of blue, hinting at its vastness. Small waves are visible around the rock formation, suggesting a gentle breeze might be present. The sky above mirrors this color with its pale blue hue and scattered clouds, completing the serene setting. This image captures not just objects but also their interplay - the rock against the ocean, the ocean against the sky, all under the vast expanse of the cloud-filled sky. It's a harmonious blend of earth and water under an open sky.
-
-### AI Generated Image using AI OllamaVision prompt:
-
-![Final image from prompt](https://github.com/user-attachments/assets/141df931-53e2-4aa3-b4ae-47978dbacad3)
-
 
 # TODO:
-Clean up the UI, add some graphics, get some better coloring. Remove redundant "connected" status icon.
-Fully implement the screenshot tool allowing quick and easy region selection and instant pasting into extension.
-House Cleaning and tweaking of the AI prompt outputs. Though pretty good already I should be able to make it better.
+Minor tweaks of AI. Implement a few more options like batch image process, setting for auto paste image from clipboard. Perhaps... maybe... a combine styles of two images option. We will see how that goes. Ideas will come, some will go. This is and will probably be a work in progress for some time. BUT! It will always remain functional and easy to use.
 
 
+# How this came to be:
 
-This was never meant to ever be anything more than a fun project. Honestly, I never expected it to work. Hope you all enjoy it!
+This was never meant to ever be anything more than a fun project. Honestly, I never expected it to work. I picked up cursor on a free trial and a post on discord. Decided to try and make an interface for a vision model since it was the new thing. I thought I was going to attempt a few things and after a few hours forget I ever even started. Then after a few tries and feeding the AI docs and other files I had an extension that installed but I couldn't see it. Excitement stirred. I spent a few more hours figuring out how to get the dang thing to even show up in the utilities tab. Then finally there it was. OllamaVision... at least in name. Clicking on it gave me a screen with like 2 buttons and a bunch of nothing when I clicked them. SEVERAL!!! Hours later, I was able to connect to Ollama, upload/paste and image but nothing I would do would make it get a response from Ollama. Lots of connection errors, errors with lots of words and numbers, me literally getting out of my seat MAD at a frikkin AI. After many MANY attempts, and a sense of this is never going to work, I stared at my screen waiting for the same error message I had seen so many times. Then.... there it was... my images description... I couldn't believe it. SUCCESS! Many more hours after that and LOTS and LOTS of helpful testing and feedback from [SouthbayJay](https://civitai.com/user/SouthbayJay) (check out his models over at CivitAI) over on the [SwarmUI](https://discord.gg/eR6V2hVg) discord, the beta release was done. So much fun, so many headaches. Rollercoasters, the whole way. 
 
