@@ -35,6 +35,7 @@ You will also, obviously, need [SwarmUI](https://github.com/mcmonkeyprojects/Swa
 
 These install instructions will change, OllamaVision will hopefully be a supported extension inside of SwarmUI itself. You'll be able to install and update OllamaVision right inside of SwarmUI.
 
+PLEASE READ THE PREREQUISTE SECTION ABOVE BEFORE INSTALLING!!!!!
 1. Open a command prompt to your /SwarmUI/src/Extensions folder.
 2. Enter `git clone https://github.com/Urabewe/OllamaVision.git` and press enter
 3. This will clone this repo to the Extensions folder for installation.
