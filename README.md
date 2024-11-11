@@ -1,3 +1,6 @@
+Thank you [SouthbayJay](https://civitai.com/user/SouthbayJay) for helping with testing, feedback, advice, and all the back and forth. Honestly sped this release up exponentially thanks to you. 
+
+
 # OllamaVision
 An extension for SwarmUI that allows you to connect to Ollama to use vision models for image analysis to create image prompts.
 
@@ -43,7 +46,7 @@ The extension is based around ease of use. Just click connect, choose your model
 ![Connected](https://github.com/user-attachments/assets/1f86a0a0-bd5d-474e-8c97-cd21141b3cfa)
 
   
-4. Select the vision model you want to use in the dropdown list provided. If you don't see your vision model then it doesn't have llava or vision in the name. Either go into "Settings" and enable "Show All Ollama Models" or rename your model to include vision or llama to keep it separate from the rest. Moondream will require you to rename or enable all.
+4. Select the vision model you want to use in the dropdown list provided. If you don't see your vision model then it doesn't have llava or vision in the name. Either go into "Settings" and enable "Show All Ollama Models" or rename your model to include vision or llava to keep it separate from the rest. Moondream will require you to rename or enable all.
    
 ![Show All](https://github.com/user-attachments/assets/fc3b91a2-adb8-4e1c-be79-91dc3f3bc4a2)
 
@@ -106,7 +109,32 @@ Here are some images with their source image, along with the description made, a
 
 This image features a vibrant array of rainbow-colored umbrellas suspended in the air, creating a visually stunning display against the backdrop of a clear blue sky. The color palette consists of the following hues: red, orange, yellow, green, blue, and purple. Each umbrella is distinctly colored, with no discernible pattern being used. There are numerous umbrellas in each color, but an exact count cannot be determined from this perspective. The umbrellas appear to be evenly spaced throughout the frame, creating a sense of harmony and balance within the composition.
 
+### Generated Image:
 
+![0125-This image features a vibrant array of r-OfficialStableDiffusionjuggernautXL_jug-2027845308](https://github.com/user-attachments/assets/0c8a872b-a584-4c5b-9102-d1aa15ae5747)
+
+
+### Original Image:
+
+![Yeah that's right, a stock photo. Wonders of screenshots!](https://github.com/user-attachments/assets/c5949e86-a9ea-4e56-99fa-5de38fc64b84)
+
+### AI Prompt using Facial Features:
+
+Eyes: Brown
+Eyebrows: Thick and well-groomed
+Nose: Straight and moderately sized
+Mouth: Shaped like a smile with full teeth showing
+Chin: Rounded in shape
+Skin tone: Light brown
+Facial hair: Well-groomed beard on face
+Hair color: Brown
+Ears: Small, located just below the jawline
+Freckles: Numerous across face and neck
+Moles: 2 small moles under eyes
+
+### Generated Image:
+
+![0114-Eyes BrownEyebrows Thick and well-gro-OfficialStableDiffusionjuggernautXL_jug-382224176](https://github.com/user-attachments/assets/870048ff-8fb2-4b1b-9949-dfb190f495b1)
 
 
 
