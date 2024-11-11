@@ -36,6 +36,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <button class="basic-button" onclick="ollamaVision.connect()" id="connect-btn">
                                 Connect to Ollama
                             </button>
+                            <button class="basic-button" onclick="ollamaVision.disconnect()" id="disconnect-btn" 
+                                    style="display: none; background-color: var(--bs-danger);">
+                                Disconnect
+                            </button>
                             <button class="basic-button" onclick="ollamaVision.showSettings()" id="settings-btn">
                                 <i class="fas fa-cog"></i> Settings
                             </button>
@@ -304,14 +308,20 @@ window.ollamaVision = {
     connect: async function() {
         try {
             const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
             connectBtn.disabled = true;
             connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
             
             const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
+            const host = localStorage.getItem('ollamaVision_host') || 'localhost';
+            const port = localStorage.getItem('ollamaVision_port') || '11434';
             
             const response = await new Promise((resolve, reject) => {
                 genericRequest('ConnectToOllamaAsync', 
-                    { showAllModels: showAllModels },
+                    { 
+                        showAllModels: showAllModels,
+                        ollamaUrl: `http://${host}:${port}`  // This is what changes where we connect to Ollama
+                    },
                     (data) => resolve(data),
                     (error) => reject(error)
                 );
@@ -320,6 +330,8 @@ window.ollamaVision = {
             if (response.success) {
                 connectBtn.innerHTML = 'Connected';
                 connectBtn.classList.add('connected');
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
                 
                 document.getElementById('ollamavision-model').disabled = false;
                 document.getElementById('screenshot-btn').disabled = false;
@@ -336,9 +348,16 @@ window.ollamaVision = {
                 connectBtn.disabled = false;
                 connectBtn.innerHTML = 'Connect to Ollama';
                 connectBtn.classList.remove('connected');
+                disconnectBtn.style.display = 'none';
                 this.updateStatus('error', 'Failed to connect: ' + response.error);
             }
         } catch (error) {
+            const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            connectBtn.disabled = false;
+            connectBtn.innerHTML = 'Connect to Ollama';
+            connectBtn.classList.remove('connected');
+            disconnectBtn.style.display = 'none';
             this.updateStatus('error', 'Error connecting to Ollama: ' + error);
         }
     },
@@ -628,6 +647,27 @@ window.ollamaVision = {
                                     Enable this to show all available models.
                                 </small>
                             </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="showDefaultPresets">
+                                <label class="form-check-label" for="showDefaultPresets">
+                                    Show default presets
+                                </label>
+                                <small class="form-text text-muted d-block mt-1">
+                                    When disabled, only user-created presets will be shown
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Remote Ollama Connection (Optional)</label>
+                                <input type="text" class="form-control mb-2" id="ollamaHost" 
+                                       placeholder="Host (e.g., 192.168.1.100)" 
+                                       value="">
+                                <input type="number" class="form-control" id="ollamaPort" 
+                                       placeholder="Port (default: 11434)" 
+                                       value="11434">
+                                <small class="form-text text-muted d-block mt-1">
+                                    Leave empty to use local Ollama installation
+                                </small>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
@@ -644,27 +684,40 @@ window.ollamaVision = {
         const modal = new bootstrap.Modal(document.getElementById('ollamaSettingsModal'));
         const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
         const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
+        const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
+        const host = localStorage.getItem('ollamaVision_host') || '';
+        const port = localStorage.getItem('ollamaVision_port') || '11434';
         
         document.getElementById('autoUnloadModel').checked = autoUnload;
         document.getElementById('showAllModels').checked = showAllModels;
+        document.getElementById('showDefaultPresets').checked = showDefaultPresets;
+        document.getElementById('ollamaHost').value = host;
+        document.getElementById('ollamaPort').value = port;
         modal.show();
     },
 
     saveSettings: function() {
         const autoUnload = document.getElementById('autoUnloadModel').checked;
         const showAllModels = document.getElementById('showAllModels').checked;
+        const showDefaultPresets = document.getElementById('showDefaultPresets').checked;
+        const host = document.getElementById('ollamaHost').value.trim();
+        const port = document.getElementById('ollamaPort').value.trim();
         
         localStorage.setItem('ollamaVision_autoUnload', autoUnload);
         localStorage.setItem('ollamaVision_showAllModels', showAllModels);
+        localStorage.setItem('ollamaVision_showDefaultPresets', showDefaultPresets);
+        localStorage.setItem('ollamaVision_host', host);
+        localStorage.setItem('ollamaVision_port', port);
         
         bootstrap.Modal.getInstance(document.getElementById('ollamaSettingsModal')).hide();
         this.updateStatus('success', 'Settings saved successfully');
         
-        // Refresh model list if connected
+        // Refresh model list if connected and update presets dropdown
         const connectBtn = document.getElementById('connect-btn');
         if (connectBtn.classList.contains('connected')) {
             this.connect();
         }
+        this.updatePresetsDropdown();
     },
 
     unloadModel: async function(model) {
@@ -1031,7 +1084,7 @@ window.ollamaVision = {
             return;
         }
         
-        // Load default presets (these stay fixed)
+        // Load default presets (these stay fixed) - removed the grip handles
         defaultList.innerHTML = [
             "Default",
             "Detailed Analysis",
@@ -1042,48 +1095,49 @@ window.ollamaVision = {
             "Facial Features"
         ].map(preset => `
             <div class="list-group-item">
-                <i class="fas fa-grip-lines me-2"></i>
                 ${preset}
             </div>
         `).join('');
 
+        // Add help text for user presets
+        userList.innerHTML = `
+            <div class="list-group-item bg-secondary bg-opacity-10 border-0">
+                <small><i class="fas fa-info-circle me-2"></i>Drag the grip handles to reorder your presets</small>
+            </div>`;
+            
         // Load user presets
         const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-        console.log('Custom presets loaded:', customPresets);
         
-        userList.innerHTML = customPresets.map(preset => `
+        userList.innerHTML += customPresets.map(preset => `
             <div class="list-group-item d-flex justify-content-between align-items-center" data-preset="${preset.name}">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-grip-lines me-2" style="cursor: grab;"></i>
+                    <span class="basic-button me-2" 
+                          style="cursor: grab; padding: 8px 12px; min-width: 40px; text-align: center;"
+                          title="Drag to reorder">
+                        <i class="fas fa-grip-lines"></i>
+                    </span>
                     ${preset.name}
                 </div>
-                <button class="btn btn-sm btn-danger" onclick="ollamaVision.deleteUserPreset('${preset.name}')">
-                    <i class="fas fa-trash"></i>
+                <button class="basic-button" 
+                        onclick="ollamaVision.deleteUserPreset('${preset.name}')" 
+                        style="background-color: var(--bs-danger); padding: 6px 10px;"
+                        title="Delete this preset">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `).join('');
 
-        // Initialize Sortable with a check and retry
-        const initSortable = () => {
-            if (typeof Sortable !== 'undefined') {
-                console.log('Initializing Sortable...'); // Debug log
-                new Sortable(userList, {
-                    animation: 150,
-                    handle: '.fa-grip-lines',
-                    ghostClass: 'sortable-ghost',
-                    dragClass: 'sortable-drag',
-                    onEnd: (evt) => {
-                        console.log('Drag ended, saving new order...');
-                        this.savePresetOrder();
-                    }
-                });
-            } else {
-                console.log('Sortable not loaded yet, retrying...'); // Debug log
-                setTimeout(initSortable, 100);
+        // Initialize Sortable
+        new Sortable(userList, {
+            animation: 150,
+            handle: '.basic-button',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: (evt) => {
+                console.log('Drag ended, saving new order...');
+                this.savePresetOrder();
             }
-        };
-
-        initSortable();
+        });
     },
 
     savePresetOrder: function() {
@@ -1102,7 +1156,6 @@ window.ollamaVision = {
         
         // Update both the dropdown and preset manager
         this.updatePresetsDropdown();
-        this.loadPresetManager();
     },
 
     updatePresetsDropdown: function() {
@@ -1112,30 +1165,40 @@ window.ollamaVision = {
         // Clear current options
         select.innerHTML = '';
         
-        // Add default presets group
-        const defaultGroup = document.createElement('optgroup');
-        defaultGroup.label = 'Default Presets';
+        const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
         
-        // Add default options
-        const defaultPresets = [
-            { value: '', text: 'Select a preset...' },
-            { value: 'Default', text: 'Default' },
-            { value: 'Detailed Analysis', text: 'Detailed Analysis' },
-            { value: 'Simple Description', text: 'Simple Description' },
-            { value: 'Artistic Style', text: 'Artistic Style' },
-            { value: 'Technical Details', text: 'Technical Details' },
-            { value: 'Facial Features', text: 'Facial Features' },
-            { value: 'Color Palette', text: 'Color Palette' }
-        ];
-        
-        defaultPresets.forEach(preset => {
-            const option = document.createElement('option');
-            option.value = preset.value;
-            option.textContent = preset.text;
-            defaultGroup.appendChild(option);
-        });
-        
-        select.appendChild(defaultGroup);
+        // Add default presets group if enabled
+        if (showDefaultPresets) {
+            const defaultGroup = document.createElement('optgroup');
+            defaultGroup.label = 'Default Presets';
+            
+            // Add default options
+            const defaultPresets = [
+                { value: '', text: 'Select a preset...' },
+                { value: 'Default', text: 'Default' },
+                { value: 'Detailed Analysis', text: 'Detailed Analysis' },
+                { value: 'Simple Description', text: 'Simple Description' },
+                { value: 'Artistic Style', text: 'Artistic Style' },
+                { value: 'Technical Details', text: 'Technical Details' },
+                { value: 'Facial Features', text: 'Facial Features' },
+                { value: 'Color Palette', text: 'Color Palette' }
+            ];
+            
+            defaultPresets.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.value;
+                option.textContent = preset.text;
+                defaultGroup.appendChild(option);
+            });
+            
+            select.appendChild(defaultGroup);
+        } else {
+            // Add just the "Select a preset..." option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a preset...';
+            select.appendChild(defaultOption);
+        }
         
         // Add user presets group
         const userPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
@@ -1146,12 +1209,35 @@ window.ollamaVision = {
             userPresets.forEach(preset => {
                 const option = document.createElement('option');
                 option.value = preset.name;
-                option.textContent = preset.name;
+                option.textContent = `USER: ${preset.name}`;
                 userGroup.appendChild(option);
             });
             
             select.appendChild(userGroup);
         }
+    },
+
+    disconnect: function() {
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const modelSelect = document.getElementById('ollamavision-model');
+        const screenshotBtn = document.getElementById('screenshot-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+
+        // Reset UI state
+        connectBtn.disabled = false;
+        connectBtn.innerHTML = 'Connect to Ollama';
+        connectBtn.classList.remove('connected');
+        connectBtn.style.display = 'inline-block';
+        disconnectBtn.style.display = 'none';
+        
+        // Disable controls
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = '<option value="">Select a model...</option>';
+        screenshotBtn.disabled = true;
+        uploadBtn.disabled = true;
+
+        this.updateStatus('info', 'Disconnected from Ollama');
     }
 };
 
