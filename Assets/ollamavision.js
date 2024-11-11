@@ -33,13 +33,16 @@ async function addOllamaVisionTab(utilitiesTab) {
                     <span class="translate">Ollama Vision Analysis</span>
                     <div class="connection-status">
                         <div class="d-flex align-items-center gap-2">
-                            <button class="connect-btn btn-sm" onclick="ollamaVision.connect()" id="connect-btn">Connect to Ollama</button>
-                            <button class="config-btn btn-sm" onclick="ollamaVision.showSettings()">
+                            <button class="basic-button" onclick="ollamaVision.connect()" id="connect-btn">
+                                Connect to Ollama
+                            </button>
+                            <button class="basic-button" onclick="ollamaVision.showSettings()" id="settings-btn">
                                 <i class="fas fa-cog"></i> Settings
                             </button>
                         </div>
                         <div class="mt-2">
-                            <select id="ollamavision-model" class="form-select form-select-sm" style="width: auto;" disabled>
+                            <select id="ollamavision-model" class="form-select" 
+                                    style="width: auto; background-color: inherit; color: inherit;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
                         </div>
@@ -56,7 +59,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                 <div class="card-body">
                                                     <img id="preview-image" class="img-fluid" src="" alt="Preview" style="max-width: 512px; max-height: 512px; object-fit: contain;">
                                                     <div id="image-info" class="mt-2 text-muted"></div>
-                                                    <button class="analyze-btn mt-3" 
+                                                    <button class="basic-button mt-3" 
                                                             onclick="ollamaVision.analyze()" 
                                                             id="analyze-btn" 
                                                             disabled>
@@ -70,12 +73,14 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label translate">Image Source</label>
-                                                <button class="config-btn" onclick="ollamaVision.showResponseSettings()" id="response-settings-btn">
+                                                <button class="basic-button" 
+                                                        onclick="ollamaVision.showResponseSettings()" 
+                                                        id="response-settings-btn">
                                                     <i class="fas fa-cog"></i> Configure Response Type
                                                 </button>
                                             </div>
                                             <div class="d-grid gap-2">
-                                                <button class="btn btn-primary btn-lg d-flex align-items-center justify-content-center" 
+                                                <button class="basic-button d-flex align-items-center justify-content-center" 
                                                         onclick="ollamaVision.takeScreenshot()" 
                                                         disabled 
                                                         id="screenshot-btn"
@@ -83,7 +88,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                     <i class="fas fa-camera me-2"></i>
                                                     Click to paste with CTRL+V
                                                 </button>
-                                                <button class="btn btn-primary btn-lg d-flex align-items-center justify-content-center" 
+                                                <button class="basic-button d-flex align-items-center justify-content-center" 
                                                         onclick="ollamaVision.uploadImage()" 
                                                         disabled 
                                                         id="upload-btn"
@@ -103,7 +108,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                 </div>
                                             </div>
                                             <div class="d-flex justify-content-end mt-3">
-                                                <button class="btn btn-secondary" onclick="ollamaVision.sendToPrompt()" id="send-to-prompt-btn" disabled>
+                                                <button class="basic-button" 
+                                                        onclick="ollamaVision.sendToPrompt()" 
+                                                        id="send-to-prompt-btn" 
+                                                        disabled>
                                                     Send to Prompt
                                                 </button>
                                             </div>
@@ -138,10 +146,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label for="promptPresets" class="form-label">Preset Prompts</label>
                                 <div class="btn-group">
-                                    <button class="btn btn-sm btn-primary" onclick="ollamaVision.showCreatePreset()">
+                                    <button class="basic-button" onclick="ollamaVision.showCreatePreset()">
                                         Create Custom Preset
                                     </button>
-                                    <button class="btn btn-sm btn-secondary" onclick="ollamaVision.showPresetManager()">
+                                    <button class="basic-button" onclick="ollamaVision.showPresetManager()">
                                         Manage Presets
                                     </button>
                                 </div>
@@ -169,8 +177,8 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="ollamaVision.saveResponseSettings()">Save</button>
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveResponseSettings()">Save</button>
                     </div>
                 </div>
             </div>
@@ -195,8 +203,11 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="ollamaVision.saveCustomPreset()">Save Preset</button>
+                        <button type="button" class="basic-button" 
+                                onclick="$('#createPresetModal').modal('hide'); ollamaVision.showResponseSettings()">
+                            Cancel
+                        </button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveNewPreset()">Save Preset</button>
                     </div>
                 </div>
             </div>
@@ -225,7 +236,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -604,14 +615,14 @@ window.ollamaVision = {
                                     Show all Ollama models
                                 </label>
                                 <small class="form-text text-muted d-block mt-1">
-                                    By default, only models with 'vision', 'llava', or 'moondream' in their names are shown. 
+                                    By default, only models with 'vision' or 'llava' in their names are shown. 
                                     Enable this to show all available models.
                                 </small>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="ollamaVision.saveSettings()">Save</button>
+                            <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="basic-button" onclick="ollamaVision.saveSettings()">Save</button>
                         </div>
                     </div>
                 </div>
@@ -703,8 +714,8 @@ window.ollamaVision = {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="ollamaVision.saveResponseConfig()">Save</button>
+                            <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="basic-button" onclick="ollamaVision.saveResponseConfig()">Save</button>
                         </div>
                     </div>
                 </div>
