@@ -17,7 +17,8 @@ This is a BETA release. Some features have not been incorporated yet, some aren'
 
 # OllamaVision - An AI based image analysis extension for SwarmUI
 
-![OllamaVision](https://github.com/user-attachments/assets/67980d3d-a3c2-48cd-8643-97b5800e6e1a)
+![OllamaVision](https://github.com/user-attachments/assets/7b5db41a-0e32-4186-951c-822661cfe1a1)
+
 
 
 
@@ -45,65 +46,16 @@ PLEASE READ THE PREREQUISTE SECTION ABOVE BEFORE INSTALLING!!!!!
 # Use:
 1. Simple! Once installed and you're in SwarmUI go to the "Utilities" tab.
 2. You should now see another tab named "OllamaVision", click on that. Welcome to OllamaVision!
+3. In the upper right hand corner you will see "Connect to Ollama" click that and the extension will connect to your Ollama install.
+4. It will automatically pull the available models from Ollama, choose one in the drop down list right below the connect button.
+5. You use the Default response type or click "Configure Response Type" to select an included preset or to create and use your own. Presets can be customized and reordered.
+6. Now, either click the paste button and use CTRL+V to paste your image or click the upload button to use an image that is saved locally on a drive.
+7. Once you have the image loaded a preview of your image will appear and a new button will come up with "Analyze Image" on it. Click that and OllamaVision will send your image and prompt/response type to the AI model or analysis. Be patient, it can sometimes take a while to get a response depending on your setup. If you didn't recieve an error message then Ollama is working on your image and well respond eventually.
+8. Once you get a response you will see the "Send to Prompt" button appear. Click that to send the AI generated description to the prompt section of the Generate tab. Here you can generate an image using the straight AI output or you can edit it to your liking however you wish before generating.
+
+That's really it. Connect, choose model, choose response or run with default, load your image, then click analyze. Simple, easy, powerful.
 
    
-3. Now, in the upper right corner we will see a button that says connect. Click that and it will automatically connect to Ollama and pull the list of available vision models you have installed.
-
-![Red Connect status](https://github.com/user-attachments/assets/74619aa0-a906-43f3-be41-299270131066)
-
-![Connected](https://github.com/user-attachments/assets/1f86a0a0-bd5d-474e-8c97-cd21141b3cfa)
-
-  
-4. Select the vision model you want to use in the dropdown list provided. If you don't see your vision model then it doesn't have llava or vision in the name. Either go into "Settings" and enable "Show All Ollama Models" or rename your model to include vision or llava to keep it separate from the rest. Moondream will require you to rename or enable all.
-   
-![Show All](https://github.com/user-attachments/assets/fc3b91a2-adb8-4e1c-be79-91dc3f3bc4a2)
-
-![Show just visioni](https://github.com/user-attachments/assets/ad0bcd40-c9a3-43ae-8088-c2570c91402d)
-
-![Show All](https://github.com/user-attachments/assets/f518df66-9d9c-4848-b15b-9a2c648adf67)
-
-
-5. If you are using an image on your drive, click upload and choose the image.
-
-![Upload Image](https://github.com/user-attachments/assets/ab046ca0-4c8f-41d5-b39f-5fd61052a0ee)
-
-
-
-6. To paste an image/screenshot from your clipboard click on the "Paste" button
-
-![Paste](https://github.com/user-attachments/assets/06c3d7d9-bb9c-42eb-a256-e5cfc2f870a4)
-
-
-7. You can use the default prompt response type or change the response to another setting by choosing a built-in preset or making your own.
-
-![Configure button](https://github.com/user-attachments/assets/8899c384-e121-464b-ae21-c1496b633254)
-
-![Modal window](https://github.com/user-attachments/assets/375a8dff-5f07-4761-a4e5-895fdca2eb83)
-
-In this window you can select a preset, make your own temporary use preset by just typing in the box, make and save a preset, manage/delete user presets. Should be pretty straight forward.
-
-
-
-8. Now, simply press "Analyze Image"
-
-![Analyze](https://github.com/user-attachments/assets/43afffb8-a075-4c6f-808a-80ed618e65e5)
-
-
-9. You will see the status bar turn blue and "Image sent, waiting for response from Ollama..."
-
-![Ollama is analyzing](https://github.com/user-attachments/assets/6ed8c4c6-ea4c-4b8f-a92c-542b2f2da7c8)
-
-   
-If you see this, be patient. Ollama is looking at your image and will respond soon. Depending on your hardware setup it could take quite a long time to get a response or you'll get one right away. This all depends on your setup and how quickly Ollama works on your computer.
-
-
-10. You should eventually see your image description pop up and you can now press "Send output to prompt" which will send your description to the "Generate" tab.
-
-![Send output to prompt](https://github.com/user-attachments/assets/b1b12087-2c24-437c-b838-80540144614c)
-
-
-11. From here you can edit your prompt or run with it to see what the AI will give you.
-
 
 # EXAMPLES:
 Here are some images with their source image, along with the description made, and the generated output from that prompt. These are examples of the facial features preset and the color palette preset since they are probably the most unique out of all of them.
