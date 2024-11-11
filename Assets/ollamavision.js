@@ -245,7 +245,7 @@ async function addOllamaVisionTab(utilitiesTab) {
     
     tabContentContainer.insertAdjacentHTML('beforeend', ollamaVisionTabContent);
     
-    // Add this: Initialize presets after the tab content is added
+    // Initialize presets after the tab content is added
     setTimeout(() => {
         const select = document.getElementById('promptPresets');
         if (select) {
@@ -292,6 +292,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                 
                 select.appendChild(userGroup);
             }
+
+            // Set default preset and load its prompt
+            select.value = 'Default';
+            window.ollamaVision.loadPresetPrompt();
         }
     }, 100); // Small delay to ensure DOM is ready
 }
@@ -838,13 +842,15 @@ window.ollamaVision = {
         // Update presets dropdown
         this.updatePresetsDropdown();
         
-        // Set the default preset
-        const promptPresets = document.getElementById('promptPresets');
-        if (promptPresets) {
-            promptPresets.value = 'Default';
-            // Trigger the preset load to populate the prompt text
-            this.loadPresetPrompt();
-        }
+        // Set the default preset and load its prompt
+        setTimeout(() => {
+            const promptPresets = document.getElementById('promptPresets');
+            if (promptPresets) {
+                promptPresets.value = 'Default';
+                // Trigger the preset load to populate the prompt text
+                this.loadPresetPrompt();
+            }
+        }, 100); // Small delay to ensure DOM is ready
     },
 
     loadExistingPresets: function() {
