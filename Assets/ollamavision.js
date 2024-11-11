@@ -366,16 +366,21 @@ window.ollamaVision = {
         const preset = document.getElementById('promptPresets').value;
         if (!preset) return;
         
-        if (preset.startsWith('USER:')) {
-            const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-            const customPreset = customPresets.find(p => p.name === preset);
-            if (customPreset) {
-                document.getElementById('responsePrompt').value = customPreset.prompt;
-            }
+        // Check if it's a custom preset first
+        const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
+        const customPreset = customPresets.find(p => p.name === preset);
+        
+        if (customPreset) {
+            // If it's a custom preset, use its prompt directly
+            document.getElementById('responsePrompt').value = customPreset.prompt;
         } else {
+            // If it's not a custom preset, it must be a default preset
             genericRequest('GetPresetPrompt', { preset: preset }, (response) => {
                 if (response.success) {
                     document.getElementById('responsePrompt').value = response.prompt;
+                } else {
+                    console.error('Failed to load preset prompt:', response.error);
+                    this.updateStatus('error', 'Failed to load preset prompt');
                 }
             });
         }
@@ -893,7 +898,7 @@ window.ollamaVision = {
         new bootstrap.Modal(document.getElementById('createPresetModal')).show();
     },
 
-    saveCustomPreset: function() {
+    saveNewPreset: function() {
         const name = document.getElementById('presetName').value.trim();
         const prompt = document.getElementById('presetPrompt').value.trim();
         
@@ -904,39 +909,38 @@ window.ollamaVision = {
 
         // Get existing presets or initialize empty array
         let customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-        console.log('Existing presets:', customPresets); // Debug log
+        
+        // Check for duplicate names
+        if (customPresets.some(p => p.name === name)) {
+            if (!confirm('A preset with this name already exists. Do you want to replace it?')) {
+                return;
+            }
+            customPresets = customPresets.filter(p => p.name !== name);
+        }
         
         // Add new preset
-        const newPreset = {
-            name: `USER: ${name}`,
+        customPresets.push({
+            name: name,
             prompt: prompt
-        };
-        customPresets.push(newPreset);
+        });
         
         // Save to localStorage
         localStorage.setItem('ollamaVision_customPresets', JSON.stringify(customPresets));
-        console.log('Saved presets:', customPresets); // Debug log
         
-        // Update both the dropdown and the preset manager
-        this.updatePresetsDropdown();  // Update main dropdown
-        this.loadPresetManager();      // Update preset manager list
+        // Update UI
+        this.updatePresetsDropdown();
+        this.loadPresetManager();
         
-        // Close the create preset modal
-        const createModal = document.getElementById('createPresetModal');
-        if (createModal) {
-            const bsCreateModal = bootstrap.Modal.getInstance(createModal);
-            if (bsCreateModal) {
-                bsCreateModal.hide();
-            }
-        }
+        // Close the create preset modal and show success message
+        const createModal = bootstrap.Modal.getInstance(document.getElementById('createPresetModal'));
+        createModal.hide();
         
         // Show the response settings modal again
-        const responseModal = document.getElementById('responseSettingsModal');
-        if (responseModal) {
-            new bootstrap.Modal(responseModal).show();
-        }
+        setTimeout(() => {
+            new bootstrap.Modal(document.getElementById('responseSettingsModal')).show();
+        }, 250);
         
-        this.updateStatus('success', 'Custom preset saved successfully');
+        this.updateStatus('success', 'Preset saved successfully');
     },
 
     loadUserPresets: function() {
