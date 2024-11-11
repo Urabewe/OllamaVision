@@ -37,7 +37,7 @@ You will also, obviously, need [SwarmUI](https://github.com/mcmonkeyprojects/Swa
 
 # Installation:
 
-These install instructions will change, OllamaVision will hopefully be a supported extension inside of SwarmUI itself. You'll be able to install and update OllamaVision right inside of SwarmUI.
+## These install instructions will change, OllamaVision will hopefully be a supported extension inside of SwarmUI itself. You'll be able to install and update OllamaVision right inside of SwarmUI.
 
 PLEASE READ THE PREREQUISTE SECTION ABOVE BEFORE INSTALLING!!!!!
 1. Open a command prompt to your /SwarmUI/src/Extensions folder.
