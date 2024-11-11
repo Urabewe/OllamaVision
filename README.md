@@ -25,8 +25,15 @@ This extension will add a new tab in SwarmUI under the "Utilities" section calle
 
 The extension is based around ease of use. Just click connect, choose your model, run with default prompt or another preset, upload/paste your image, then press analyze. That's it. The extension itself does not load any models it only sends and recieves data from Ollama so there is no extra overhead. There is also an option to unload models from memory so there is 0 impact on image generation. This is meant to be a lightweight frontend for Ollama vision models. 
 
+# Prerequisites:
+
+[Ollama](https://ollama.com/) MUST be installed and setup before this extension will work. This extension uses Ollama for all of it's heavy work and will not function without it. Follow that link to their website and download and install Ollama. Once you install Ollama you will need to follow their instructions to install a Llava Vision model. [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3), [MoondreamV2](https://ollama.com/library/moondream) are two good places to start since they are smaller. You can also check out a larger model such as [llama3.2-vision](https://ollama.com/library/llama3.2-vision). Installing a model is pretty simple. Ollama has a library of models to choose from. Once Ollama is installed you just find the one you like, open a command prompt, and enter 'ollama pull "model name"' where model name is the name of the model you found on Ollama.com. 
+
+You will also, obviously, need [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) installed and running. This is an extension that adds functionality to the SwarmUI interface itself. Without SwarmUI this extension will not install and will not work.  Head over to the SwarmUI git page and follow the instructions for install if you haven't already. Easy as downloading the installer .bat file, run that installer and everything will be done for you. There are a few options to select but other than that it's an automatic setup.
 
 # Installation:
+
+These install instructions will change, OllamaVision will hopefully be a supported extension inside of SwarmUI itself. You'll be able to install and update OllamaVision right inside of SwarmUI.
 
 1. Open a command prompt to your /SwarmUI/src/Extensions folder.
 2. Enter `git clone https://github.com/Urabewe/OllamaVision.git` and press enter
