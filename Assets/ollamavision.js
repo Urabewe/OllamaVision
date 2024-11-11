@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const utilities = document.getElementById('utilities_tab');
         if (utilities) {
             addOllamaVisionTab(utilities);
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const connectBtn = document.getElementById('connect-btn');
+            connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : 'Ollama'}`;
         } else {
             console.log('Utilities tab not found, something has gone very wrong!');
             return;
@@ -33,13 +36,20 @@ async function addOllamaVisionTab(utilitiesTab) {
                     <span class="translate">Ollama Vision Analysis</span>
                     <div class="connection-status">
                         <div class="d-flex align-items-center gap-2">
-                            <button class="connect-btn btn-sm" onclick="ollamaVision.connect()" id="connect-btn">Connect to Ollama</button>
-                            <button class="config-btn btn-sm" onclick="ollamaVision.showSettings()">
+                            <button class="basic-button" onclick="ollamaVision.connect()" id="connect-btn">
+                                Connect to Ollama
+                            </button>
+                            <button class="basic-button" onclick="ollamaVision.disconnect()" id="disconnect-btn" 
+                                    style="display: none; background-color: var(--bs-danger);">
+                                Disconnect
+                            </button>
+                            <button class="basic-button" onclick="ollamaVision.showSettings()" id="settings-btn">
                                 <i class="fas fa-cog"></i> Settings
                             </button>
                         </div>
                         <div class="mt-2">
-                            <select id="ollamavision-model" class="form-select form-select-sm" style="width: auto;" disabled>
+                            <select id="ollamavision-model" class="form-select" 
+                                    style="width: auto; background-color: inherit; color: inherit;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
                         </div>
@@ -56,7 +66,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                 <div class="card-body">
                                                     <img id="preview-image" class="img-fluid" src="" alt="Preview" style="max-width: 512px; max-height: 512px; object-fit: contain;">
                                                     <div id="image-info" class="mt-2 text-muted"></div>
-                                                    <button class="analyze-btn mt-3" 
+                                                    <button class="basic-button mt-3" 
                                                             onclick="ollamaVision.analyze()" 
                                                             id="analyze-btn" 
                                                             disabled>
@@ -70,12 +80,14 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label translate">Image Source</label>
-                                                <button class="config-btn" onclick="ollamaVision.showResponseSettings()" id="response-settings-btn">
+                                                <button class="basic-button" 
+                                                        onclick="ollamaVision.showResponseSettings()" 
+                                                        id="response-settings-btn">
                                                     <i class="fas fa-cog"></i> Configure Response Type
                                                 </button>
                                             </div>
                                             <div class="d-grid gap-2">
-                                                <button class="btn btn-primary btn-lg d-flex align-items-center justify-content-center" 
+                                                <button class="basic-button d-flex align-items-center justify-content-center" 
                                                         onclick="ollamaVision.takeScreenshot()" 
                                                         disabled 
                                                         id="screenshot-btn"
@@ -83,7 +95,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                     <i class="fas fa-camera me-2"></i>
                                                     Click to paste with CTRL+V
                                                 </button>
-                                                <button class="btn btn-primary btn-lg d-flex align-items-center justify-content-center" 
+                                                <button class="basic-button d-flex align-items-center justify-content-center" 
                                                         onclick="ollamaVision.uploadImage()" 
                                                         disabled 
                                                         id="upload-btn"
@@ -103,7 +115,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                 </div>
                                             </div>
                                             <div class="d-flex justify-content-end mt-3">
-                                                <button class="btn btn-secondary" onclick="ollamaVision.sendToPrompt()" id="send-to-prompt-btn" disabled>
+                                                <button class="basic-button" 
+                                                        onclick="ollamaVision.sendToPrompt()" 
+                                                        id="send-to-prompt-btn" 
+                                                        disabled>
                                                     Send to Prompt
                                                 </button>
                                             </div>
@@ -138,10 +153,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label for="promptPresets" class="form-label">Preset Prompts</label>
                                 <div class="btn-group">
-                                    <button class="btn btn-sm btn-primary" onclick="ollamaVision.showCreatePreset()">
+                                    <button class="basic-button" onclick="ollamaVision.showCreatePreset()">
                                         Create Custom Preset
                                     </button>
-                                    <button class="btn btn-sm btn-secondary" onclick="ollamaVision.showPresetManager()">
+                                    <button class="basic-button" onclick="ollamaVision.showPresetManager()">
                                         Manage Presets
                                     </button>
                                 </div>
@@ -169,8 +184,8 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="ollamaVision.saveResponseSettings()">Save</button>
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveResponseSettings()">Save</button>
                     </div>
                 </div>
             </div>
@@ -195,8 +210,11 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="ollamaVision.saveCustomPreset()">Save Preset</button>
+                        <button type="button" class="basic-button" 
+                                onclick="$('#createPresetModal').modal('hide'); ollamaVision.showResponseSettings()">
+                            Cancel
+                        </button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveNewPreset()">Save Preset</button>
                     </div>
                 </div>
             </div>
@@ -225,7 +243,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -234,7 +252,7 @@ async function addOllamaVisionTab(utilitiesTab) {
     
     tabContentContainer.insertAdjacentHTML('beforeend', ollamaVisionTabContent);
     
-    // Add this: Initialize presets after the tab content is added
+    // Initialize presets after the tab content is added
     setTimeout(() => {
         const select = document.getElementById('promptPresets');
         if (select) {
@@ -281,6 +299,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                 
                 select.appendChild(userGroup);
             }
+
+            // Set default preset and load its prompt
+            select.value = 'Default';
+            window.ollamaVision.loadPresetPrompt();
         }
     }, 100); // Small delay to ensure DOM is ready
 }
@@ -289,42 +311,82 @@ window.ollamaVision = {
     connect: async function() {
         try {
             const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            
             connectBtn.disabled = true;
-            connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            connectBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connecting to ${backendType === 'openai' ? 'OpenAI' : 'Ollama'}...`;
             
-            const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
-            
-            const response = await new Promise((resolve, reject) => {
-                genericRequest('ConnectToOllamaAsync', 
-                    { showAllModels: showAllModels },
-                    (data) => resolve(data),
-                    (error) => reject(error)
-                );
-            });
-
-            if (response.success) {
-                connectBtn.innerHTML = 'Connected';
+            if (backendType === 'openai') {
+                const apiKey = localStorage.getItem('ollamaVision_openaiKey');
+                if (!apiKey) {
+                    throw new Error('OpenAI API key not found. Please add it in settings.');
+                }
+                
+                connectBtn.innerHTML = 'Connect to OpenAI';
                 connectBtn.classList.add('connected');
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
                 
                 document.getElementById('ollamavision-model').disabled = false;
                 document.getElementById('screenshot-btn').disabled = false;
                 document.getElementById('upload-btn').disabled = false;
                 
+                // Update model options for OpenAI
                 const modelSelect = document.getElementById('ollamavision-model');
-                modelSelect.innerHTML = '<option value="">Select a model...</option>';
-                response.models.forEach(model => {
-                    modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
-                });
+                modelSelect.innerHTML = `
+                    <option value="">Select a model...</option>
+                    <option value="gpt-4o-mini">GPT-4 Vision</option>
+                `;
                 
-                this.updateStatus('success', 'Connected to Ollama successfully');
+                this.updateStatus('success', 'Connected to OpenAI successfully');
+                
             } else {
-                connectBtn.disabled = false;
-                connectBtn.innerHTML = 'Connect to Ollama';
-                connectBtn.classList.remove('connected');
-                this.updateStatus('error', 'Failed to connect: ' + response.error);
+                // Existing Ollama connection logic
+                const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
+                const host = localStorage.getItem('ollamaVision_host') || 'localhost';
+                const port = localStorage.getItem('ollamaVision_port') || '11434';
+                
+                const response = await new Promise((resolve, reject) => {
+                    genericRequest('ConnectToOllamaAsync', 
+                        { 
+                            showAllModels: showAllModels,
+                            ollamaUrl: `http://${host}:${port}`
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error)
+                    );
+                });
+
+                if (response.success) {
+                    connectBtn.innerHTML = 'Connected';
+                    connectBtn.classList.add('connected');
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'inline-block';
+                    
+                    document.getElementById('ollamavision-model').disabled = false;
+                    document.getElementById('screenshot-btn').disabled = false;
+                    document.getElementById('upload-btn').disabled = false;
+                    
+                    const modelSelect = document.getElementById('ollamavision-model');
+                    modelSelect.innerHTML = '<option value="">Select a model...</option>';
+                    response.models.forEach(model => {
+                        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+                    });
+                    
+                    this.updateStatus('success', 'Connected to Ollama successfully');
+                } else {
+                    throw new Error('Failed to connect: ' + response.error);
+                }
             }
         } catch (error) {
-            this.updateStatus('error', 'Error connecting to Ollama: ' + error);
+            const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            connectBtn.disabled = false;
+            connectBtn.innerHTML = 'Connect';
+            connectBtn.classList.remove('connected');
+            disconnectBtn.style.display = 'none';
+            this.updateStatus('error', 'Error connecting: ' + error);
         }
     },
 
@@ -355,16 +417,21 @@ window.ollamaVision = {
         const preset = document.getElementById('promptPresets').value;
         if (!preset) return;
         
-        if (preset.startsWith('USER:')) {
-            const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-            const customPreset = customPresets.find(p => p.name === preset);
-            if (customPreset) {
-                document.getElementById('responsePrompt').value = customPreset.prompt;
-            }
+        // Check if it's a custom preset first
+        const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
+        const customPreset = customPresets.find(p => p.name === preset);
+        
+        if (customPreset) {
+            // If it's a custom preset, use its prompt directly
+            document.getElementById('responsePrompt').value = customPreset.prompt;
         } else {
+            // If it's not a custom preset, it must be a default preset
             genericRequest('GetPresetPrompt', { preset: preset }, (response) => {
                 if (response.success) {
                     document.getElementById('responsePrompt').value = response.prompt;
+                } else {
+                    console.error('Failed to load preset prompt:', response.error);
+                    this.updateStatus('error', 'Failed to load preset prompt');
                 }
             });
         }
@@ -517,36 +584,80 @@ window.ollamaVision = {
 
         try {
             analyzeBtn.disabled = true;
-            this.updateStatus('info', 'Image sent, waiting for response from Ollama...', true);
             sendToPromptBtn.disabled = true;
-
-            // Use a Promise with genericRequest
-            const response = await new Promise((resolve, reject) => {
-                genericRequest('AnalyzeImageAsync', 
-                    {
-                        imageData: imageData,
-                        model: model
+            
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            
+            if (backendType === 'openai') {
+                this.updateStatus('info', 'Image sent, waiting for response from OpenAI...', true);
+                
+                const apiKey = localStorage.getItem('ollamaVision_openaiKey');
+                if (!apiKey) {
+                    throw new Error('OpenAI API key not found');
+                }
+                
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
                     },
-                    (data) => resolve(data),
-                    (error) => reject(error)
-                );
-            });
-
-            if (response.success) {
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'user',
+                                content: [
+                                    { type: 'text', text: document.getElementById('responsePrompt').value || 'Describe this image in detail.' },
+                                    { type: 'image_url', image_url: { url: imageData } }
+                                ]
+                            }
+                        ],
+                        max_tokens: 500
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'OpenAI API request failed');
+                }
+                
+                const data = await response.json();
+                const analysisResult = data.choices[0].message.content;
+                
                 this.updateStatus('success', 'Image description complete!');
                 responseArea.style.display = 'block';
-                responseText.textContent = response.response;
+                responseText.textContent = analysisResult;
                 sendToPromptBtn.disabled = false;
-
-                // Check if auto-unload is enabled
-                const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
-                if (autoUnload) {
-                    await this.unloadModel(model);
-                }
+                
             } else {
-                this.updateStatus('error', 'Analysis failed: ' + response.error);
-                responseArea.style.display = 'none';
-                sendToPromptBtn.disabled = true;
+                // Existing Ollama analysis logic
+                this.updateStatus('info', 'Image sent, waiting for response from Ollama...', true);
+                
+                const response = await new Promise((resolve, reject) => {
+                    genericRequest('AnalyzeImageAsync', 
+                        {
+                            imageData: imageData,
+                            model: model
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error)
+                    );
+                });
+
+                if (response.success) {
+                    this.updateStatus('success', 'Image description complete!');
+                    responseArea.style.display = 'block';
+                    responseText.textContent = response.response;
+                    sendToPromptBtn.disabled = false;
+
+                    const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
+                    if (autoUnload) {
+                        await this.unloadModel(model);
+                    }
+                } else {
+                    throw new Error('Analysis failed: ' + response.error);
+                }
             }
         } catch (error) {
             this.updateStatus('error', 'Error analyzing image: ' + error);
@@ -589,6 +700,15 @@ window.ollamaVision = {
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Backend Selection</label>
+                                <select id="backend-type" class="form-select" onchange="ollamaVision.toggleBackendSettings()">
+                                    <option value="ollama">Ollama</option>
+                                    <option value="openai">OpenAI</option>
+                                </select>
+                            </div>
+
+                            <!-- Common Settings -->
                             <div class="form-check form-switch mb-3">
                                 <input class="form-check-input" type="checkbox" id="autoUnloadModel">
                                 <label class="form-check-label" for="autoUnloadModel">
@@ -599,19 +719,53 @@ window.ollamaVision = {
                                 </small>
                             </div>
                             <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="showAllModels">
-                                <label class="form-check-label" for="showAllModels">
-                                    Show all Ollama models
+                                <input class="form-check-input" type="checkbox" id="showDefaultPresets">
+                                <label class="form-check-label" for="showDefaultPresets">
+                                    Show default presets
                                 </label>
                                 <small class="form-text text-muted d-block mt-1">
-                                    By default, only models with 'vision', 'llava', or 'moondream' in their names are shown. 
-                                    Enable this to show all available models.
+                                    Toggle visibility of default response presets
                                 </small>
+                            </div>
+
+                            <!-- Ollama-specific Settings -->
+                            <div id="ollama-connection-settings">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="showAllModels">
+                                    <label class="form-check-label" for="showAllModels">
+                                        Show all Ollama models
+                                    </label>
+                                    <small class="form-text text-muted d-block mt-1">
+                                        By default, only models with 'vision' or 'llava' in their names are shown
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Remote Ollama Connection (Optional)</label>
+                                    <input type="text" class="form-control mb-2" id="ollamaHost" 
+                                           placeholder="Host (e.g., 192.168.1.100)" 
+                                           value="">
+                                    <input type="number" class="form-control" id="ollamaPort" 
+                                           placeholder="Port (default: 11434)" 
+                                           value="11434">
+                                    <small class="form-text text-muted d-block mt-1">
+                                        Leave empty to use local Ollama installation
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- OpenAI Settings -->
+                            <div id="openai-settings" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">OpenAI API Key</label>
+                                    <input type="password" class="form-control" id="openai-key" 
+                                           placeholder="Enter your OpenAI API key">
+                                    <small class="form-text text-muted">Your API key will be stored locally</small>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="ollamaVision.saveSettings()">Save</button>
+                            <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="basic-button" onclick="ollamaVision.saveSettings()">Save</button>
                         </div>
                     </div>
                 </div>
@@ -622,25 +776,71 @@ window.ollamaVision = {
         }
 
         const modal = new bootstrap.Modal(document.getElementById('ollamaSettingsModal'));
+        
+        // Load saved settings
         const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
         const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
+        const host = localStorage.getItem('ollamaVision_host') || '';
+        const port = localStorage.getItem('ollamaVision_port') || '11434';
+        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+        const openaiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
+        const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
         
         document.getElementById('autoUnloadModel').checked = autoUnload;
         document.getElementById('showAllModels').checked = showAllModels;
+        document.getElementById('ollamaHost').value = host;
+        document.getElementById('ollamaPort').value = port;
+        document.getElementById('backend-type').value = backendType;
+        document.getElementById('openai-key').value = openaiKey;
+        document.getElementById('showDefaultPresets').checked = showDefaultPresets;
+        
+        // Show/hide appropriate settings
+        this.toggleBackendSettings();
+        
         modal.show();
+    },
+
+    toggleBackendSettings: function() {
+        const backendType = document.getElementById('backend-type').value;
+        const ollamaConnectionSettings = document.getElementById('ollama-connection-settings');
+        const openaiSettings = document.getElementById('openai-settings');
+        const connectBtn = document.getElementById('connect-btn');
+        
+        if (backendType === 'ollama') {
+            ollamaConnectionSettings.style.display = 'block';
+            openaiSettings.style.display = 'none';
+            connectBtn.innerHTML = 'Connect to Ollama';
+        } else {
+            ollamaConnectionSettings.style.display = 'none';
+            openaiSettings.style.display = 'block';
+            connectBtn.innerHTML = 'Connect to OpenAI';
+        }
     },
 
     saveSettings: function() {
         const autoUnload = document.getElementById('autoUnloadModel').checked;
         const showAllModels = document.getElementById('showAllModels').checked;
+        const showDefaultPresets = document.getElementById('showDefaultPresets').checked;
+        const host = document.getElementById('ollamaHost').value.trim();
+        const port = document.getElementById('ollamaPort').value.trim();
+        const backendType = document.getElementById('backend-type').value;
+        const openaiKey = document.getElementById('openai-key').value.trim();
         
         localStorage.setItem('ollamaVision_autoUnload', autoUnload);
         localStorage.setItem('ollamaVision_showAllModels', showAllModels);
+        localStorage.setItem('ollamaVision_showDefaultPresets', showDefaultPresets);
+        localStorage.setItem('ollamaVision_host', host);
+        localStorage.setItem('ollamaVision_port', port);
+        localStorage.setItem('ollamaVision_backendType', backendType);
+        localStorage.setItem('ollamaVision_openaiKey', openaiKey);
         
         bootstrap.Modal.getInstance(document.getElementById('ollamaSettingsModal')).hide();
         this.updateStatus('success', 'Settings saved successfully');
         
-        // Refresh model list if connected
+        // Update presets dropdown with new settings
+        this.updatePresetsDropdown();
+        
+        // Refresh connection if needed
         const connectBtn = document.getElementById('connect-btn');
         if (connectBtn.classList.contains('connected')) {
             this.connect();
@@ -703,8 +903,8 @@ window.ollamaVision = {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="ollamaVision.saveResponseConfig()">Save</button>
+                            <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="basic-button" onclick="ollamaVision.saveResponseConfig()">Save</button>
                         </div>
                     </div>
                 </div>
@@ -822,13 +1022,15 @@ window.ollamaVision = {
         // Update presets dropdown
         this.updatePresetsDropdown();
         
-        // Set the default preset
-        const promptPresets = document.getElementById('promptPresets');
-        if (promptPresets) {
-            promptPresets.value = 'Default';
-            // Trigger the preset load to populate the prompt text
-            this.loadPresetPrompt();
-        }
+        // Set the default preset and load its prompt
+        setTimeout(() => {
+            const promptPresets = document.getElementById('promptPresets');
+            if (promptPresets) {
+                promptPresets.value = 'Default';
+                // Trigger the preset load to populate the prompt text
+                this.loadPresetPrompt();
+            }
+        }, 100); // Small delay to ensure DOM is ready
     },
 
     loadExistingPresets: function() {
@@ -874,15 +1076,16 @@ window.ollamaVision = {
         // Hide the response settings modal
         bootstrap.Modal.getInstance(document.getElementById('responseSettingsModal')).hide();
         
-        // Copy current prompt to the new preset modal
+        // Copy current prompt to the new preset modal and set placeholders
         const currentPrompt = document.getElementById('responsePrompt').value;
-        document.getElementById('presetPrompt').value = currentPrompt;
+        document.getElementById('presetName').value = "Preset Name";
+        document.getElementById('presetPrompt').value = "Your response prompt.";
         
         // Show the create preset modal
         new bootstrap.Modal(document.getElementById('createPresetModal')).show();
     },
 
-    saveCustomPreset: function() {
+    saveNewPreset: function() {
         const name = document.getElementById('presetName').value.trim();
         const prompt = document.getElementById('presetPrompt').value.trim();
         
@@ -893,39 +1096,38 @@ window.ollamaVision = {
 
         // Get existing presets or initialize empty array
         let customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-        console.log('Existing presets:', customPresets); // Debug log
+        
+        // Check for duplicate names
+        if (customPresets.some(p => p.name === name)) {
+            if (!confirm('A preset with this name already exists. Do you want to replace it?')) {
+                return;
+            }
+            customPresets = customPresets.filter(p => p.name !== name);
+        }
         
         // Add new preset
-        const newPreset = {
-            name: `USER: ${name}`,
+        customPresets.push({
+            name: name,
             prompt: prompt
-        };
-        customPresets.push(newPreset);
+        });
         
         // Save to localStorage
         localStorage.setItem('ollamaVision_customPresets', JSON.stringify(customPresets));
-        console.log('Saved presets:', customPresets); // Debug log
         
-        // Update both the dropdown and the preset manager
-        this.updatePresetsDropdown();  // Update main dropdown
-        this.loadPresetManager();      // Update preset manager list
+        // Update UI
+        this.updatePresetsDropdown();
+        this.loadPresetManager();
         
-        // Close the create preset modal
-        const createModal = document.getElementById('createPresetModal');
-        if (createModal) {
-            const bsCreateModal = bootstrap.Modal.getInstance(createModal);
-            if (bsCreateModal) {
-                bsCreateModal.hide();
-            }
-        }
+        // Close the create preset modal and show success message
+        const createModal = bootstrap.Modal.getInstance(document.getElementById('createPresetModal'));
+        createModal.hide();
         
         // Show the response settings modal again
-        const responseModal = document.getElementById('responseSettingsModal');
-        if (responseModal) {
-            new bootstrap.Modal(responseModal).show();
-        }
+        setTimeout(() => {
+            new bootstrap.Modal(document.getElementById('responseSettingsModal')).show();
+        }, 250);
         
-        this.updateStatus('success', 'Custom preset saved successfully');
+        this.updateStatus('success', 'Preset saved successfully');
     },
 
     loadUserPresets: function() {
@@ -1010,59 +1212,45 @@ window.ollamaVision = {
             return;
         }
         
-        // Load default presets (these stay fixed)
-        defaultList.innerHTML = [
-            "Default",
-            "Detailed Analysis",
-            "Simple Description",
-            "Artistic Style",
-            "Technical Details",
-            "Color Palette",
-            "Facial Features"
-        ].map(preset => `
-            <div class="list-group-item">
-                <i class="fas fa-grip-lines me-2"></i>
-                ${preset}
-            </div>
-        `).join('');
+        // Remove the default presets section entirely
+        defaultList.parentElement.style.display = 'none';  // Hide the entire default presets section
 
+        // Add help text for user presets
+        userList.innerHTML = '';  // Remove the header completely
+            
         // Load user presets
         const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-        console.log('Custom presets loaded:', customPresets);
         
-        userList.innerHTML = customPresets.map(preset => `
+        userList.innerHTML += customPresets.map(preset => `
             <div class="list-group-item d-flex justify-content-between align-items-center" data-preset="${preset.name}">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-grip-lines me-2" style="cursor: grab;"></i>
+                    <span class="basic-button me-2" 
+                          style="cursor: grab; padding: 8px 12px; min-width: 40px; text-align: center;"
+                          title="Drag to reorder">
+                        <i class="fas fa-grip-lines"></i>
+                    </span>
                     ${preset.name}
                 </div>
-                <button class="btn btn-sm btn-danger" onclick="ollamaVision.deleteUserPreset('${preset.name}')">
-                    <i class="fas fa-trash"></i>
+                <button class="basic-button" 
+                        onclick="ollamaVision.deleteUserPreset('${preset.name}')" 
+                        style="background-color: #dc3545 !important; padding: 6px 10px;"
+                        title="Delete this preset">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `).join('');
 
-        // Initialize Sortable with a check and retry
-        const initSortable = () => {
-            if (typeof Sortable !== 'undefined') {
-                console.log('Initializing Sortable...'); // Debug log
-                new Sortable(userList, {
-                    animation: 150,
-                    handle: '.fa-grip-lines',
-                    ghostClass: 'sortable-ghost',
-                    dragClass: 'sortable-drag',
-                    onEnd: (evt) => {
-                        console.log('Drag ended, saving new order...');
-                        this.savePresetOrder();
-                    }
-                });
-            } else {
-                console.log('Sortable not loaded yet, retrying...'); // Debug log
-                setTimeout(initSortable, 100);
+        // Initialize Sortable
+        new Sortable(userList, {
+            animation: 150,
+            handle: '.basic-button',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: (evt) => {
+                console.log('Drag ended, saving new order...');
+                this.savePresetOrder();
             }
-        };
-
-        initSortable();
+        });
     },
 
     savePresetOrder: function() {
@@ -1081,7 +1269,6 @@ window.ollamaVision = {
         
         // Update both the dropdown and preset manager
         this.updatePresetsDropdown();
-        this.loadPresetManager();
     },
 
     updatePresetsDropdown: function() {
@@ -1091,30 +1278,40 @@ window.ollamaVision = {
         // Clear current options
         select.innerHTML = '';
         
-        // Add default presets group
-        const defaultGroup = document.createElement('optgroup');
-        defaultGroup.label = 'Default Presets';
+        const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
         
-        // Add default options
-        const defaultPresets = [
-            { value: '', text: 'Select a preset...' },
-            { value: 'Default', text: 'Default' },
-            { value: 'Detailed Analysis', text: 'Detailed Analysis' },
-            { value: 'Simple Description', text: 'Simple Description' },
-            { value: 'Artistic Style', text: 'Artistic Style' },
-            { value: 'Technical Details', text: 'Technical Details' },
-            { value: 'Facial Features', text: 'Facial Features' },
-            { value: 'Color Palette', text: 'Color Palette' }
-        ];
-        
-        defaultPresets.forEach(preset => {
-            const option = document.createElement('option');
-            option.value = preset.value;
-            option.textContent = preset.text;
-            defaultGroup.appendChild(option);
-        });
-        
-        select.appendChild(defaultGroup);
+        // Add default presets group if enabled
+        if (showDefaultPresets) {
+            const defaultGroup = document.createElement('optgroup');
+            defaultGroup.label = 'Default Presets';
+            
+            // Add default options
+            const defaultPresets = [
+                { value: '', text: 'Select a preset...' },
+                { value: 'Default', text: 'Default' },
+                { value: 'Detailed Analysis', text: 'Detailed Analysis' },
+                { value: 'Simple Description', text: 'Simple Description' },
+                { value: 'Artistic Style', text: 'Artistic Style' },
+                { value: 'Technical Details', text: 'Technical Details' },
+                { value: 'Facial Features', text: 'Facial Features' },
+                { value: 'Color Palette', text: 'Color Palette' }
+            ];
+            
+            defaultPresets.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.value;
+                option.textContent = preset.text;
+                defaultGroup.appendChild(option);
+            });
+            
+            select.appendChild(defaultGroup);
+        } else {
+            // Add just the "Select a preset..." option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a preset...';
+            select.appendChild(defaultOption);
+        }
         
         // Add user presets group
         const userPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
@@ -1125,12 +1322,36 @@ window.ollamaVision = {
             userPresets.forEach(preset => {
                 const option = document.createElement('option');
                 option.value = preset.name;
-                option.textContent = preset.name;
+                option.textContent = `USER: ${preset.name}`;
                 userGroup.appendChild(option);
             });
             
             select.appendChild(userGroup);
         }
+    },
+
+    disconnect: function() {
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const modelSelect = document.getElementById('ollamavision-model');
+        const screenshotBtn = document.getElementById('screenshot-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+
+        // Reset UI state
+        connectBtn.disabled = false;
+        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : 'Ollama'}`;
+        connectBtn.classList.remove('connected');
+        connectBtn.style.display = 'inline-block';
+        disconnectBtn.style.display = 'none';
+        
+        // Disable controls
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = '<option value="">Select a model...</option>';
+        screenshotBtn.disabled = true;
+        uploadBtn.disabled = true;
+
+        this.updateStatus('info', `Disconnected from ${backendType === 'openai' ? 'OpenAI' : 'Ollama'}`);
     }
 };
 
