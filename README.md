@@ -1,4 +1,4 @@
-Thank you [SouthbayJay](https://civitai.com/user/SouthbayJay) for helping with testing, feedback, advice, and all the back and forth. Honestly sped this release up exponentially thanks to you. 
+Thank you to [SouthbayJay](https://civitai.com/user/SouthbayJay) for helping with testing, feedback, advice, and all the back and forth. Honestly sped this release up exponentially thanks to you. 
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
