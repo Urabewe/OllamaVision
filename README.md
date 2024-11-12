@@ -6,11 +6,6 @@ Thank you to [SouthbayJay](https://civitai.com/user/SouthbayJay) for helping wit
 # OllamaVision
 An extension for SwarmUI that allows you to connect to Ollama to use vision models for image analysis to create image prompts.
 
-![OllamaVision](https://github.com/user-attachments/assets/8304be38-5ae5-4a41-88b8-72311069d4f7)
-
-
-
-
 This extension is for [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) a Web-UI frontend for ComfyUI. If you haven't already, go there and install now. If you're here I would imagine you already have it running.
 
 This extension connects to [Ollama](https://ollama.com/) as a backend for image analysis. You will need to install this and download a LLAVA based Vision model such as llama3.2-vision. Ollama's website has a full, extensive library of models to choose from. I have been using [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3) with a lot of success. I have reports of [MoondreamV2](https://ollama.com/library/moondream) working well also which is even smaller at 1.8b. Though I would suggest trying a few models based on your specs. For the use of this extension a 3B or smaller model will do just fine.
@@ -20,8 +15,7 @@ This is a BETA release. Some features have not been incorporated yet, some aren'
 
 # OllamaVision - An AI based image analysis extension for SwarmUI
 
-![OllamaVision](https://github.com/user-attachments/assets/7b5db41a-0e32-4186-951c-822661cfe1a1)
-
+![OllamaVision](https://github.com/user-attachments/assets/8304be38-5ae5-4a41-88b8-72311069d4f7)
 
 
 
