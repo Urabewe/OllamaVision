@@ -171,44 +171,27 @@ namespace Urabewe.OllamaVision.WebAPI
                 var content = await response.Content.ReadAsStringAsync();
                 Logs.Debug($"Ollama response: {content}");
 
-                try
-                {
-                    var jsonResponse = JsonConvert.DeserializeObject<JObject>(content);
-                    var models = jsonResponse["models"]?
-                        .Select(m => m["name"]?.ToString())
-                        .Where(name => !string.IsNullOrEmpty(name) && 
-                            (showAllModels || 
-                             name.Contains("vision", StringComparison.OrdinalIgnoreCase) || 
-                             name.Contains("llava", StringComparison.OrdinalIgnoreCase)))
-                        .ToList();
+                var jsonResponse = JsonConvert.DeserializeObject<JObject>(content);
+                var models = jsonResponse["models"]?
+                    .Select(m => m["name"]?.ToString())
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .ToList();
 
-                    if (models == null || !models.Any())
-                    {
-                        return new JObject
-                        {
-                            ["success"] = false,
-                            ["error"] = showAllModels ? 
-                                "No models found in Ollama." : 
-                                "No vision models found in Ollama. Please install a vision model like 'llava' or enable 'Show all models' in settings."
-                        };
-                    }
-
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = "Connected to Ollama successfully",
-                        ["models"] = JArray.FromObject(models)
-                    };
-                }
-                catch (JsonException)
+                if (models == null || !models.Any())
                 {
-                    Logs.Error($"Raw response content: {content}");
                     return new JObject
                     {
                         ["success"] = false,
-                        ["error"] = "Invalid response format from Ollama"
+                        ["error"] = "No models found in Ollama."
                     };
                 }
+
+                return new JObject
+                {
+                    ["success"] = true,
+                    ["response"] = "Connected to Ollama successfully",
+                    ["models"] = JArray.FromObject(models)
+                };
             }
             catch (Exception ex)
             {

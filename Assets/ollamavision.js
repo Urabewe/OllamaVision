@@ -323,6 +323,30 @@ window.ollamaVision = {
                     throw new Error('OpenAI API key not found. Please add it in settings.');
                 }
                 
+                // Fetch all available models from OpenAI
+                const response = await fetch('https://api.openai.com/v1/models', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'Failed to fetch models from OpenAI');
+                }
+
+                const data = await response.json();
+                const modelSelect = document.getElementById('ollamavision-model');
+                modelSelect.innerHTML = '<option value="">Select a model...</option>';
+                
+                // Sort models alphabetically by their ID
+                const sortedModels = data.data.sort((a, b) => a.id.localeCompare(b.id));
+                
+                sortedModels.forEach(model => {
+                    modelSelect.innerHTML += `<option value="${model.id}">${model.id}</option>`;
+                });
+
                 connectBtn.innerHTML = 'Connect to OpenAI';
                 connectBtn.classList.add('connected');
                 connectBtn.style.display = 'none';
@@ -332,15 +356,7 @@ window.ollamaVision = {
                 document.getElementById('screenshot-btn').disabled = false;
                 document.getElementById('upload-btn').disabled = false;
                 
-                // Update model options for OpenAI
-                const modelSelect = document.getElementById('ollamavision-model');
-                modelSelect.innerHTML = `
-                    <option value="">Select a model...</option>
-                    <option value="gpt-4o-mini">GPT-4 Vision</option>
-                `;
-                
                 this.updateStatus('success', 'Connected to OpenAI successfully');
-                
             } else {
                 // Existing Ollama connection logic
                 const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
@@ -359,6 +375,16 @@ window.ollamaVision = {
                 });
 
                 if (response.success) {
+                    const modelSelect = document.getElementById('ollamavision-model');
+                    modelSelect.innerHTML = '<option value="">Select a model...</option>';
+                    
+                    // Filter models if showAllModels is false
+                    const filteredModels = showAllModels ? response.models : response.models.filter(model => model.includes('vision') || model.includes('llava'));
+                    
+                    filteredModels.forEach(model => {
+                        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+                    });
+
                     connectBtn.innerHTML = 'Connected';
                     connectBtn.classList.add('connected');
                     connectBtn.style.display = 'none';
@@ -367,12 +393,6 @@ window.ollamaVision = {
                     document.getElementById('ollamavision-model').disabled = false;
                     document.getElementById('screenshot-btn').disabled = false;
                     document.getElementById('upload-btn').disabled = false;
-                    
-                    const modelSelect = document.getElementById('ollamavision-model');
-                    modelSelect.innerHTML = '<option value="">Select a model...</option>';
-                    response.models.forEach(model => {
-                        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
-                    });
                     
                     this.updateStatus('success', 'Connected to Ollama successfully');
                 } else {
@@ -1368,3 +1388,15 @@ document.getElementById('response-type').addEventListener('change', function(e) 
         }
     }
 });
+
+// Add model validation
+const validOpenAIModels = [
+    'gpt-4-vision-preview',
+    'gpt-4-1106-vision-preview',
+    'gpt-4-turbo-preview'
+];
+
+// In your analyze function
+if (backendType === 'openai' && !validOpenAIModels.includes(model)) {
+    throw new Error('Invalid OpenAI model selected');
+}
