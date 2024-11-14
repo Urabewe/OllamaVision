@@ -1,3 +1,5 @@
+Thank you [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision an official extension of SwarmUI!
+
 Thank you [SouthbayJay](https://civitai.com/user/SouthbayJay) for helping with testing, feedback, advice, and all the back and forth. Honestly sped this release up exponentially thanks to you. 
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
@@ -33,14 +35,10 @@ You will also, obviously, need [SwarmUI](https://github.com/mcmonkeyprojects/Swa
 
 # Installation:
 
- These install instructions will change, OllamaVision will hopefully be a supported extension inside of SwarmUI itself. You'll be able to install and update OllamaVision right inside of SwarmUI.
+## Make sure you have followed the prerequisites and have properly setup Ollama with a vision model and SwarmUI is installed and setup.
 
-## PLEASE READ THE PREREQUISTE SECTION ABOVE BEFORE INSTALLING!!!!!
-1. Open a command prompt to your /SwarmUI/src/Extensions folder.
-2. Enter `git clone https://github.com/Urabewe/OllamaVision.git` and press enter
-3. This will clone this repo to the Extensions folder for installation.
-4. Go to /SwarmUI/ main directory and run "windows-update.bat" (NOTE: This is UNTESTED on anything Linux, if anyone can help with this let me know, please.) this will install the extension into SwarmUI
-5. Launch SwarmUI and the extension will be installed and should be ready to use.
+Now just simply open up SwarmUI, at the top click on the "SERVER" tab, you will "EXTENSIONS" appear under "SERVER", click on "EXTENSIONS". Now just simply find OllamaVision in the list of available extensions and click install! That's it! Your SwarmUI will reload and OllamaVision will be installed!
+
 
 # Use:
 1. Simple! Once installed and you're in SwarmUI go to the "Utilities" tab.
