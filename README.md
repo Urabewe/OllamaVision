@@ -124,7 +124,7 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 - Batch image processing
 - Auto clipboard paste
 - Style combination analysis
-- [Your other planned features]
+- OpenAI Support with API Key (SOON!)
 
 ## 🙏 Acknowledgments
 - [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision official and for giving us SwarmUI
