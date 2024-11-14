@@ -6,9 +6,9 @@
 ## 🌟 Features
 - One-click connection to Ollama
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
-- Direct-to-prompt generation
+- Send to prompt after generation
 - Zero impact on VRAM when not in use
-- Custom preset support
+- Create and save custom response types
 - Image paste/upload support
 
 
