@@ -64,7 +64,11 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <div id="image-preview-area" style="display: none;">
                                             <div class="card">
                                                 <div class="card-body">
-                                                    <img id="preview-image" class="img-fluid" src="" alt="Preview" style="max-width: 512px; max-height: 512px; object-fit: contain;">
+                                                    <img id="preview-image" 
+                                                         class="img-fluid" 
+                                                         src="" 
+                                                         alt="Preview" 
+                                                         style="max-width: 512px; max-height: 512px; object-fit: contain;">
                                                     <div id="image-info" class="mt-2 text-muted"></div>
                                                     <button class="basic-button mt-3" 
                                                             onclick="ollamaVision.analyze()" 
@@ -473,35 +477,40 @@ window.ollamaVision = {
         try {
             this.updateStatus('info', 'Opening Snip Tool...');
             
-            // Set up paste event listener first
-            const handlePaste = (e) => {
-                const items = e.clipboardData.items;
-                let imageFile = null;
-
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        imageFile = items[i].getAsFile();
-                        break;
+            // Remove any existing paste event listener first
+            if (this.pasteHandler) {
+                document.removeEventListener('paste', this.pasteHandler);
+            }
+            
+            // Create and store the bound handler
+            this.pasteHandler = this.handlePaste.bind(this);
+            
+            // Enable paste and set up the paste event listener
+            this.pasteEnabled = true;
+            
+            // Add the paste listener only to the OllamaVision tab
+            const ollamaVisionTab = document.getElementById('Utilities-OllamaVision-Tab');
+            if (ollamaVisionTab) {
+                ollamaVisionTab.addEventListener('paste', this.pasteHandler);
+                
+                // Create a hidden input field within the OllamaVision tab
+                const hiddenInput = document.createElement('input');
+                hiddenInput.style.position = 'absolute';
+                hiddenInput.style.opacity = '0';
+                hiddenInput.style.pointerEvents = 'none';
+                hiddenInput.id = 'ollamavision-hidden-input';
+                ollamaVisionTab.appendChild(hiddenInput);
+                
+                // Focus the hidden input
+                hiddenInput.focus();
+                
+                // Keep focus in the tab area
+                ollamaVisionTab.addEventListener('blur', () => {
+                    if (this.pasteEnabled) {
+                        hiddenInput.focus();
                     }
-                }
-
-                if (imageFile) {
-                    this.handleImageUpload(imageFile);
-                    document.removeEventListener('paste', handlePaste);
-                    this.updateStatus('success', 'Screenshot captured successfully');
-                } else {
-                    this.updateStatus('error', 'No image found in clipboard');
-                }
-            };
-
-            document.addEventListener('paste', handlePaste.bind(this));
-
-            // Create a hidden input to focus
-            const input = document.createElement('input');
-            input.style.position = 'fixed';
-            input.style.top = '-100px';
-            document.body.appendChild(input);
-            input.focus();
+                });
+            }
 
             // Trigger Win+Shift+S using keyboard events
             document.dispatchEvent(new KeyboardEvent('keydown', {
@@ -521,11 +530,6 @@ window.ollamaVision = {
                 code: 'KeyS',
                 bubbles: true
             }));
-
-            // Clean up the hidden input
-            setTimeout(() => {
-                document.body.removeChild(input);
-            }, 100);
             
             this.updateStatus('info', 'Now press CTRL+V to paste your image for analyzing...');
             
@@ -974,31 +978,39 @@ window.ollamaVision = {
     },
 
     savePreset: function() {
-        const name = document.getElementById('preset-name').value.trim();
-        const prompt = document.getElementById('custom-prompt').value.trim();
+        const presetName = document.getElementById('newPresetName').value.trim();
+        const presetPrompt = document.getElementById('newPresetPrompt').value.trim();
         
-        if (!name || !prompt) {
-            this.updateStatus('error', 'Please enter both name and prompt');
+        if (!presetName || !presetPrompt) {
+            alert('Please enter both a name and prompt for the preset.');
             return;
         }
-
-        let presets = JSON.parse(localStorage.getItem('ollamaVision_presets') || '[]');
         
-        // Check for duplicate names
-        if (presets.some(p => p.name === name)) {
-            if (!confirm('A preset with this name already exists. Do you want to replace it?')) {
-                return;
-            }
-            presets = presets.filter(p => p.name !== name);
+        // Add USER: prefix when saving the preset
+        const fullPresetName = presetName.startsWith('USER: ') ? presetName : `USER: ${presetName}`;
+        
+        const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
+        
+        // Check if a preset with this name already exists
+        if (customPresets.some(p => p.name === fullPresetName)) {
+            alert('A preset with this name already exists.');
+            return;
         }
-
-        presets.push({ name, prompt });
-        localStorage.setItem('ollamaVision_presets', JSON.stringify(presets));
         
-        // Clear input and reload presets
-        document.getElementById('preset-name').value = '';
-        this.loadResponseConfig();
-        this.updateStatus('success', 'Preset saved successfully');
+        // Save the preset with the USER: prefix included in the name
+        customPresets.push({
+            name: fullPresetName,
+            prompt: presetPrompt
+        });
+        
+        localStorage.setItem('ollamaVision_customPresets', JSON.stringify(customPresets));
+        
+        // Update UI
+        this.updatePresetsDropdown();
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createPresetModal'));
+        if (modal) modal.hide();
     },
 
     usePreset: function(name) {
@@ -1342,7 +1354,7 @@ window.ollamaVision = {
             userPresets.forEach(preset => {
                 const option = document.createElement('option');
                 option.value = preset.name;
-                option.textContent = `USER: ${preset.name}`;
+                option.textContent = preset.name;
                 userGroup.appendChild(option);
             });
             
@@ -1371,7 +1383,63 @@ window.ollamaVision = {
         screenshotBtn.disabled = true;
         uploadBtn.disabled = true;
 
+        this.cleanup();
+
         this.updateStatus('info', `Disconnected from ${backendType === 'openai' ? 'OpenAI' : 'Ollama'}`);
+    },
+
+    handlePaste: function(e) {
+        if (!this.pasteEnabled) {
+            e.stopPropagation();
+            this.updateStatus('error', 'Please click the Screenshot button before pasting');
+            return;
+        }
+
+        const items = e.clipboardData.items;
+        let imageFile = null;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                imageFile = items[i].getAsFile();
+                break;
+            }
+        }
+
+        if (imageFile) {
+            this.handleImageUpload(imageFile);
+            this.pasteEnabled = false;
+            
+            // Clean up the paste listener and hidden input
+            const ollamaVisionTab = document.getElementById('Utilities-OllamaVision-Tab');
+            if (ollamaVisionTab && this.pasteHandler) {
+                ollamaVisionTab.removeEventListener('paste', this.pasteHandler);
+                // Remove the hidden input
+                const hiddenInput = document.getElementById('ollamavision-hidden-input');
+                if (hiddenInput) {
+                    hiddenInput.remove();
+                }
+                this.pasteHandler = null;
+            }
+            this.updateStatus('success', 'Screenshot captured successfully');
+        } else {
+            this.updateStatus('error', 'No image found in clipboard');
+        }
+    },
+
+    cleanup: function() {
+        if (this.pasteHandler) {
+            const ollamaVisionTab = document.getElementById('Utilities-OllamaVision-Tab');
+            if (ollamaVisionTab) {
+                ollamaVisionTab.removeEventListener('paste', this.pasteHandler);
+                // Remove the hidden input if it exists
+                const hiddenInput = document.getElementById('ollamavision-hidden-input');
+                if (hiddenInput) {
+                    hiddenInput.remove();
+                }
+            }
+            this.pasteHandler = null;
+        }
+        this.pasteEnabled = false;
     }
 };
 
@@ -1399,4 +1467,21 @@ const validOpenAIModels = [
 // In your analyze function
 if (backendType === 'openai' && !validOpenAIModels.includes(model)) {
     throw new Error('Invalid OpenAI model selected');
+}
+
+// Example function to create a new preset
+function createNewPreset(presetName) {
+    const userPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
+    
+    // Add "USER:" prefix to the preset name
+    const newPreset = {
+        name: `USER: ${presetName}`, // Add the prefix here
+        prompt: "Your preset prompt text here" // Replace with actual prompt
+    };
+    
+    userPresets.push(newPreset);
+    localStorage.setItem('ollamaVision_customPresets', JSON.stringify(userPresets));
+    
+    // Update the dropdown to reflect the new preset
+    updatePresetsDropdown();
 }
