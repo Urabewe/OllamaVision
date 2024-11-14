@@ -1,5 +1,5 @@
 # OllamaVision
-> An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts.
+> An image analysis frontend for SwarmUI that allows users to get detailed responses for use in crafting image prompts.
 
 ## Table of Contents
 - [🌟 Features](#-features)
