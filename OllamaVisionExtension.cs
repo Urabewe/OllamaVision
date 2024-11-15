@@ -9,7 +9,6 @@ namespace Urabewe.OllamaVision
         public override void OnPreInit()
         {
             Logs.Info("OllamaVision Extension Version 1.0 started.");
-            ScriptFiles.Add("Assets/sortable.min.js");
             ScriptFiles.Add("Assets/ollamavision.js");
         }
 

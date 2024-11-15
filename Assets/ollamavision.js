@@ -1246,7 +1246,7 @@ window.ollamaVision = {
         
         // Remove the default presets section entirely
         defaultList.parentElement.style.display = 'none';  // Hide the entire default presets section
-
+    
         // Add help text for user presets
         userList.innerHTML = '';  // Remove the header completely
             
@@ -1271,8 +1271,21 @@ window.ollamaVision = {
                 </button>
             </div>
         `).join('');
-
-        // Initialize Sortable
+    
+        // Initialize Sortable from CDN if not already loaded
+        if (typeof Sortable === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+            script.onload = () => {
+                this.initializeSortable(userList);
+            };
+            document.head.appendChild(script);
+        } else {
+            this.initializeSortable(userList);
+        }
+    },
+    
+    initializeSortable: function(userList) {
         new Sortable(userList, {
             animation: 150,
             handle: '.basic-button',
