@@ -1,27 +1,32 @@
+
+<a href="https://www.buymeacoffee.com/urabewe"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=urabewe&button_colour=5F7FFF&font_colour=ffffff&font_family=Bree&outline_colour=000000&coffee_colour=FFDD00" /></a>
+
 # OllamaVision
 > An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts.
+> With the ability to connect to Ollama and OpenAI.
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
 ## 🌟 Features
-- One-click connection to Ollama
+- One-click connection to Ollama and OpenAI with your OpenAI API key
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
 - Direct-to-prompt generation
-- Zero impact on VRAM when not in use
+- Zero impact on VRAM when not in use (when unload model is selected)
 - Custom preset support
 - Image paste/upload support
 
 
-## 📋 Prerequisites
-- [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI)
-- [Ollama](https://ollama.com/) with a vision model installed
+## 📋 Prerequisites for use with Ollama
+- [Ollama](https://ollama.com/) with a [vision model](https://ollama.com/search?c=vision) installed. You will need to install Ollama and one of the many available vision models from their website.
+There are many tutorials, videos, and docs on how to do all of this. It is quite simple.
 
 
 ## 🛠️ Installation
-1. Install [Ollama](https://ollama.com/)
-2. Install a vision model (recommended: [benzie/llava-phi-3](https://ollama.com/benzie/llava-phi-3) or [MoondreamV2](https://ollama.com/library/moondream))
-3. Install the extension in SwarmUI. Open SwarmUI, go to the Extensions tab, look for OllamaVision, and install.
-4. Connect and start analyzing!
+1. Download and install [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI)
+2. Go to "Server" -> "Extensions"
+3. Find OllamaVision and click "Install"
+4. SwarmUI will restart and OllamaVision will be installed!
+5. If you plan on using this with local LLM and not OpenAI then you will also need to follow the [Prerequisites](https://github.com/Urabewe/OllamaVision/blob/main/README.md#-prerequisites) section.
 
 
 ## 💡 Usage Guide
@@ -29,7 +34,8 @@
 ### 🚀 Getting Started
 1. Open SwarmUI and navigate to the **"Utilities"** tab
 2. Click the **"OllamaVision"** tab that appears
-3. Click **"Connect to Ollama"** in the upper right corner to establish connection
+3. In settings you can choose to either connect to Ollama or OpenAI (you will need to enter your API key into the supplied field)
+4. Click **"Connect to Ollama"** (or **"Connect to OpenAI"** if using OpenAI) in the upper right corner to establish connection
 
 ### 🎯 Setup & Configuration
 1. Select your preferred vision model from the dropdown list
@@ -37,7 +43,7 @@
    - Use the default preset
    - Select from included presets
    - Click **"Configure Response Type"** to:
-     - Create and savecustom presets
+     - Create and Save custom presets
      - Reorder your presets
    
 
@@ -57,9 +63,9 @@
 
 
 ### 🔑 Quick Tips
-- Ensure Ollama is running before connecting
+- If you are using Ollama. Ensure Ollama is running before connecting
 - Larger images may take longer to process
-- Custom presets are saved between sessions
+- Custom presets are saved between sessions (In beta, if you delete browser data you will lose presets. This is unintended and will be fixed in future updates.)
 - You can edit descriptions before generating images
 
 That's it! Connect → Choose Model → Select Response Type → Load Image → Analyze. Simple yet powerful.
@@ -122,7 +128,7 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 
 ## 🔮 Planned Features
 - Batch image processing
-- Auto clipboard paste
+- Send Image to OllamaVision button
 - Style combination analysis
 
   
