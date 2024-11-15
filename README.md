@@ -1,30 +1,14 @@
 # OllamaVision
-> An image analysis frontend for SwarmUI that allows users to get detailed responses for use in crafting image prompts.
-
-## Table of Contents
-- [🌟 Features](#-features)
-- [📋 Prerequisites](#-prerequisites)
-- [🛠️ Installation](#️-installation)
-- [💡 Usage Guide](#-usage-guide)
-  - [🚀 Getting Started](#-getting-started)
-  - [🎯 Setup & Configuration](#-setup--configuration)
-  - [📸 Image Analysis](#-image-analysis)
-  - [🎨 Using the Results](#-using-the-results)
-  - [🔑 Quick Tips](#-quick-tips)
-- [🎯 Example Outputs](#-example-outputs)
-  - [🌈 Color Palette Analysis](#-color-palette-analysis)
-  - [👤 Facial Features Analysis](#-facial-features-analysis)
-- [🔮 Planned Features](#-planned-features)
-- [🙏 Acknowledgments](#-acknowledgments)
+> An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts.
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
 ## 🌟 Features
 - One-click connection to Ollama
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
-- Send to prompt after generation
+- Direct-to-prompt generation
 - Zero impact on VRAM when not in use
-- Create and save custom response types
+- Custom preset support
 - Image paste/upload support
 
 
@@ -140,8 +124,8 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 - Batch image processing
 - Auto clipboard paste
 - Style combination analysis
-- OpenAI Support with API Key (SOON!)
 
+  
 ## 🙏 Acknowledgments
 - [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision official and for giving us SwarmUI
 - [SouthbayJay](https://civitai.com/user/SouthbayJay) for testing and feedback and all the late nights!
