@@ -157,14 +157,16 @@ namespace Urabewe.OllamaVision.WebAPI
             try
             {
                 bool showAllModels = data["showAllModels"]?.ToObject<bool>() ?? false;
-                var response = await client.GetAsync("http://localhost:11434/api/tags");
+                string ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                
+                var response = await client.GetAsync($"{ollamaUrl}/api/tags");
                 
                 if (!response.IsSuccessStatusCode)
                 {
                     return new JObject
                     {
                         ["success"] = false,
-                        ["error"] = $"Failed to connect to Ollama. Status code: {response.StatusCode}"
+                        ["error"] = $"Failed to connect to Ollama at {ollamaUrl}. Status code: {response.StatusCode}"
                     };
                 }
 
@@ -209,8 +211,21 @@ namespace Urabewe.OllamaVision.WebAPI
         {
             try
             {
+                // Extract and validate all model settings
                 var imageData = data["imageData"]?.ToString();
                 var model = data["model"]?.ToString();
+                var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                
+                // Parse model settings with validation
+                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.5f));
+                var seed = data["seed"]?.ToObject<int?>() ?? -1;
+                var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
+                var topK = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
+                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 2048));
+                var repeatPenalty = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
+                
+                // Log received settings
+                Logs.Debug($"Received Model Settings - Temperature: {temperature}, Seed: {seed}, TopP: {topP}, TopK: {topK}, MaxTokens: {maxTokens}, RepeatPenalty: {repeatPenalty}");
 
                 if (string.IsNullOrEmpty(imageData) || string.IsNullOrEmpty(model))
                 {
@@ -236,28 +251,23 @@ namespace Urabewe.OllamaVision.WebAPI
                     ["model"] = model,
                     ["prompt"] = DEFAULT_PROMPT,
                     ["images"] = new JArray { base64Data },
-                    ["stream"] = false
+                    ["stream"] = false,
+                    ["options"] = new JObject
+                    {
+                        ["temperature"] = temperature,
+                        ["seed"] = seed,
+                        ["top_p"] = topP,
+                        ["top_k"] = topK,
+                        ["num_predict"] = maxTokens,
+                        ["repeat_penalty"] = repeatPenalty
+                    }
                 };
 
-                return await SendOllamaRequest(requestBody);
-            }
-            catch (Exception ex)
-            {
-                Logs.Error($"Error analyzing image: {ex.Message}");
-                return new JObject
-                {
-                    ["success"] = false,
-                    ["error"] = ex.Message
-                };
-            }
-        }
+                // Log the complete request body for debugging
+                Logs.Debug($"Sending request to Ollama with options: {requestBody["options"].ToString(Formatting.Indented)}");
 
-        private static async Task<JObject> SendOllamaRequest(JObject requestBody)
-        {
-            try
-            {
                 var response = await client.PostAsync(
-                    "http://localhost:11434/api/generate",
+                    $"{ollamaUrl}/api/generate",
                     new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
                 );
 
@@ -282,11 +292,11 @@ namespace Urabewe.OllamaVision.WebAPI
             }
             catch (Exception ex)
             {
-                Logs.Error($"Error in SendOllamaRequest: {ex.Message}");
+                Logs.Error($"Error analyzing image: {ex.Message}");
                 return new JObject
                 {
                     ["success"] = false,
-                    ["error"] = $"Request failed: {ex.Message}"
+                    ["error"] = ex.Message
                 };
             }
         }
@@ -354,18 +364,11 @@ namespace Urabewe.OllamaVision.WebAPI
             try
             {
                 string model = data["model"]?.ToString();
-                if (string.IsNullOrEmpty(model))
-                {
-                    return new JObject
-                    {
-                        ["success"] = false,
-                        ["error"] = "No model specified"
-                    };
-                }
-
+                string ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                
                 // First check if the model is loaded using /api/show
                 var showResponse = await client.PostAsync(
-                    "http://localhost:11434/api/show",
+                    $"{ollamaUrl}/api/show",
                     new StringContent(JsonConvert.SerializeObject(new { name = model }), System.Text.Encoding.UTF8, "application/json")
                 );
 
@@ -388,7 +391,7 @@ namespace Urabewe.OllamaVision.WebAPI
                 };
 
                 var response = await client.PostAsync(
-                    "http://localhost:11434/api/generate",
+                    $"{ollamaUrl}/api/generate",
                     new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
                 );
                 

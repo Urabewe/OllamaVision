@@ -432,14 +432,7 @@ window.ollamaVision = {
                         'Authorization': `Bearer ${apiKey}`
                     }
                 });
-
-                if (!localStorage.getItem('ollamaVision_host')) {
-                    localStorage.setItem('ollamaVision_host', 'localhost');
-                }
-                if (!localStorage.getItem('ollamaVision_port')) {
-                    localStorage.setItem('ollamaVision_port', '11434');
-                }
-
+    
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.error?.message || 'Failed to fetch models from OpenAI');
@@ -517,24 +510,11 @@ window.ollamaVision = {
                 const host = localStorage.getItem('ollamaVision_host') || 'localhost';
                 const port = localStorage.getItem('ollamaVision_port') || '11434';
                 
-                // Add protocol if not present
-                if (!host.startsWith('http://') && !host.startsWith('https://')) {
-                    host = `http://${host}`;
-                }
-                
-                // Remove any trailing slashes
-                host = host.replace(/\/+$/, '');
-                
-                // Construct the full URL
-                const ollamaUrl = `${host}:${port}`;
-                
-                console.log('Attempting to connect to Ollama at:', ollamaUrl); // Debug log
-                
                 const response = await new Promise((resolve, reject) => {
                     genericRequest('ConnectToOllamaAsync', 
                         { 
                             showAllModels: showAllModels,
-                            ollamaUrl: ollamaUrl
+                            ollamaUrl: `http://${host}:${port}`
                         },
                         (data) => resolve(data),
                         (error) => reject(error)
@@ -784,6 +764,7 @@ window.ollamaVision = {
                 }
                 
                 const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.5');
+                const seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
                 const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '128');
                 
                 const openaiRequest = {
@@ -857,8 +838,6 @@ window.ollamaVision = {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.origin,
-                        'X-Title': siteName
                     },
                     body: JSON.stringify(openrouterRequest)
                 });
@@ -880,21 +859,6 @@ window.ollamaVision = {
                 
                 // Existing Ollama analysis logic
                 this.updateStatus('info', 'Image sent, waiting for response from Ollama...', true);
-                
-                let host = localStorage.getItem('ollamaVision_host') || 'localhost';
-                const port = localStorage.getItem('ollamaVision_port') || '11434';
-                
-                // Add protocol if not present
-                if (!host.startsWith('http://') && !host.startsWith('https://')) {
-                    host = `http://${host}`;
-                }
-                
-                // Remove any trailing slashes
-                host = host.replace(/\/+$/, '');
-                
-                const ollamaUrl = `${host}:${port}`;
-                
-                console.log('Sending analysis request to:', ollamaUrl); // Debug log
                 
                 const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.5');
                 const seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
@@ -918,7 +882,6 @@ window.ollamaVision = {
                 const requestData = {
                     imageData: imageData,
                     model: model,
-                    ollamaUrl: ollamaUrl,
                     temperature: modelSettings.temperature,
                     seed: modelSettings.seed,
                     topP: modelSettings.topP,
@@ -1039,19 +1002,15 @@ window.ollamaVision = {
                                     </small>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Remote Ollama Connection</label>
+                                    <label class="form-label">Remote Ollama Connection (Optional)</label>
                                     <input type="text" class="form-control mb-2" id="ollamaHost" 
-                                           placeholder="Host (e.g., 192.168.1.100 or remote.example.com)" 
-                                           value="${localStorage.getItem('ollamaVision_host') || 'localhost'}">
+                                           placeholder="Host (e.g., 192.168.1.100)" 
+                                           value="">
                                     <input type="number" class="form-control" id="ollamaPort" 
                                            placeholder="Port (default: 11434)" 
-                                           value="${localStorage.getItem('ollamaVision_port') || '11434'}">
+                                           value="11434">
                                     <small class="form-text text-muted d-block mt-1">
-                                        For remote connections:<br>
-                                        • Use IP address (e.g., 192.168.1.100) or hostname<br>
-                                        • Make sure the Ollama server is accessible from your network<br>
-                                        • Check if any firewalls are blocking the connection<br>
-                                        • The Ollama server must have API access enabled
+                                        Leave empty to use local Ollama installation
                                     </small>
                                 </div>
                             </div>
@@ -1098,7 +1057,7 @@ window.ollamaVision = {
         // Load saved settings
         const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
         const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
-        const host = localStorage.getItem('ollamaVision_host') || 'localhost';
+        const host = localStorage.getItem('ollamaVision_host') || '';
         const port = localStorage.getItem('ollamaVision_port') || '11434';
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         const openaiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
@@ -1193,25 +1152,12 @@ window.ollamaVision = {
 
     unloadModel: async function(model) {
         try {
-            let host = localStorage.getItem('ollamaVision_host') || 'localhost';
-            const port = localStorage.getItem('ollamaVision_port') || '11434';
-            
-            // Add protocol if not present
-            if (!host.startsWith('http://') && !host.startsWith('https://')) {
-                host = `http://${host}`;
-            }
-            
-            // Remove any trailing slashes
-            host = host.replace(/\/+$/, '');
-            
-            const ollamaUrl = `${host}:${port}`;
-            
+            // Send a generate request with keep_alive set to 0 to unload immediately
             const response = await new Promise((resolve, reject) => {
                 genericRequest('UnloadModelWithKeepAliveAsync', 
                     { 
                         model: model,
-                        ollamaUrl: ollamaUrl,
-                        keep_alive: 0
+                        keep_alive: 0  // This will make the model unload immediately
                     },
                     (data) => resolve(data),
                     (error) => reject(error)
@@ -1830,15 +1776,11 @@ window.ollamaVision = {
         document.getElementById('modelRepeatPenalty').value = savedRepeatPenalty;
 
         // Show/hide settings based on backend
-        const ollamaOnlySettings = ['modelTopK', 'modelSeed', 'modelRepeatPenalty'];
+        const ollamaOnlySettings = ['modelTopK', 'modelSeed', 'modelRepeatPenalty', 'modelTopP'];
         ollamaOnlySettings.forEach(settingId => {
             const container = document.getElementById(settingId).closest('.col-md-4');
             container.style.display = backendType === 'ollama' ? 'block' : 'none';
         });
-		
-		// Handle top_p visibility separately (show for Ollama and OpenRouter, hide for OpenAI)
-        const topPContainer = document.getElementById('modelTopP').closest('.col-md-4');
-        topPContainer.style.display = backendType === 'openai' ? 'none' : 'block';
 
         new bootstrap.Modal(document.getElementById('modelSettingsModal')).show();
     },

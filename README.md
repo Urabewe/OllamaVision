@@ -1,51 +1,76 @@
- 
 <a href="https://www.buymeacoffee.com/urabewe"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=urabewe&button_colour=5F7FFF&font_colour=ffffff&font_family=Bree&outline_colour=000000&coffee_colour=FFDD00" /></a>
 
 # OllamaVision
-> An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts. Options to use local LLM with Ollama or your OpenAI API key.
+> An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts. Options to use local LLM with Ollama, OpenAI API, or OpenRouter API.
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
 ## 🌟 Features
-- One-click connection to Ollama and OpenAI with your OpenAi key
+- Multiple backend options:
+  - Local LLM with Ollama (including remote Ollama installations)
+  - OpenAI API integration
+  - OpenRouter API support
+- Advanced model settings:
+  - Temperature control (0-2)
+  - Top P and Top K sampling
+  - Maximum token limit
+  - Repeat penalty adjustment
+  - Custom seed settings
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
+- Custom preset support with reordering capability
 - Direct-to-prompt generation
 - Zero impact on VRAM when not in use (when using unload model setting)
-- Custom preset support
 - Image paste/upload support
+- Remote Ollama server connection support
 
+## 📋 Prerequisites
+### For Ollama:
+- [Ollama](https://ollama.com/) with a [vision model](https://ollama.com/search?c=vision) installed
+- For remote connections:
+  - Ollama server must be accessible on your network
+  - Port 11434 must be open on the server
+  - Server must be properly configured for remote access
 
-## 📋 Prerequisites for use with Ollama
-- [Ollama](https://ollama.com/) with a [vision model](https://ollama.com/search?c=vision) installed. Go to their website with the link provided and follow install instructions there.
+### For OpenAI:
+- Valid OpenAI API key with access to vision models
 
+### For OpenRouter:
+- Valid OpenRouter API key
+- Optional: Custom site name for API requests
 
 ## 🛠️ Installation
-1. Follow the [Prerequisites](https://github.com/Urabewe/OllamaVision/blob/main/README.md#-prerequisites) section if you plan on using Ollama.
+1. Follow the [Prerequisites](https://github.com/Urabewe/OllamaVision/blob/main/README.md#-prerequisites) section for your chosen backend
 2. Open SwarmUI
-3. Click on **"Server"** at the top of the page.
+3. Click on **"Server"** at the top of the page
 4. Click on **"Extensions"**
 5. Find **"OllamaVision"** in the list of available extensions
 6. Click the **"Install"** button
 7. A message will appear and click on **"Restart Now"**
-8. SwarmUI will restart and OllamaVision will be installed into the Utilitites tab.
-
+8. SwarmUI will restart and OllamaVision will be installed into the Utilities tab
 
 ## 💡 Usage Guide
 
 ### 🚀 Getting Started
 1. Open SwarmUI and navigate to the **"Utilities"** tab
-2. Click the **"OllamaVision"** tab that appears
-3. Click **"Connect to Ollama"** or **"Connect to OpenAI"** in the upper right corner to establish connection
+2. Click the **"OllamaVision"** tab
+3. Click the settings gear icon to configure your preferred backend:
+   - Ollama (local or remote)
+   - OpenAI
+   - OpenRouter
+4. Click **"Connect"** to establish connection
 
 ### 🎯 Setup & Configuration
 1. Select your preferred vision model from the dropdown list
-2. Choose your response type:
+2. Configure model settings (optional):
+   - Adjust temperature for creativity level
+   - Fine-tune Top P and Top K for response diversity
+   - Set maximum tokens for response length
+   - Adjust repeat penalty to prevent repetition
+   - Set custom seed for reproducible results
+3. Choose your response type:
    - Use the default preset
    - Select from included presets
-   - Click **"Configure Response Type"** to:
-     - Create and save custom presets
-     - Reorder your presets
-   
+   - Create and manage custom presets
 
 ### 📸 Image Analysis
 1. Load your image:
@@ -55,12 +80,10 @@
 3. Click **"Analyze Image"** to begin processing
    > ⚠️ Processing time varies based on your setup. If no error appears, analysis is in progress.
 
-
 ### 🎨 Using the Results
 1. Once analysis completes, click **"Send to Prompt"**
 2. The AI-generated description will appear in the Generate tab
 3. Use the description as-is or customize it for your needs
-
 
 ### 🔑 Quick Tips
 - If you're using local LLM ensure Ollama is running BEFORE trying connect
@@ -69,7 +92,6 @@
 - You can edit descriptions before generating images
 
 That's it! Connect → Choose Model → Select Response Type → Load Image → Analyze. Simple yet powerful.
-
 
 ## 🎯 Example Outputs
 
@@ -125,13 +147,11 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 ![Generated Portrait](https://github.com/user-attachments/assets/870048ff-8fb2-4b1b-9949-dfb190f495b1)
 </details>
 
-
 ## 🔮 Planned Features
 - Batch image processing
 - Send image to OllamaVision button
 - Style combination analysis
 
-  
 ## 🙏 Acknowledgments
 - [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision official and for giving us SwarmUI
 - [SouthbayJay](https://civitai.com/user/SouthbayJay) for testing and feedback and all the late nights!
