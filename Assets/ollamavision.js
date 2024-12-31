@@ -514,7 +514,7 @@ window.ollamaVision = {
                 
                 // Existing Ollama connection logic
                 const showAllModels = localStorage.getItem('ollamaVision_showAllModels') === 'true';
-                const host = localStorage.getItem('ollamaVision_host') || 'localhost';
+                let host = localStorage.getItem('ollamaVision_host') || 'localhost';
                 const port = localStorage.getItem('ollamaVision_port') || '11434';
                 
                 // Add protocol if not present
