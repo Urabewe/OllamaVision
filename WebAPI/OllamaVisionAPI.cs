@@ -217,11 +217,11 @@ namespace Urabewe.OllamaVision.WebAPI
                 var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
                 
                 // Parse model settings with validation
-                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.5f));
+                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
                 var seed = data["seed"]?.ToObject<int?>() ?? -1;
                 var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
                 var topK = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
-                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 2048));
+                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500));
                 var repeatPenalty = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
                 
                 // Log received settings

@@ -47,7 +47,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                             </button>
                         </div>
                         <div class="mt-2">
-                            <select id="ollamavision-model" class="form-select" 
+                            <select id="ollamavision-model" class="auto-dropdown" 
                                     style="width: auto; background-color: inherit; color: inherit;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
@@ -153,75 +153,73 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Response Settings Modal -->
         <div class="modal fade" id="responseSettingsModal" tabindex="-1">
             <div class="modal-dialog">
-                <div class="modal-content">
+                <div class="modal-content" style="font-size: 1.1rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Response Type Settings</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label for="promptPresets" class="form-label">Preset Prompts</label>
-                                <div class="btn-group">
-                                    <button class="basic-button" onclick="ollamaVision.showCreatePreset()">
-                                        Create Custom Preset
-                                    </button>
-                                    <button class="basic-button" onclick="ollamaVision.showPresetManager()">
-                                        Manage Presets
-                                    </button>
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="promptPresets" class="form-label">Preset Prompts</label>
+                                        <div class="btn-group">
+                                            <button class="basic-button" onclick="ollamaVision.showCreatePreset()">
+                                                Create Custom Preset
+                                            </button>
+                                            <button class="basic-button" onclick="ollamaVision.showPresetManager()">
+                                                Manage Presets
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <select class="auto-dropdown modal_text_extra" id="promptPresets" 
+                                            style="width: auto; min-width: 200px;" 
+                                            onchange="ollamaVision.loadPresetPrompt()">
+                                        <!-- Options will be loaded dynamically -->
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="responsePrompt" class="form-label">Custom Response Prompt</label>
+                                    <textarea class="auto-text-block modal_text_extra" id="responsePrompt" rows="6"></textarea>
+                                    <small class="form-text text-muted">Enter the prompt that will be used to generate image descriptions.</small>
                                 </div>
                             </div>
-                            <select class="form-select" id="promptPresets" onchange="ollamaVision.loadPresetPrompt()">
-                                <optgroup label="Default Presets">
-                                    <option value="">Select a preset...</option>
-                                    <option value="Default">Default</option>
-                                    <option value="Detailed Analysis">Detailed Analysis</option>
-                                    <option value="Simple Description">Simple Description</option>
-                                    <option value="Artistic Style">Artistic Style</option>
-                                    <option value="Technical Details">Technical Details</option>
-                                    <option value="Facial Features">Facial Features</option>
-                                    <option value="Color Palette">Color Palette</option>
-                                </optgroup>
-                                <optgroup label="User Presets" id="user-presets">
-                                    <!-- User presets will be loaded here -->
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="responsePrompt" class="form-label">Custom Response Prompt</label>
-                            <textarea class="form-control" id="responsePrompt" rows="3"></textarea>
-                            <small class="form-text text-muted">Enter the prompt that will be used to generate image descriptions.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="basic-button" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="basic-button" onclick="ollamaVision.saveResponseSettings()">Save</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Add new Create Preset Modal -->
+        <!-- Create Preset Modal -->
         <div class="modal fade" id="createPresetModal" tabindex="-1">
             <div class="modal-dialog">
-                <div class="modal-content">
+                <div class="modal-content" style="font-size: 1.1rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Create Custom Preset</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="presetName" class="form-label">Preset Name</label>
-                            <input type="text" class="form-control" id="presetName" placeholder="Enter preset name">
-                        </div>
-                        <div class="mb-3">
-                            <label for="presetPrompt" class="form-label">Preset Prompt</label>
-                            <textarea class="form-control" id="presetPrompt" rows="3" placeholder="Enter the prompt for this preset"></textarea>
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <label for="presetName" class="form-label">Preset Name</label>
+                                    <input type="text" class="auto-text modal_text_extra" id="presetName" placeholder="Enter preset name">
+                                </div>
+                                <div class="col-12">
+                                    <label for="presetPrompt" class="form-label">Preset Prompt</label>
+                                    <textarea class="auto-text-block modal_text_extra" id="presetPrompt" rows="6" placeholder="Enter the prompt for this preset"></textarea>
+                                    <small class="form-text text-muted">Enter the prompt template that will be used to analyze images with this preset.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="basic-button" 
-                                onclick="$('#createPresetModal').modal('hide'); ollamaVision.showResponseSettings()">
+                        <button type="button" class="basic-button" onclick="$('#createPresetModal').modal('hide'); ollamaVision.showResponseSettings()">
                             Cancel
                         </button>
                         <button type="button" class="basic-button" onclick="ollamaVision.saveNewPreset()">Save Preset</button>
@@ -232,23 +230,25 @@ async function addOllamaVisionTab(utilitiesTab) {
 
         <!-- Preset Manager Modal -->
         <div class="modal fade" id="presetManagerModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" style="font-size: 1.1rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Manage Presets</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Default Presets</label>
-                            <div class="list-group" id="default-presets-list">
-                                <!-- Default presets will be loaded here -->
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">User Presets</label>
-                            <div class="list-group" id="user-presets-list">
-                                <!-- User presets will be loaded here -->
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label">User Presets</label>
+                                    <div class="list-group auto-text modal_text_extra" id="user-presets-list">
+                                        <!-- User presets will be loaded here -->
+                                    </div>
+                                    <small class="form-text text-muted mt-2">
+                                        • Drag and drop presets to reorder them<br>
+                                        • Click the trash icon to delete a preset
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -261,8 +261,8 @@ async function addOllamaVisionTab(utilitiesTab) {
 
         <!-- Model Settings Modal -->
         <div class="modal fade" id="modelSettingsModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+            <div class="modal-dialog">
+                <div class="modal-content" style="font-size: 1.1rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Model Settings</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -278,8 +278,8 @@ async function addOllamaVisionTab(utilitiesTab) {
                                 <div class="col-md-4 mb-2">
                                     <label for="modelTemperature" class="form-label mb-1">Temperature</label>
                                     <input type="number" class="auto-text modal_text_extra" id="modelTemperature" 
-                                           min="0" max="2" step="0.1" value="0.5">
-                                    <small class="form-text text-muted">Controls creativity (Default: 0.5)
+                                           min="0" max="2" step="0.1" value="0.8">
+                                    <small class="form-text text-muted">Controls creativity (Default: 0.8)
                                         <br>• 0.1-0.3: Very focused, consistent outputs
                                         <br>• 0.4-0.7: Balanced creativity and consistency
                                         <br>• 0.8-1.2: More varied, creative outputs
@@ -322,8 +322,8 @@ async function addOllamaVisionTab(utilitiesTab) {
                                 <div class="col-md-4 mb-2">
                                     <label for="modelMaxTokens" class="form-label mb-1">Max Tokens</label>
                                     <input type="number" class="auto-text modal_text_extra" id="modelMaxTokens" 
-                                           min="-1" max="4096" step="1" value="128">
-                                    <small class="form-text text-muted">Maximum response length (Default: 128)
+                                           min="-1" max="4096" step="1" value="500">
+                                    <small class="form-text text-muted">Maximum response length (Default: 500)
                                         <br>• -1: Unlimited
                                         <br>• 1-4096: Token limit
                                     </small>
@@ -345,6 +345,162 @@ async function addOllamaVisionTab(utilitiesTab) {
                     <div class="modal-footer">
                         <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="basic-button" onclick="ollamaVision.saveModelSettings()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal fade" id="ollamaSettingsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="font-size: 1.1rem;">
+                    <div class="modal-header">
+                        <h5 class="modal-title">OllamaVision Settings</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label mb-1">Backend Selection</label>
+                                    <select id="backend-type" class="auto-dropdown modal_text_extra" 
+                                            style="width: auto; min-width: 200px;" 
+                                            onchange="ollamaVision.toggleBackendSettings()">
+                                        <option value="ollama">Ollama</option>
+                                        <option value="openai">OpenAI</option>
+                                        <option value="openrouter">OpenRouter</option>
+                                    </select>
+                                </div>
+
+                                <!-- Common Settings -->
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoUnloadModel">
+                                        <label class="form-check-label" for="autoUnloadModel">
+                                            Automatically unload model after analysis
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        This will free up memory but may increase load time for the next analysis
+                                    </small>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="showDefaultPresets">
+                                        <label class="form-check-label" for="showDefaultPresets">
+                                            Show default presets
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Toggle visibility of default response presets
+                                    </small>
+                                </div>
+
+                                <!-- Ollama-specific Settings -->
+                                <div id="ollama-connection-settings">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showAllModels">
+                                            <label class="form-check-label" for="showAllModels">
+                                                Show all Ollama models
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            By default, only models with 'vision' or 'llava' in their names are shown
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">Remote Ollama Connection</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="ollamaHost" 
+                                               placeholder="Host (e.g., 192.168.1.100 or remote.example.com)" 
+                                               value="${localStorage.getItem('ollamaVision_host') || 'localhost'}">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <input type="number" class="auto-text modal_text_extra" id="ollamaPort" 
+                                               placeholder="Port (default: 11434)" 
+                                               value="${localStorage.getItem('ollamaVision_port') || '11434'}">
+                                        <small class="form-text text-muted">
+                                            For remote connections:<br>
+                                            • Use IP address (e.g., 192.168.1.100) or hostname<br>
+                                            • Make sure the Ollama server is accessible from your network<br>
+                                            • Check if any firewalls are blocking the connection<br>
+                                            • The Ollama server must have API access enabled
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- OpenAI Settings -->
+                                <div id="openai-settings" style="display: none;">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">OpenAI API Key</label>
+                                        <input type="password" class="auto-text modal_text_extra" id="openai-key" 
+                                               placeholder="Enter your OpenAI API key">
+                                        <small class="form-text text-muted">Your API key will be stored locally</small>
+                                    </div>
+                                </div>
+                                <!-- OpenRouter Settings -->
+                                <div id="openrouter-settings" style="display: none;">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">OpenRouter API Key</label>
+                                        <input type="password" class="auto-text modal_text_extra" id="openrouter-key" 
+                                               placeholder="Enter your OpenRouter API key">
+                                        <small class="form-text text-muted">Your API key will be stored locally</small>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">Site Name</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="openrouter-site" 
+                                               placeholder="Enter your site name (e.g., My App)">
+                                        <small class="form-text text-muted">This will be used in the X-Title header</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveSettings()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Config Modal -->
+        <div class="modal fade" id="responseConfigModal">
+            <div class="modal-dialog">
+                <div class="modal-content" style="font-size: 1.1rem;">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Configure Response</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <label class="form-label">Custom Prompt</label>
+                                    <textarea id="custom-prompt" class="auto-text-block modal_text_extra" rows="6"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Save as Preset</label>
+                                    <div class="input-group">
+                                        <input type="text" id="preset-name" class="auto-text modal_text_extra" placeholder="Preset name">
+                                        <button class="basic-button" onclick="ollamaVision.savePreset()">
+                                            Save Preset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Saved Presets</label>
+                                    <div id="saved-presets" class="list-group">
+                                        <!-- Presets will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveResponseConfig()">Save</button>
                     </div>
                 </div>
             </div>
@@ -783,8 +939,8 @@ window.ollamaVision = {
                     throw new Error('OpenAI API key not found');
                 }
                 
-                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.5');
-                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '128');
+                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
+                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
                 
                 const openaiRequest = {
                     model: model,
@@ -832,9 +988,9 @@ window.ollamaVision = {
                     throw new Error('OpenRouter API key not found');
                 }
                 
-                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.5');
+                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
                 const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
-                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '128');
+                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
                 
                 const openrouterRequest = {
                     model: model,
@@ -896,11 +1052,11 @@ window.ollamaVision = {
                 
                 console.log('Sending analysis request to:', ollamaUrl); // Debug log
                 
-                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.5');
+                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
                 const seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
                 const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
                 const topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '128');
+                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
                 const repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
                 
                 // Log all model settings for debugging
@@ -992,94 +1148,109 @@ window.ollamaVision = {
         const settingsHtml = `
             <div class="modal fade" id="ollamaSettingsModal" tabindex="-1">
                 <div class="modal-dialog">
-                    <div class="modal-content">
+                    <div class="modal-content" style="font-size: 1.1rem;">
                         <div class="modal-header">
                             <h5 class="modal-title">OllamaVision Settings</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Backend Selection</label>
-                                <select id="backend-type" class="form-select" onchange="ollamaVision.toggleBackendSettings()">
-                                    <option value="ollama">Ollama</option>
-                                    <option value="openai">OpenAI</option>
-                                    <option value="openrouter">OpenRouter</option>
-                                </select>
-                            </div>
+                            <div class="card card-body mb-3 py-2">
+                                <div class="row g-2">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">Backend Selection</label>
+                                        <select id="backend-type" class="auto-dropdown modal_text_extra" 
+                                                style="width: auto; min-width: 200px;" 
+                                                onchange="ollamaVision.toggleBackendSettings()">
+                                            <option value="ollama">Ollama</option>
+                                            <option value="openai">OpenAI</option>
+                                            <option value="openrouter">OpenRouter</option>
+                                        </select>
+                                    </div>
 
-                            <!-- Common Settings -->
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="autoUnloadModel">
-                                <label class="form-check-label" for="autoUnloadModel">
-                                    Automatically unload model after analysis
-                                </label>
-                                <small class="form-text text-muted d-block mt-1">
-                                    This will free up memory but may increase load time for the next analysis
-                                </small>
-                            </div>
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="showDefaultPresets">
-                                <label class="form-check-label" for="showDefaultPresets">
-                                    Show default presets
-                                </label>
-                                <small class="form-text text-muted d-block mt-1">
-                                    Toggle visibility of default response presets
-                                </small>
-                            </div>
+                                    <!-- Common Settings -->
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="autoUnloadModel">
+                                            <label class="form-check-label" for="autoUnloadModel">
+                                                Automatically unload model after analysis
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            This will free up memory but may increase load time for the next analysis
+                                        </small>
+                                    </div>
 
-                            <!-- Ollama-specific Settings -->
-                            <div id="ollama-connection-settings">
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="showAllModels">
-                                    <label class="form-check-label" for="showAllModels">
-                                        Show all Ollama models
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">
-                                        By default, only models with 'vision' or 'llava' in their names are shown
-                                    </small>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Remote Ollama Connection</label>
-                                    <input type="text" class="form-control mb-2" id="ollamaHost" 
-                                           placeholder="Host (e.g., 192.168.1.100 or remote.example.com)" 
-                                           value="${localStorage.getItem('ollamaVision_host') || 'localhost'}">
-                                    <input type="number" class="form-control" id="ollamaPort" 
-                                           placeholder="Port (default: 11434)" 
-                                           value="${localStorage.getItem('ollamaVision_port') || '11434'}">
-                                    <small class="form-text text-muted d-block mt-1">
-                                        For remote connections:<br>
-                                        • Use IP address (e.g., 192.168.1.100) or hostname<br>
-                                        • Make sure the Ollama server is accessible from your network<br>
-                                        • Check if any firewalls are blocking the connection<br>
-                                        • The Ollama server must have API access enabled
-                                    </small>
-                                </div>
-                            </div>
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showDefaultPresets">
+                                            <label class="form-check-label" for="showDefaultPresets">
+                                                Show default presets
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            Toggle visibility of default response presets
+                                        </small>
+                                    </div>
 
-                            <!-- OpenAI Settings -->
-                            <div id="openai-settings" style="display: none;">
-                                <div class="mb-3">
-                                    <label class="form-label">OpenAI API Key</label>
-                                    <input type="password" class="form-control" id="openai-key" 
-                                           placeholder="Enter your OpenAI API key">
-                                    <small class="form-text text-muted">Your API key will be stored locally</small>
+                                    <!-- Ollama-specific Settings -->
+                                    <div id="ollama-connection-settings">
+                                        <div class="col-md-6 mb-2">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="showAllModels">
+                                                <label class="form-check-label" for="showAllModels">
+                                                    Show all Ollama models
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                By default, only models with 'vision' or 'llava' in their names are shown
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">Remote Ollama Connection</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="ollamaHost" 
+                                                   placeholder="Host (e.g., 192.168.1.100 or remote.example.com)" 
+                                                   value="${localStorage.getItem('ollamaVision_host') || 'localhost'}">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <input type="number" class="auto-text modal_text_extra" id="ollamaPort" 
+                                                   placeholder="Port (default: 11434)" 
+                                                   value="${localStorage.getItem('ollamaVision_port') || '11434'}">
+                                            <small class="form-text text-muted">
+                                                For remote connections:<br>
+                                                • Use IP address (e.g., 192.168.1.100) or hostname<br>
+                                                • Make sure the Ollama server is accessible from your network<br>
+                                                • Check if any firewalls are blocking the connection<br>
+                                                • The Ollama server must have API access enabled
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <!-- OpenAI Settings -->
+                                    <div id="openai-settings" style="display: none;">
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">OpenAI API Key</label>
+                                            <input type="password" class="auto-text modal_text_extra" id="openai-key" 
+                                                   placeholder="Enter your OpenAI API key">
+                                            <small class="form-text text-muted">Your API key will be stored locally</small>
+                                        </div>
+                                    </div>
+                                    <!-- OpenRouter Settings -->
+                                    <div id="openrouter-settings" style="display: none;">
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">OpenRouter API Key</label>
+                                            <input type="password" class="auto-text modal_text_extra" id="openrouter-key" 
+                                                   placeholder="Enter your OpenRouter API key">
+                                            <small class="form-text text-muted">Your API key will be stored locally</small>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">Site Name</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="openrouter-site" 
+                                                   placeholder="Enter your site name (e.g., My App)">
+                                            <small class="form-text text-muted">This will be used in the X-Title header</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <!-- OpenRouter Settings -->
-                            <div id="openrouter-settings" style="display: none;">
-                                <div class="mb-3">
-                                    <label class="form-label">OpenRouter API Key</label>
-                                    <input type="password" class="form-control" id="openrouter-key" 
-                                           placeholder="Enter your OpenRouter API key">
-                                    <small class="form-text text-muted">Your API key will be stored locally</small>
-                                </div>
-                            <div class="mb-3">
-                                <label class="form-label">Site Name</label>
-                                <input type="text" class="form-control" id="openrouter-site" 
-                                       placeholder="Enter your site name (e.g., My App)">
-                                <small class="form-text text-muted">This will be used in the X-Title header</small>
-                            </div>
-                        </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
@@ -1233,29 +1404,33 @@ window.ollamaVision = {
         const configHtml = `
             <div class="modal fade" id="responseConfigModal">
                 <div class="modal-dialog">
-                    <div class="modal-content">
+                    <div class="modal-content" style="font-size: 1.1rem;">
                         <div class="modal-header">
                             <h5 class="modal-title">Configure Response</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Custom Prompt</label>
-                                <textarea id="custom-prompt" class="form-control" rows="4"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Save as Preset</label>
-                                <div class="input-group">
-                                    <input type="text" id="preset-name" class="form-control" placeholder="Preset name">
-                                    <button class="btn btn-outline-primary" onclick="ollamaVision.savePreset()">
-                                        Save Preset
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Saved Presets</label>
-                                <div id="saved-presets" class="list-group">
-                                    <!-- Presets will be loaded here -->
+                            <div class="card card-body mb-3 py-2">
+                                <div class="row g-2">
+                                    <div class="col-12 mb-2">
+                                        <label class="form-label">Custom Prompt</label>
+                                        <textarea id="custom-prompt" class="auto-text-block modal_text_extra" rows="6"></textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Save as Preset</label>
+                                        <div class="input-group">
+                                            <input type="text" id="preset-name" class="auto-text modal_text_extra" placeholder="Preset name">
+                                            <button class="basic-button" onclick="ollamaVision.savePreset()">
+                                                Save Preset
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Saved Presets</label>
+                                        <div id="saved-presets" class="list-group">
+                                            <!-- Presets will be loaded here -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1299,10 +1474,10 @@ window.ollamaVision = {
                     <small class="d-block text-muted">${preset.prompt.substring(0, 50)}...</small>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="ollamaVision.usePreset('${preset.name}')">
+                    <button class="basic-button" onclick="ollamaVision.usePreset('${preset.name}')">
                         Use
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="ollamaVision.deletePreset('${preset.name}')">
+                    <button class="basic-button" onclick="ollamaVision.deletePreset('${preset.name}')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1588,52 +1763,60 @@ window.ollamaVision = {
     loadPresetManager: function() {
         console.log('Loading preset manager...'); // Debug log
         
-        const defaultList = document.getElementById('default-presets-list');
         const userList = document.getElementById('user-presets-list');
         
-        if (!defaultList || !userList) {
-            console.error('Preset lists not found:', {defaultList, userList});
+        if (!userList) {
+            console.error('User preset list not found');
             return;
         }
         
-        // Remove the default presets section entirely
-        defaultList.parentElement.style.display = 'none';  // Hide the entire default presets section
-    
-        // Add help text for user presets
-        userList.innerHTML = '';  // Remove the header completely
-            
+        // Clear the list
+        userList.innerHTML = '';
+        
         // Load user presets
         const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
         
-        userList.innerHTML += customPresets.map(preset => `
-            <div class="list-group-item d-flex justify-content-between align-items-center" data-preset="${preset.name}">
+        if (customPresets.length === 0) {
+            userList.innerHTML = `
+                <div class="list-group-item text-muted">
+                    No custom presets created yet. Create a preset to see it here.
+                </div>`;
+            return;
+        }
+        
+        userList.innerHTML = customPresets.map(preset => `
+            <div class="list-group-item d-flex justify-content-between align-items-center modal_text_extra auto-text" 
+                 data-preset="${preset.name}">
                 <div class="d-flex align-items-center">
                     <span class="basic-button me-2" 
-                          style="cursor: grab; padding: 8px 12px; min-width: 40px; text-align: center;"
+                          style="cursor: grab; padding: 4px 8px; min-width: 30px; text-align: center;"
                           title="Drag to reorder">
                         <i class="fas fa-grip-lines"></i>
                     </span>
-                    ${preset.name}
+                    <div class="auto-text">
+                        <div class="fw-bold">${preset.name}</div>
+                        <div class="small text-muted">${preset.prompt.substring(0, 100)}${preset.prompt.length > 100 ? '...' : ''}</div>
+                    </div>
                 </div>
                 <button class="basic-button" 
                         onclick="ollamaVision.deleteUserPreset('${preset.name}')" 
-                        style="background-color: #dc3545 !important; padding: 6px 10px;"
+                        style="padding: 4px 8px; background-color: var(--bs-danger) !important;"
                         title="Delete this preset">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `).join('');
-    
-        // Initialize Sortable from CDN if not already loaded
-        if (typeof Sortable === 'undefined') {
+
+        // Initialize Sortable
+        if (typeof Sortable !== 'undefined') {
+            this.initializeSortable(userList);
+        } else {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
             script.onload = () => {
                 this.initializeSortable(userList);
             };
             document.head.appendChild(script);
-        } else {
-            this.initializeSortable(userList);
         }
     },
     
@@ -1814,11 +1997,11 @@ window.ollamaVision = {
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         
         // Load saved settings
-        const savedTemp = localStorage.getItem('ollamaVision_temperature') || '0.5';
+        const savedTemp = localStorage.getItem('ollamaVision_temperature') || '0.8';
         const savedSeed = localStorage.getItem('ollamaVision_seed') || '-1';
         const savedTopP = localStorage.getItem('ollamaVision_topP') || '0.7';
         const savedTopK = localStorage.getItem('ollamaVision_topK') || '40';
-        const savedMaxTokens = localStorage.getItem('ollamaVision_maxTokens') || '128';
+        const savedMaxTokens = localStorage.getItem('ollamaVision_maxTokens') || '500';
         const savedRepeatPenalty = localStorage.getItem('ollamaVision_repeatPenalty') || '1.1';
         
         // Set values
@@ -1894,19 +2077,19 @@ window.ollamaVision = {
     resetToDefaults: function() {
         try {
             // Set default values
-            document.getElementById('modelTemperature').value = '0.5';
+            document.getElementById('modelTemperature').value = '0.8';
             document.getElementById('modelSeed').value = '-1';
             document.getElementById('modelTopP').value = '0.7';
             document.getElementById('modelTopK').value = '40';
-            document.getElementById('modelMaxTokens').value = '128';
+            document.getElementById('modelMaxTokens').value = '500';
             document.getElementById('modelRepeatPenalty').value = '1.1';
 
             // Save the defaults to localStorage
-            localStorage.setItem('ollamaVision_temperature', '0.5');
+            localStorage.setItem('ollamaVision_temperature', '0.8');
             localStorage.setItem('ollamaVision_seed', '-1');
             localStorage.setItem('ollamaVision_topP', '0.7');
             localStorage.setItem('ollamaVision_topK', '40');
-            localStorage.setItem('ollamaVision_maxTokens', '128');
+            localStorage.setItem('ollamaVision_maxTokens', '500');
             localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
 
             this.updateStatus('success', 'Settings reset to defaults');
