@@ -362,9 +362,9 @@ async function addOllamaVisionTab(utilitiesTab) {
                         <div class="card card-body mb-3 py-2">
                             <div class="row g-2">
                                 <div class="col-md-6 mb-2">
-                                    <label class="form-label mb-1">Backend Selection</label>
+                                    <label class="form-label mb-1"><b>Backend Type</b></label>
                                     <select id="backend-type" class="auto-dropdown modal_text_extra" 
-                                            style="width: auto; min-width: 200px;" 
+                                            style="width: auto; min-width: 200px; padding: 6px 12px; border: 2px solid var(--border-color); background-color: var(--input-background-color);" 
                                             onchange="ollamaVision.toggleBackendSettings()">
                                         <option value="ollama">Ollama</option>
                                         <option value="openai">OpenAI</option>
@@ -1157,9 +1157,9 @@ window.ollamaVision = {
                             <div class="card card-body mb-3 py-2">
                                 <div class="row g-2">
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label mb-1">Backend Selection</label>
+                                        <label class="form-label mb-1"><b>Backend Type</b></label>
                                         <select id="backend-type" class="auto-dropdown modal_text_extra" 
-                                                style="width: auto; min-width: 200px;" 
+                                                style="width: auto; min-width: 200px; padding: 6px 12px; border: 2px solid var(--border-color); background-color: var(--input-background-color);" 
                                                 onchange="ollamaVision.toggleBackendSettings()">
                                             <option value="ollama">Ollama</option>
                                             <option value="openai">OpenAI</option>
