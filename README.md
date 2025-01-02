@@ -53,7 +53,7 @@
 ### 🚀 Getting Started
 1. Open SwarmUI and navigate to the **"Utilities"** tab
 2. Click the **"OllamaVision"** tab
-3. Click the settings gear icon to configure your preferred backend:
+3. Click the settings button to configure your preferred backend:
    - Ollama (local or remote)
    - OpenAI
    - OpenRouter
