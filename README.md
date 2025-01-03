@@ -21,6 +21,7 @@
 - Direct-to-prompt generation
 - Zero impact on VRAM when not in use (when using unload model setting)
 - Image paste/upload support
+- Image Drag and drop support
 - Remote Ollama server connection support
 
 ## 📋 Prerequisites
