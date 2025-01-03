@@ -25,6 +25,10 @@
 - Remote Ollama server connection support
 
 ## 📋 Prerequisites
+
+### First and foremost:
+- ### Make sure you have [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) installed and setup on your system. 
+
 ### For Ollama:
 - [Ollama](https://ollama.com/) with a [vision model](https://ollama.com/search?c=vision) installed
 - For remote connections:
