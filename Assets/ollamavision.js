@@ -60,22 +60,22 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <div class="col-10">
                                 <div class="row mb-3">
                                     <div class="col-md-6 mx-auto text-center">
-                                        <div id="image-preview-area" style="display: none;">
-                                            <div class="card">
-                                                <div class="card-body">
+                                        <div id="image-preview-area" class="card">
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 512px; height: 512px; margin: 0 auto; position: relative;">
                                                     <img id="preview-image" 
                                                          class="img-fluid" 
                                                          src="" 
                                                          alt="Preview" 
-                                                         style="max-width: 512px; max-height: 512px; object-fit: contain;">
-                                                    <div id="image-info" class="mt-2 text-muted"></div>
-                                                    <button class="basic-button mt-3" 
-                                                            onclick="ollamaVision.analyze()" 
-                                                            id="analyze-btn" 
-                                                            disabled>
-                                                        <span>ANALYZE IMAGE</span>
-                                                    </button>
+                                                         style="width: 100%; height: 100%; object-fit: contain; display: none;">
                                                 </div>
+                                                <div id="image-info" class="mt-2 text-muted"></div>
+                                                <button class="basic-button mt-3" 
+                                                        onclick="ollamaVision.analyze()" 
+                                                        id="analyze-btn" 
+                                                        disabled>
+                                                    <span>ANALYZE IMAGE</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -509,6 +509,9 @@ async function addOllamaVisionTab(utilitiesTab) {
     
     tabContentContainer.insertAdjacentHTML('beforeend', ollamaVisionTabContent);
     
+    // Initialize the preview area after adding the content
+    ollamaVision.initializePreviewArea();
+    
     // Initialize presets after the tab content is added
     setTimeout(() => {
         const select = document.getElementById('promptPresets');
@@ -874,8 +877,9 @@ window.ollamaVision = {
         const reader = new FileReader();
         reader.onload = (e) => {
             const dataUrl = e.target.result;
-            this.displayImagePreview(file.name || 'screenshot.png', dataUrl);
+            this.displayImagePreview(file.name || 'uploaded.png', dataUrl);
             this.updateStatus('success', 'Image loaded successfully');
+            document.getElementById('image-preview-area').classList.add('has-image');
         };
         reader.readAsDataURL(file);
     },
@@ -888,15 +892,22 @@ window.ollamaVision = {
         const responseArea = document.getElementById('analysis-response');
         const sendToPromptBtn = document.getElementById('send-to-prompt-btn');
         
-        previewArea.style.display = 'block';
-        previewImage.src = dataUrl;
-        imageInfo.textContent = `Image: ${imageName}`;
-        previewImage.dataset.imageData = dataUrl;
-        analyzeBtn.disabled = false;
-        sendToPromptBtn.disabled = true;
+        if (dataUrl) {
+            previewImage.src = dataUrl;
+            previewImage.style.display = 'block';
+            imageInfo.textContent = `Image: ${imageName}`;
+            previewImage.dataset.imageData = dataUrl;
+            analyzeBtn.disabled = false;
+            previewArea.classList.add('has-image');
+        } else {
+            previewImage.style.display = 'none';
+            imageInfo.textContent = '';
+            analyzeBtn.disabled = true;
+            previewArea.classList.remove('has-image');
+        }
         
-        // Clear previous response when new image is loaded
         responseArea.style.display = 'none';
+        sendToPromptBtn.disabled = true;
     },
 
     sendToPrompt: function() {
@@ -1569,7 +1580,7 @@ window.ollamaVision = {
                     color: inherit;
                 }
             </style>
-            <!-- rest of your template -->
+            <!-- ... rest of template ... -->
         `;
     },
 
@@ -2096,6 +2107,44 @@ window.ollamaVision = {
         } catch (error) {
             this.updateStatus('error', 'Failed to reset settings: ' + error.message);
         }
+    },
+
+    // Add this new function to initialize the preview area
+    initializePreviewArea: function() {
+        const previewArea = document.getElementById('image-preview-area');
+        const previewImage = document.getElementById('preview-image');
+        const imageInfo = document.getElementById('image-info');
+        
+        // Set up initial text with inline styling
+        imageInfo.style.fontSize = '1.5rem';  // Make text larger
+        imageInfo.style.textAlign = 'center'; // Center the text
+        imageInfo.textContent = 'Drop an image here or use the buttons to the side.';
+        
+        // Add drag and drop event listeners
+        previewArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.add('dragover');
+        });
+
+        previewArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.remove('dragover');
+        });
+
+        previewArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                this.handleImageUpload(files[0]);
+            } else {
+                this.updateStatus('error', 'Please drop an image file');
+            }
+        });
     }
 };
 
