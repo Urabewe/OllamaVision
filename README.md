@@ -81,6 +81,7 @@
 1. Load your image:
    - **Quick Paste**: Click paste button + `CTRL+V`
    - **File Upload**: Click upload button to select local file
+   - **Drag and Drop**: Drag and Drop your image directly into the preview area.
 2. Image preview will appear
 3. Click **"Analyze Image"** to begin processing
    > ⚠️ Processing time varies based on your setup. If no error appears, analysis is in progress.
