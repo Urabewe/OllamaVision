@@ -952,6 +952,8 @@ window.ollamaVision = {
                 
                 const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
                 const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
+                const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
+                const repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
                 
                 const openaiRequest = {
                     model: model,
@@ -966,6 +968,8 @@ window.ollamaVision = {
                     ],
                     max_tokens: maxTokens,
                     temperature: temperature,
+                    top_p: topP,
+                    repeatPenalty: repeatPenalty
                 };
     
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -999,9 +1003,12 @@ window.ollamaVision = {
                     throw new Error('OpenRouter API key not found');
                 }
                 
+                const seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
                 const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
                 const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
+                const topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
                 const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
+                const repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
                 
                 const openrouterRequest = {
                     model: model,
@@ -1014,9 +1021,12 @@ window.ollamaVision = {
                             ]
                         }
                     ],
+                    seed: seed,
                     max_tokens: maxTokens,
                     temperature: temperature,
-                    top_p: topP
+                    top_p: topP,
+                    top_K: topK,
+                    repeatPenalty: repeatPenalty
                 };
     
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -2024,15 +2034,38 @@ window.ollamaVision = {
         document.getElementById('modelRepeatPenalty').value = savedRepeatPenalty;
 
         // Show/hide settings based on backend
-        const ollamaOnlySettings = ['modelTopK', 'modelSeed', 'modelRepeatPenalty'];
-        ollamaOnlySettings.forEach(settingId => {
+        const settingVisibility = {
+            'ollama': {
+                'modelTemperature': true,
+                'modelSeed': true,
+                'modelTopP': true,
+                'modelTopK': true,
+                'modelMaxTokens': true,
+                'modelRepeatPenalty': true
+            },
+            'openai': {
+                'modelTemperature': true,
+                'modelSeed': false,
+                'modelTopP': true,
+                'modelTopK': false,
+                'modelMaxTokens': true,
+                'modelRepeatPenalty': true
+            },
+            'openrouter': {
+                'modelTemperature': true,
+                'modelSeed': true,
+                'modelTopP': true,
+                'modelTopK': true,
+                'modelMaxTokens': true,
+                'modelRepeatPenalty': true
+            }
+        };
+
+        // Apply visibility settings
+        Object.entries(settingVisibility[backendType]).forEach(([settingId, isVisible]) => {
             const container = document.getElementById(settingId).closest('.col-md-4');
-            container.style.display = backendType === 'ollama' ? 'block' : 'none';
+            container.style.display = isVisible ? 'block' : 'none';
         });
-		
-		// Handle top_p visibility separately (show for Ollama and OpenRouter, hide for OpenAI)
-        const topPContainer = document.getElementById('modelTopP').closest('.col-md-4');
-        topPContainer.style.display = backendType === 'openai' ? 'none' : 'block';
 
         new bootstrap.Modal(document.getElementById('modelSettingsModal')).show();
     },
@@ -2043,9 +2076,11 @@ window.ollamaVision = {
             const temperature = parseFloat(document.getElementById('modelTemperature').value);
             const topP = parseFloat(document.getElementById('modelTopP').value);
             const maxTokens = parseInt(document.getElementById('modelMaxTokens').value);
+            const topK = parseInt(document.getElementById('modelTopK').value);
+            const repeatPenalty = parseFloat(document.getElementById('modelRepeatPenalty').value);
 
             // Only validate Ollama-specific settings if using Ollama
-            if (backendType === 'ollama') {
+            if (backendType === 'ollama' || backendType === 'openrouter' || backendType === 'openai') {
                 const seed = parseInt(document.getElementById('modelSeed').value);
                 const topK = parseInt(document.getElementById('modelTopK').value);
                 const repeatPenalty = parseFloat(document.getElementById('modelRepeatPenalty').value);
