@@ -339,6 +339,48 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <br>• 1.5-2.0: Strong
                                     </small>
                                 </div>
+
+                                <div class="col-md-4 mb-2">
+                                    <label for="modelFrequencyPenalty" class="form-label mb-1">Frequency Penalty</label>
+                                    <input type="number" class="auto-text modal_text_extra" id="modelFrequencyPenalty" 
+                                           min="-2.0" max="2.0" step="0.1" value="0.0">
+                                    <small class="form-text text-muted">Controls repetition (-2.0 to 2.0) (Default: 0.0)
+                                        <br>• Negative: More repetitive
+                                        <br>• 0.0: Neutral
+                                        <br>• Positive: Less repetitive
+                                    </small>
+                            </div>
+
+                                <div class="col-md-4 mb-2">
+                                    <label for="modelPresencePenalty" class="form-label mb-1">Presence Penalty</label>
+                                    <input type="number" class="auto-text modal_text_extra" id="modelPresencePenalty" 
+                                           min="-2.0" max="2.0" step="0.1" value="0.0">
+                                    <small class="form-text text-muted">Controls topic diversity (-2.0 to 2.0) (Default: 0.0)
+                                        <br>• Negative: More focused
+                                        <br>• 0.0: Neutral
+                                        <br>• Positive: More diverse
+                                    </small>
+                                </div>
+
+                                <div class="col-md-4 mb-2">
+                                    <label for="modelMinP" class="form-label mb-1">Min P</label>
+                                    <input type="number" class="auto-text modal_text_extra" id="modelMinP" 
+                                           min="0" max="1" step="0.01" value="0.0">
+                                    <small class="form-text text-muted">Minimum probability (0-1.0) (Default: 0.0)
+                                        <br>• Lower: More diverse
+                                        <br>• Higher: More focused
+                                    </small>
+                                </div>
+
+                                <div class="col-md-4 mb-2">
+                                    <label for="modelTopA" class="form-label mb-1">Top A</label>
+                                    <input type="number" class="auto-text modal_text_extra" id="modelTopA" 
+                                           min="0" max="1" step="0.01" value="0.0">
+                                    <small class="form-text text-muted">Alternative to top_p (0-1.0) (Default: 0.0)
+                                        <br>• 0.0: Disabled
+                                        <br>• Higher values: More diverse
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -922,224 +964,67 @@ window.ollamaVision = {
         }
     },
 
-    analyze: async function() {
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const model = document.getElementById('ollamavision-model').value;
-        const previewImage = document.getElementById('preview-image');
-        const imageData = previewImage.dataset.imageData;
-        const responseArea = document.getElementById('analysis-response');
-        const responseText = document.getElementById('response-text');
-        const sendToPromptBtn = document.getElementById('send-to-prompt-btn');
-        
-        if (!model || !imageData) {
-            this.updateStatus('error', !model ? 'Please select a model first' : 'No image data available');
-            return;
-        }
-    
+    analyze: function() {
         try {
-            analyzeBtn.disabled = true;
-            sendToPromptBtn.disabled = true;
-            
+            const imageData = document.getElementById('preview-image').dataset.imageData;
+            const model = document.getElementById('ollamavision-model').value;
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
             
+            // Base request data with common parameters
+            const requestData = {
+                imageData: imageData,
+                model: model,
+                backendType: backendType,
+                temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
+                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
+                topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7')
+            };
+
+            // Add backend-specific parameters
             if (backendType === 'openai') {
-                this.updateStatus('info', 'Image sent, waiting for response from OpenAI...', true);
-                
-                const apiKey = localStorage.getItem('ollamaVision_openaiKey');
-                if (!apiKey) {
-                    throw new Error('OpenAI API key not found');
-                }
-                
-                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
-                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
-                const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
-                const repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                
-                const openaiRequest = {
-                    model: model,
-                    messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: document.getElementById('responsePrompt').value || 'Describe this image in detail.' },
-                                { type: "image_url", image_url: { url: imageData } }
-                            ]
-                        }
-                    ],
-                    max_tokens: maxTokens,
-                    temperature: temperature,
-                    top_p: topP,
-                    repeatPenalty: repeatPenalty
-                };
-    
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify(openaiRequest)
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'OpenAI API request failed');
-                }
-                
-                const data = await response.json();
-                const analysisResult = data.choices[0].message.content;
-                
-                this.updateStatus('success', 'Image description complete!');
-                responseArea.style.display = 'block';
-                responseText.textContent = analysisResult;
-                sendToPromptBtn.disabled = false;
-                
-            } else if (backendType === 'openrouter') {
-                this.updateStatus('info', 'Image sent, waiting for response from OpenRouter...', true);
-                
-                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
-                const siteName = localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI';
-                if (!apiKey) {
-                    throw new Error('OpenRouter API key not found');
-                }
-                
-                const seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
-                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
-                const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
-                const topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
-                const repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                
-                const openrouterRequest = {
-                    model: model,
-                    messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: document.getElementById('responsePrompt').value || 'Describe this image in detail.' },
-                                { type: "image_url", image_url: { url: imageData } }
-                            ]
-                        }
-                    ],
-                    seed: seed,
-                    max_tokens: maxTokens,
-                    temperature: temperature,
-                    top_p: topP,
-                    top_K: topK,
-                    repeatPenalty: repeatPenalty
-                };
-    
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.origin,
-                        'X-Title': siteName
-                    },
-                    body: JSON.stringify(openrouterRequest)
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'OpenRouter API request failed');
-                }
-                
-                const data = await response.json();
-                const analysisResult = data.choices[0].message.content;
-                
-                this.updateStatus('success', 'Image description complete!');
-                responseArea.style.display = 'block';
-                responseText.textContent = analysisResult;
-                sendToPromptBtn.disabled = false;
-                
-            } else {
-                
-                // Existing Ollama analysis logic
-                this.updateStatus('info', 'Image sent, waiting for response from Ollama...', true);
-                
-                let host = localStorage.getItem('ollamaVision_host') || 'localhost';
-                const port = localStorage.getItem('ollamaVision_port') || '11434';
-                
-                // Add protocol if not present
-                if (!host.startsWith('http://') && !host.startsWith('https://')) {
-                    host = `http://${host}`;
-                }
-                
-                // Remove any trailing slashes
-                host = host.replace(/\/+$/, '');
-                
-                const ollamaUrl = `${host}:${port}`;
-                
-                console.log('Sending analysis request to:', ollamaUrl); // Debug log
-                
-                const temperature = parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8');
-                const seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
-                const topP = parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7');
-                const topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                const maxTokens = parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500');
-                const repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                
-                // Log all model settings for debugging
-                const modelSettings = {
-                    temperature: temperature,
-                    seed: seed,
-                    topP: topP,
-                    topK: topK,
-                    maxTokens: maxTokens,
-                    repeatPenalty: repeatPenalty
-                };
-                
-                console.log('Model Settings:', modelSettings);
-
-                const requestData = {
-                    imageData: imageData,
-                    model: model,
-                    ollamaUrl: ollamaUrl,
-                    temperature: modelSettings.temperature,
-                    seed: modelSettings.seed,
-                    topP: modelSettings.topP,
-                    topK: modelSettings.topK,
-                    maxTokens: modelSettings.maxTokens,
-                    repeatPenalty: modelSettings.repeatPenalty
-                };
-
-                console.log('Request data:', JSON.stringify(requestData, null, 2));
-
-                const response = await new Promise((resolve, reject) => {
-                    genericRequest('AnalyzeImageAsync', 
-                        requestData,
-                        (data) => {
-                            console.log('Full Ollama Response:', data);
-                            resolve(data);
-                        },
-                        (error) => {
-                            console.error('Request Error:', error);
-                            reject(error);
-                        }
-                    );
-                });
-
-                if (response.success) {
-                    this.updateStatus('success', 'Image description complete!');
-                    responseArea.style.display = 'block';
-                    responseText.textContent = response.response;
-                    sendToPromptBtn.disabled = false;
-
-                    const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
-                    if (autoUnload) {
-                        await this.unloadModel(model);
-                    }
-                } else {
-                    throw new Error('Analysis failed: ' + response.error);
-                }
+                requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
+                requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
+                requestData.apiKey = localStorage.getItem('ollamaVision_openaiKey');
+            } 
+            else if (backendType === 'openrouter') {
+                requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
+                requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
+                requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
+                requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
+                requestData.minP = parseFloat(localStorage.getItem('ollamaVision_minP') || '0.0');
+                requestData.topA = parseFloat(localStorage.getItem('ollamaVision_topA') || '0.0');
+                requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
+                requestData.apiKey = localStorage.getItem('ollamaVision_openrouterKey');
             }
+            else { // ollama
+                requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
+                requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
+                requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
+                requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
+            }
+
+            // Show loading status
+            this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
+
+            // Make the API call
+            genericRequest('AnalyzeImageAsync', requestData, 
+                (response) => {
+                    if (response.success) {
+                        this.updateStatus('success', 'Image description complete!');
+                        const responseArea = document.getElementById('analysis-response');
+                        const responseText = document.getElementById('response-text');
+                        const sendToPromptBtn = document.getElementById('send-to-prompt-btn');
+                        
+                        responseArea.style.display = 'block';
+                        responseText.textContent = response.response;
+                        sendToPromptBtn.disabled = false;
+                    } else {
+                        this.updateStatus('error', 'Analysis failed: ' + response.error);
+                    }
+                }
+            );
         } catch (error) {
             this.updateStatus('error', 'Error analyzing image: ' + error);
-            responseArea.style.display = 'none';
-            sendToPromptBtn.disabled = true;
-        } finally {
-            analyzeBtn.disabled = false;
         }
     },
 
@@ -2036,28 +1921,40 @@ window.ollamaVision = {
         // Show/hide settings based on backend
         const settingVisibility = {
             'ollama': {
-                'modelTemperature': true,
-                'modelSeed': true,
-                'modelTopP': true,
-                'modelTopK': true,
-                'modelMaxTokens': true,
-                'modelRepeatPenalty': true
+                'modelTemperature': true,    // 0-2
+                'modelTopP': true,           // 0-1
+                'modelTopK': true,           // 0-100
+                'modelMaxTokens': true,      // num_predict
+                'modelRepeatPenalty': true,  // 0-2
+                'modelSeed': true,           // any integer
+                'modelFrequencyPenalty': false,
+                'modelPresencePenalty': false,
+                'modelMinP': false,
+                'modelTopA': false
             },
             'openai': {
-                'modelTemperature': true,
+                'modelTemperature': true,      // 0-2
+                'modelMaxTokens': true,        // max_tokens
+                'modelTopP': true,             // 0-1
+                'modelFrequencyPenalty': true, // -2.0 to 2.0
+                'modelPresencePenalty': true,  // -2.0 to 2.0
                 'modelSeed': false,
-                'modelTopP': true,
                 'modelTopK': false,
-                'modelMaxTokens': true,
-                'modelRepeatPenalty': true
+                'modelRepeatPenalty': false,
+                'modelMinP': false,
+                'modelTopA': false
             },
             'openrouter': {
-                'modelTemperature': true,
-                'modelSeed': true,
-                'modelTopP': true,
-                'modelTopK': true,
-                'modelMaxTokens': true,
-                'modelRepeatPenalty': true
+                'modelTemperature': true,      // 0-2
+                'modelMaxTokens': true,        // max_tokens
+                'modelTopP': true,             // 0-1
+                'modelFrequencyPenalty': true, // -2.0 to 2.0
+                'modelPresencePenalty': true,  // -2.0 to 2.0
+                'modelTopK': true,             // top_k
+                'modelRepeatPenalty': true,    // repetition_penalty
+                'modelSeed': true,             // seed
+                'modelMinP': true,             // 0-1
+                'modelTopA': true              // 0-1
             }
         };
 
@@ -2078,26 +1975,12 @@ window.ollamaVision = {
             const maxTokens = parseInt(document.getElementById('modelMaxTokens').value);
             const topK = parseInt(document.getElementById('modelTopK').value);
             const repeatPenalty = parseFloat(document.getElementById('modelRepeatPenalty').value);
+            const frequencyPenalty = parseFloat(document.getElementById('modelFrequencyPenalty').value);
+            const presencePenalty = parseFloat(document.getElementById('modelPresencePenalty').value);
+            const minP = parseFloat(document.getElementById('modelMinP').value);
+            const topA = parseFloat(document.getElementById('modelTopA').value);
 
-            // Only validate Ollama-specific settings if using Ollama
-            if (backendType === 'ollama' || backendType === 'openrouter' || backendType === 'openai') {
-                const seed = parseInt(document.getElementById('modelSeed').value);
-                const topK = parseInt(document.getElementById('modelTopK').value);
-                const repeatPenalty = parseFloat(document.getElementById('modelRepeatPenalty').value);
-
-                if (isNaN(topK) || topK < 0 || topK > 100) {
-                    throw new Error('Top K must be between 0 and 100');
-                }
-                if (isNaN(repeatPenalty) || repeatPenalty < 0.0 || repeatPenalty > 2.0) {
-                    throw new Error('Repeat Penalty must be between 0.0 and 2.0');
-                }
-
-                localStorage.setItem('ollamaVision_seed', seed);
-                localStorage.setItem('ollamaVision_topK', topK);
-                localStorage.setItem('ollamaVision_repeatPenalty', repeatPenalty);
-            }
-
-            // Validate common settings
+            // Validate all parameters
             if (isNaN(temperature) || temperature < 0 || temperature > 2) {
                 throw new Error('Temperature must be between 0 and 2');
             }
@@ -2107,11 +1990,34 @@ window.ollamaVision = {
             if (isNaN(maxTokens) || maxTokens < -1 || maxTokens > 4096) {
                 throw new Error('Max Tokens must be between -1 and 4096');
             }
+            if (isNaN(frequencyPenalty) || frequencyPenalty < -2.0 || frequencyPenalty > 2.0) {
+                throw new Error('Frequency Penalty must be between -2.0 and 2.0');
+            }
+            if (isNaN(presencePenalty) || presencePenalty < -2.0 || presencePenalty > 2.0) {
+                throw new Error('Presence Penalty must be between -2.0 and 2.0');
+            }
+            if (isNaN(minP) || minP < 0 || minP > 1) {
+                throw new Error('Min P must be between 0 and 1');
+            }
+            if (isNaN(topA) || topA < 0 || topA > 1) {
+                throw new Error('Top A must be between 0 and 1');
+            }
 
-            // Save common settings
+            // Save all settings
             localStorage.setItem('ollamaVision_temperature', temperature);
             localStorage.setItem('ollamaVision_topP', topP);
             localStorage.setItem('ollamaVision_maxTokens', maxTokens);
+            localStorage.setItem('ollamaVision_frequencyPenalty', frequencyPenalty);
+            localStorage.setItem('ollamaVision_presencePenalty', presencePenalty);
+            localStorage.setItem('ollamaVision_minP', minP);
+            localStorage.setItem('ollamaVision_topA', topA);
+
+            // Save backend-specific settings
+            if (backendType === 'ollama' || backendType === 'openrouter') {
+                localStorage.setItem('ollamaVision_topK', topK);
+                localStorage.setItem('ollamaVision_repeatPenalty', repeatPenalty);
+                localStorage.setItem('ollamaVision_seed', document.getElementById('modelSeed').value);
+            }
 
             bootstrap.Modal.getInstance(document.getElementById('modelSettingsModal')).hide();
             this.updateStatus('success', 'Model settings saved successfully');

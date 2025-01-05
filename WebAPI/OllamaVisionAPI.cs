@@ -206,7 +206,7 @@ namespace Urabewe.OllamaVision.WebAPI
             }
         }
 
-        [API.APIDescription("Analyzes an image using Ollama vision models", "Returns the AI's analysis of the image")]
+        [API.APIDescription("Analyzes an image using vision models", "Returns the AI's analysis of the image")]
         public static async Task<JObject> AnalyzeImageAsync(JObject data)
         {
             try
@@ -214,19 +214,15 @@ namespace Urabewe.OllamaVision.WebAPI
                 // Extract and validate all model settings
                 var imageData = data["imageData"]?.ToString();
                 var model = data["model"]?.ToString();
+                var backendType = data["backendType"]?.ToString() ?? "ollama";
                 var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
-                
-                // Parse model settings with validation
-                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
-                var seed = data["seed"]?.ToObject<int?>() ?? -1;
-                var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
-                var topK = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
-                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500));
-                var repeatPenalty = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
-                
-                // Log received settings
-                Logs.Debug($"Received Model Settings - Temperature: {temperature}, Seed: {seed}, TopP: {topP}, TopK: {topK}, MaxTokens: {maxTokens}, RepeatPenalty: {repeatPenalty}");
 
+                // Parse common model settings
+                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
+                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500));
+                var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
+
+                // Validate required parameters
                 if (string.IsNullOrEmpty(imageData) || string.IsNullOrEmpty(model))
                 {
                     return new JObject
@@ -236,69 +232,193 @@ namespace Urabewe.OllamaVision.WebAPI
                     };
                 }
 
-                string base64Data;
-                if (imageData.StartsWith("data:image"))
-                {
-                    base64Data = imageData.Split(',')[1];
-                }
-                else
-                {
-                    base64Data = imageData;
-                }
+                // Process image data
+                string base64Data = imageData.StartsWith("data:image") ? imageData.Split(',')[1] : imageData;
 
-                var requestBody = new JObject
+                // Handle different backends
+                if (backendType == "openai")
                 {
-                    ["model"] = model,
-                    ["prompt"] = DEFAULT_PROMPT,
-                    ["images"] = new JArray { base64Data },
-                    ["stream"] = false,
-                    ["options"] = new JObject
+                    var apiKey = data["apiKey"]?.ToString();
+                    if (string.IsNullOrEmpty(apiKey))
                     {
-                        ["temperature"] = temperature,
-                        ["seed"] = seed,
-                        ["top_p"] = topP,
-                        ["top_k"] = topK,
-                        ["num_predict"] = maxTokens,
-                        ["repeat_penalty"] = repeatPenalty
+                        return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
                     }
-                };
 
-                // Log the complete request body for debugging
-                Logs.Debug($"Sending request to Ollama with options: {requestBody["options"].ToString(Formatting.Indented)}");
+                    // Parse OpenAI-specific parameters
+                    var frequencyPenalty = Math.Max(-2.0f, Math.Min(2.0f, data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f));
+                    var presencePenalty = Math.Max(-2.0f, Math.Min(2.0f, data["presencePenalty"]?.ToObject<float?>() ?? 0.0f));
 
-                var response = await client.PostAsync(
-                    $"{ollamaUrl}/api/generate",
-                    new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
-                );
+                    var messages = new JArray();
+                    messages.Add(new JObject
+                    {
+                        ["role"] = "user",
+                        ["content"] = new JArray {
+                            new JObject { ["type"] = "text", ["text"] = DEFAULT_PROMPT },
+                            new JObject {
+                                ["type"] = "image_url",
+                                ["image_url"] = new JObject {
+                                    ["url"] = $"data:image/jpeg;base64,{base64Data}"
+                                }
+                            }
+                        }
+                    });
 
-                var content = await response.Content.ReadAsStringAsync();
-                Logs.Debug($"Ollama response: {content}");
+                    var apiRequestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["max_tokens"] = maxTokens,
+                        ["temperature"] = temperature,
+                        ["top_p"] = topP,
+                        ["frequency_penalty"] = frequencyPenalty,
+                        ["presence_penalty"] = presencePenalty
+                    };
 
-                if (!response.IsSuccessStatusCode)
+                    return await SendApiRequest(apiRequestBody, "openai", apiKey);
+                }
+                else if (backendType == "openrouter")
                 {
+                    var apiKey = data["apiKey"]?.ToString();
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject { ["success"] = false, ["error"] = "OpenRouter API key is required" };
+                    }
+
+                    // Parse OpenRouter-specific parameters
+                    var frequencyPenalty = Math.Max(-2.0f, Math.Min(2.0f, data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f));
+                    var presencePenalty = Math.Max(-2.0f, Math.Min(2.0f, data["presencePenalty"]?.ToObject<float?>() ?? 0.0f));
+                    var repeatPenalty = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
+                    var topK = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
+                    var minP = Math.Max(0.0f, Math.Min(1.0f, data["minP"]?.ToObject<float?>() ?? 0.0f));
+                    var topA = Math.Max(0.0f, Math.Min(1.0f, data["topA"]?.ToObject<float?>() ?? 0.0f));
+                    var seed = data["seed"]?.ToObject<int?>() ?? -1;
+
+                    var messages = new JArray();
+                    messages.Add(new JObject
+                    {
+                        ["role"] = "user",
+                        ["content"] = new JArray {
+                            new JObject { ["type"] = "text", ["text"] = DEFAULT_PROMPT },
+                            new JObject {
+                                ["type"] = "image_url",
+                                ["image_url"] = new JObject {
+                                    ["url"] = $"data:image/jpeg;base64,{base64Data}"
+                                }
+                            }
+                        }
+                    });
+
+                    var apiRequestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["max_tokens"] = maxTokens,
+                        ["temperature"] = temperature,
+                        ["top_p"] = topP,
+                        ["frequency_penalty"] = frequencyPenalty,
+                        ["presence_penalty"] = presencePenalty,
+                        ["repetition_penalty"] = repeatPenalty,
+                        ["top_k"] = topK,
+                        ["min_p"] = minP,
+                        ["top_a"] = topA,
+                        ["seed"] = seed
+                    };
+
+                    return await SendApiRequest(apiRequestBody, "openrouter", apiKey);
+                }
+                else // Ollama
+                {
+                    // Parse Ollama-specific parameters
+                    var seed = data["seed"]?.ToObject<int?>() ?? -1;
+                    var topK = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
+                    var repeatPenalty = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
+
+                    var requestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["prompt"] = DEFAULT_PROMPT,
+                        ["images"] = new JArray { base64Data },
+                        ["stream"] = false,
+                        ["options"] = new JObject
+                        {
+                            ["temperature"] = temperature,
+                            ["seed"] = seed,
+                            ["top_p"] = topP,
+                            ["top_k"] = topK,
+                            ["num_predict"] = maxTokens,
+                            ["repeat_penalty"] = repeatPenalty
+                        }
+                    };
+
+                    var response = await client.PostAsync(
+                        $"{ollamaUrl}/api/generate",
+                        new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
+                    );
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = $"Failed to analyze image. Status: {response.StatusCode}, Content: {content}"
+                        };
+                    }
+
+                    var result = JObject.Parse(content);
                     return new JObject
                     {
-                        ["success"] = false,
-                        ["error"] = $"Failed to analyze image. Status: {response.StatusCode}, Content: {content}"
+                        ["success"] = true,
+                        ["response"] = result["response"]?.ToString()
                     };
                 }
-
-                var result = JObject.Parse(content);
-                return new JObject
-                {
-                    ["success"] = true,
-                    ["response"] = result["response"]?.ToString()
-                };
             }
             catch (Exception ex)
             {
                 Logs.Error($"Error analyzing image: {ex.Message}");
+                return new JObject { ["success"] = false, ["error"] = ex.Message };
+            }
+        }
+
+        private static async Task<JObject> SendApiRequest(JObject requestBody, string backendType, string apiKey)
+        {
+            var endpoint = backendType == "openai" 
+                ? "https://api.openai.com/v1/chat/completions"
+                : "https://openrouter.ai/api/v1/chat/completions";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            request.Headers.Add("Authorization", $"Bearer {apiKey}");
+
+            if (backendType == "openrouter")
+            {
+                request.Headers.Add("HTTP-Referer", "https://swarmui.local");
+                request.Headers.Add("X-Title", "SwarmUI");
+            }
+
+            request.Content = new StringContent(
+                requestBody.ToString(),
+                System.Text.Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await client.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
                 return new JObject
                 {
                     ["success"] = false,
-                    ["error"] = ex.Message
+                    ["error"] = $"{backendType} API request failed: {content}"
                 };
             }
+
+            var result = JObject.Parse(content);
+            return new JObject
+            {
+                ["success"] = true,
+                ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
+            };
         }
 
         [API.APIDescription("Unloads a model from Ollama's memory", "Returns success status of unloading the model")]
