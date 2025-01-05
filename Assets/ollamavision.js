@@ -2028,21 +2028,57 @@ window.ollamaVision = {
 
     resetToDefaults: function() {
         try {
-            // Set default values
-            document.getElementById('modelTemperature').value = '0.8';
-            document.getElementById('modelSeed').value = '-1';
-            document.getElementById('modelTopP').value = '0.7';
-            document.getElementById('modelTopK').value = '40';
-            document.getElementById('modelMaxTokens').value = '500';
-            document.getElementById('modelRepeatPenalty').value = '1.1';
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
 
-            // Save the defaults to localStorage
+            // Set common defaults
+            document.getElementById('modelTemperature').value = '0.8';
+            document.getElementById('modelMaxTokens').value = '500';
+            document.getElementById('modelTopP').value = '0.7';
+
+            // Set backend-specific defaults
+            if (backendType === 'openai') {
+                document.getElementById('modelFrequencyPenalty').value = '0.0';
+                document.getElementById('modelPresencePenalty').value = '0.0';
+            }
+            else if (backendType === 'openrouter') {
+                document.getElementById('modelFrequencyPenalty').value = '0.0';
+                document.getElementById('modelPresencePenalty').value = '0.0';
+                document.getElementById('modelRepeatPenalty').value = '1.1';
+                document.getElementById('modelTopK').value = '40';
+                document.getElementById('modelSeed').value = '-1';
+                document.getElementById('modelMinP').value = '0.0';
+                document.getElementById('modelTopA').value = '0.0';
+            }
+            else { // ollama
+                document.getElementById('modelSeed').value = '-1';
+                document.getElementById('modelTopK').value = '40';
+                document.getElementById('modelRepeatPenalty').value = '1.1';
+            }
+
+            // Save common defaults to localStorage
             localStorage.setItem('ollamaVision_temperature', '0.8');
-            localStorage.setItem('ollamaVision_seed', '-1');
-            localStorage.setItem('ollamaVision_topP', '0.7');
-            localStorage.setItem('ollamaVision_topK', '40');
             localStorage.setItem('ollamaVision_maxTokens', '500');
-            localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
+            localStorage.setItem('ollamaVision_topP', '0.7');
+
+            // Save backend-specific defaults
+            if (backendType === 'openai') {
+                localStorage.setItem('ollamaVision_frequencyPenalty', '0.0');
+                localStorage.setItem('ollamaVision_presencePenalty', '0.0');
+            }
+            else if (backendType === 'openrouter') {
+                localStorage.setItem('ollamaVision_frequencyPenalty', '0.0');
+                localStorage.setItem('ollamaVision_presencePenalty', '0.0');
+                localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
+                localStorage.setItem('ollamaVision_topK', '40');
+                localStorage.setItem('ollamaVision_seed', '-1');
+                localStorage.setItem('ollamaVision_minP', '0.0');
+                localStorage.setItem('ollamaVision_topA', '0.0');
+            }
+            else { // ollama
+                localStorage.setItem('ollamaVision_seed', '-1');
+                localStorage.setItem('ollamaVision_topK', '40');
+                localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
+            }
 
             this.updateStatus('success', 'Settings reset to defaults');
         } catch (error) {
