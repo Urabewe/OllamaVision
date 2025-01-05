@@ -98,11 +98,11 @@ async function addOllamaVisionTab(utilitiesTab) {
                                             </div>
                                             <div class="d-grid gap-2">
                                                 <button class="basic-button d-flex align-items-center justify-content-center" 
-                                                        onclick="ollamaVision.takeScreenshot()" 
+                                                        onclick="ollamaVision.enablePaste()" 
                                                         disabled 
-                                                        id="screenshot-btn"
+                                                        id="paste-btn"
                                                         style="transition: all 0.3s ease;">
-                                                    <i class="fas fa-camera me-2"></i>
+                                                    <i class="fas fa-paste me-2"></i>
                                                     Click to paste with CTRL+V
                                                 </button>
                                                 <button class="basic-button d-flex align-items-center justify-content-center" 
@@ -663,7 +663,7 @@ window.ollamaVision = {
                 disconnectBtn.style.display = 'inline-block';
                 
                 document.getElementById('ollamavision-model').disabled = false;
-                document.getElementById('screenshot-btn').disabled = false;
+                document.getElementById('paste-btn').disabled = false;
                 document.getElementById('upload-btn').disabled = false;
                 
                 this.updateStatus('success', 'Connected to OpenAI successfully');
@@ -707,7 +707,7 @@ window.ollamaVision = {
                 disconnectBtn.style.display = 'inline-block';
                 
                 document.getElementById('ollamavision-model').disabled = false;
-                document.getElementById('screenshot-btn').disabled = false;
+                document.getElementById('paste-btn').disabled = false;
                 document.getElementById('upload-btn').disabled = false;
                 
                 this.updateStatus('success', 'Connected to OpenRouter successfully');
@@ -759,7 +759,7 @@ window.ollamaVision = {
                     disconnectBtn.style.display = 'inline-block';
                     
                     document.getElementById('ollamavision-model').disabled = false;
-                    document.getElementById('screenshot-btn').disabled = false;
+                    document.getElementById('paste-btn').disabled = false;
                     document.getElementById('upload-btn').disabled = false;
                     
                     this.updateStatus('success', 'Connected to Ollama successfully');
@@ -837,9 +837,9 @@ window.ollamaVision = {
         });
     },
 
-    takeScreenshot: async function() {
+    enablePaste: function() {
         try {
-            this.updateStatus('info', 'Opening Snip Tool...');
+            this.updateStatus('info', 'Ready for paste...');
             
             // Remove any existing paste event listener first
             if (this.pasteHandler) {
@@ -875,30 +875,11 @@ window.ollamaVision = {
                     }
                 });
             }
-
-            // Trigger Win+Shift+S using keyboard events
-            document.dispatchEvent(new KeyboardEvent('keydown', {
-                key: 'Meta',
-                code: 'MetaLeft',
-                metaKey: true,
-                bubbles: true
-            }));
-            document.dispatchEvent(new KeyboardEvent('keydown', {
-                key: 'Shift',
-                code: 'ShiftLeft',
-                shiftKey: true,
-                bubbles: true
-            }));
-            document.dispatchEvent(new KeyboardEvent('keydown', {
-                key: 's',
-                code: 'KeyS',
-                bubbles: true
-            }));
             
-            this.updateStatus('info', 'Now press CTRL+V to paste your image for analyzing...');
+            this.updateStatus('info', 'Ready for paste (CTRL+V)');
             
         } catch (error) {
-            this.updateStatus('error', 'Error handling screenshot: ' + error);
+            this.updateStatus('error', 'Error enabling paste: ' + error);
         }
     },
 
@@ -1820,7 +1801,7 @@ window.ollamaVision = {
         const connectBtn = document.getElementById('connect-btn');
         const disconnectBtn = document.getElementById('disconnect-btn');
         const modelSelect = document.getElementById('ollamavision-model');
-        const screenshotBtn = document.getElementById('screenshot-btn');
+        const pasteBtn = document.getElementById('paste-btn');
         const uploadBtn = document.getElementById('upload-btn');
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
 
@@ -1834,7 +1815,7 @@ window.ollamaVision = {
         // Disable controls
         modelSelect.disabled = true;
         modelSelect.innerHTML = '<option value="">Select a model...</option>';
-        screenshotBtn.disabled = true;
+        pasteBtn.disabled = true;
         uploadBtn.disabled = true;
 
         this.cleanup();

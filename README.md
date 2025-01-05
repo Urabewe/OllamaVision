@@ -11,11 +11,9 @@
   - OpenAI API integration
   - OpenRouter API support
 - Advanced model settings:
-  - Temperature control (0-2)
-  - Top P and Top K sampling
-  - Maximum token limit
-  - Repeat penalty adjustment
-  - Custom seed settings
+  - Ollama: temperature, top_p, top_k, max_tokens, repeat_penalty, seed
+  - OpenAI: temperature, max_tokens, top_p, frequency_penalty, presence_penalty
+  - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
 - Custom preset support with reordering capability
 - Direct-to-prompt generation
