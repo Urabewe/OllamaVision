@@ -547,6 +547,23 @@ async function addOllamaVisionTab(utilitiesTab) {
                 </div>
             </div>
         </div>
+
+        <!-- Add to the existing HTML template, after the analysis-response div: -->
+        <div id="analysis-history" class="mt-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Analysis History</span>
+                    <button class="basic-button" onclick="ollamaVision.clearHistory()">
+                        <i class="fas fa-trash"></i> Clear History
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="history-items" class="row g-3">
+                        <!-- History items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
     
     tabContentContainer.insertAdjacentHTML('beforeend', ollamaVisionTabContent);
@@ -985,6 +1002,12 @@ window.ollamaVision = {
                         responseArea.style.display = 'block';
                         responseText.textContent = response.response;
                         sendToPromptBtn.disabled = false;
+
+                        // Add to history
+                        this.addToHistory(
+                            document.getElementById('preview-image').src,
+                            response.response
+                        );
                     } else {
                         this.updateStatus('error', 'Analysis failed: ' + response.error);
                     }
@@ -2087,6 +2110,122 @@ window.ollamaVision = {
                 this.updateStatus('error', 'Please drop an image file');
             }
         });
+
+        // Initialize history
+        this.updateHistoryUI();
+    },
+
+    // Add these new methods to the ollamaVision object
+    addToHistory: function(imageData, response) {
+        try {
+            let history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
+            
+            // Add new item to start of array
+            history.unshift({
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                imageData: imageData,
+                response: response
+            });
+
+            // Keep only last 20 items
+            history = history.slice(0, 20);
+            
+            // Save to localStorage
+            localStorage.setItem('ollamaVision_history', JSON.stringify(history));
+            
+            // Update UI
+            this.updateHistoryUI();
+        } catch (error) {
+            console.error('Error adding to history:', error);
+        }
+    },
+
+    updateHistoryUI: function() {
+        const historyContainer = document.getElementById('history-items');
+        if (!historyContainer) return;
+
+        const history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
+        
+        historyContainer.innerHTML = history.map(item => `
+            <div class="col-md-6 col-lg-3" id="history-${item.id}">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2">
+                        <small class="text-muted">${new Date(item.timestamp).toLocaleString()}</small>
+                        <div class="btn-group">
+                            <button class="basic-button px-2" 
+                                    onclick="ollamaVision.useHistoryItem(${item.id})" 
+                                    title="Reuse this analysis"
+                                    style="background-color: var(--bs-success);">
+                                <i class="fas fa-sync me-1"></i>Reuse
+                            </button>
+                            <button class="basic-button px-2" 
+                                    onclick="ollamaVision.deleteHistoryItem(${item.id})" 
+                                    title="Delete"
+                                    style="background-color: var(--bs-danger);">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                    <img src="${item.imageData}" class="card-img-top" style="height: 120px; object-fit: contain; padding: 0.5rem;">
+                    <div class="card-body p-2">
+                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 0.9em;">${item.response}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    deleteHistoryItem: function(id) {
+        try {
+            let history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('ollamaVision_history', JSON.stringify(history));
+            
+            // Remove item from UI with animation
+            const element = document.getElementById(`history-${id}`);
+            if (element) {
+                element.style.transition = 'all 0.3s ease';
+                element.style.opacity = '0';
+                setTimeout(() => {
+                    this.updateHistoryUI();
+                }, 300);
+            }
+        } catch (error) {
+            console.error('Error deleting history item:', error);
+        }
+    },
+
+    clearHistory: function() {
+        if (confirm('Are you sure you want to clear all history?')) {
+            localStorage.setItem('ollamaVision_history', '[]');
+            this.updateHistoryUI();
+        }
+    },
+
+    useHistoryItem: function(id) {
+        try {
+            const history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
+            const item = history.find(i => i.id === id);
+            if (item) {
+                // Set the image and response
+                const previewImage = document.getElementById('preview-image');
+                previewImage.src = item.imageData;
+                previewImage.style.display = 'block';
+                previewImage.dataset.imageData = item.imageData;
+                
+                const responseText = document.getElementById('response-text');
+                responseText.textContent = item.response;
+                
+                document.getElementById('analysis-response').style.display = 'block';
+                document.getElementById('send-to-prompt-btn').disabled = false;
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (error) {
+            console.error('Error using history item:', error);
+        }
     }
 };
 
