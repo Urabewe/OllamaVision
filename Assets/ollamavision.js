@@ -841,43 +841,29 @@ window.ollamaVision = {
         try {
             this.updateStatus('info', 'Ready for paste...');
             
-            // Remove any existing paste event listener first
+            // Remove any existing paste event listener
             if (this.pasteHandler) {
                 document.removeEventListener('paste', this.pasteHandler);
             }
             
-            // Create and store the bound handler
             this.pasteHandler = this.handlePaste.bind(this);
-            
-            // Enable paste and set up the paste event listener
             this.pasteEnabled = true;
             
-            // Add the paste listener only to the OllamaVision tab
             const ollamaVisionTab = document.getElementById('Utilities-OllamaVision-Tab');
             if (ollamaVisionTab) {
                 ollamaVisionTab.addEventListener('paste', this.pasteHandler);
                 
-                // Create a hidden input field within the OllamaVision tab
+                // Create hidden input for paste focus
                 const hiddenInput = document.createElement('input');
                 hiddenInput.style.position = 'absolute';
                 hiddenInput.style.opacity = '0';
                 hiddenInput.style.pointerEvents = 'none';
                 hiddenInput.id = 'ollamavision-hidden-input';
                 ollamaVisionTab.appendChild(hiddenInput);
-                
-                // Focus the hidden input
                 hiddenInput.focus();
-                
-                // Keep focus in the tab area
-                ollamaVisionTab.addEventListener('blur', () => {
-                    if (this.pasteEnabled) {
-                        hiddenInput.focus();
-                    }
-                });
             }
             
             this.updateStatus('info', 'Ready for paste (CTRL+V)');
-            
         } catch (error) {
             this.updateStatus('error', 'Error enabling paste: ' + error);
         }
@@ -1613,9 +1599,7 @@ window.ollamaVision = {
     },
 
     showPresetManager: function() {
-        console.log('Opening preset manager...'); // Debug log
-        
-        // First properly close the response settings modal
+        // Remove debug logs
         const responseModal = document.getElementById('responseSettingsModal');
         if (responseModal) {
             const bsResponseModal = bootstrap.Modal.getInstance(responseModal);

@@ -55,7 +55,6 @@ namespace Urabewe.OllamaVision.WebAPI
             API.RegisterAPICall(SaveResponsePrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetPresetPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(UnloadModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
-            API.RegisterAPICall(UnloadModelWithKeepAliveAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
@@ -382,43 +381,56 @@ namespace Urabewe.OllamaVision.WebAPI
 
         private static async Task<JObject> SendApiRequest(JObject requestBody, string backendType, string apiKey)
         {
-            var endpoint = backendType == "openai" 
-                ? "https://api.openai.com/v1/chat/completions"
-                : "https://openrouter.ai/api/v1/chat/completions";
-
-            var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
-            request.Headers.Add("Authorization", $"Bearer {apiKey}");
-
-            if (backendType == "openrouter")
+            try 
             {
-                request.Headers.Add("HTTP-Referer", "https://swarmui.local");
-                request.Headers.Add("X-Title", "SwarmUI");
+                var endpoint = backendType == "openai" 
+                    ? "https://api.openai.com/v1/chat/completions"
+                    : "https://openrouter.ai/api/v1/chat/completions";
+
+                var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+                request.Headers.Add("Authorization", $"Bearer {apiKey}");
+
+                if (backendType == "openrouter")
+                {
+                    request.Headers.Add("HTTP-Referer", "https://swarmui.local");
+                    request.Headers.Add("X-Title", "SwarmUI");
+                }
+
+                request.Content = new StringContent(
+                    requestBody.ToString(),
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = await client.SendAsync(request);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Logs.Error($"API request failed: {content}");
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = $"{backendType} API request failed: {content}"
+                    };
+                }
+
+                var result = JObject.Parse(content);
+                return new JObject
+                {
+                    ["success"] = true,
+                    ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
+                };
             }
-
-            request.Content = new StringContent(
-                requestBody.ToString(),
-                System.Text.Encoding.UTF8,
-                "application/json"
-            );
-
-            var response = await client.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
+                Logs.Error($"Error in SendApiRequest: {ex.Message}");
                 return new JObject
                 {
                     ["success"] = false,
-                    ["error"] = $"{backendType} API request failed: {content}"
+                    ["error"] = $"API request error: {ex.Message}"
                 };
             }
-
-            var result = JObject.Parse(content);
-            return new JObject
-            {
-                ["success"] = true,
-                ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-            };
         }
 
         [API.APIDescription("Unloads a model from Ollama's memory", "Returns success status of unloading the model")]
@@ -444,74 +456,6 @@ namespace Urabewe.OllamaVision.WebAPI
 
                 var response = await client.PostAsync(
                     "http://localhost:11434/api/pull",
-                    new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
-                );
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    Logs.Info($"Successfully unloaded model: {model}");
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = "Model unloaded successfully"
-                    };
-                }
-                else
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    Logs.Error($"Failed to unload model. Status: {response.StatusCode}, Content: {content}");
-                    return new JObject
-                    {
-                        ["success"] = false,
-                        ["error"] = $"Failed to unload model: {content}"
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.Error($"Error unloading model: {ex.Message}");
-                return new JObject
-                {
-                    ["success"] = false,
-                    ["error"] = ex.Message
-                };
-            }
-        }
-
-        [API.APIDescription("Unloads a model by setting keep_alive to 0", "Returns success status of unloading the model")]
-        public static async Task<JObject> UnloadModelWithKeepAliveAsync(JObject data)
-        {
-            try
-            {
-                string model = data["model"]?.ToString();
-                string ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
-                
-                // First check if the model is loaded using /api/show
-                var showResponse = await client.PostAsync(
-                    $"{ollamaUrl}/api/show",
-                    new StringContent(JsonConvert.SerializeObject(new { name = model }), System.Text.Encoding.UTF8, "application/json")
-                );
-
-                if (!showResponse.IsSuccessStatusCode)
-                {
-                    // If show request fails, model might not be loaded anyway
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = "Model not loaded or already unloaded"
-                    };
-                }
-
-                // If model is loaded, send a minimal request to unload it
-                var requestBody = new JObject
-                {
-                    ["model"] = model,
-                    ["prompt"] = "exit",  // Minimal prompt
-                    ["keep_alive"] = 0
-                };
-
-                var response = await client.PostAsync(
-                    $"{ollamaUrl}/api/generate",
                     new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
                 );
                 
