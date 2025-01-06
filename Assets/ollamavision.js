@@ -71,16 +71,25 @@ const idb = {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-    function checkForOllamaVision() {
+    async function checkForOllamaVision() {
         const utilities = document.getElementById('utilities_tab');
         if (utilities) {
-            addOllamaVisionTab(utilities);
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-            const connectBtn = document.getElementById('connect-btn');
-            connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
-            console.log('Utilities tab not found, something has gone very wrong!');
+            await addOllamaVisionTab(utilities);
+            
+            // Add tab show event listener
+            const tab = document.getElementById('ollamavision_tab');
+            tab.addEventListener('shown.bs.tab', function () {
+                const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+                const connectBtn = document.getElementById('connect-btn');
+                if (connectBtn) {
+                    connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
+                }
+            });
+            
+            console.log('Utilities tab found, OllamaVision tab added');
             return;
         }
+        console.log('Utilities tab not found, something has gone very wrong!');
     }
     checkForOllamaVision();
 });
@@ -1270,18 +1279,18 @@ window.ollamaVision = {
             ollamaConnectionSettings.style.display = 'block';
             openaiSettings.style.display = 'none';
             openrouterSettings.style.display = 'none';
-            connectBtn.innerHTML = 'Connect to Ollama';
         } else if (backendType === 'openai') {
             ollamaConnectionSettings.style.display = 'none';
             openaiSettings.style.display = 'block';
             openrouterSettings.style.display = 'none';
-            connectBtn.innerHTML = 'Connect to OpenAI';
         } else if (backendType === 'openrouter') {
             ollamaConnectionSettings.style.display = 'none';
             openaiSettings.style.display = 'none';
             openrouterSettings.style.display = 'block';
-            connectBtn.innerHTML = 'Connect to OpenRouter';
         }
+        
+        // Use the same format as everywhere else
+        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
     },
 
     saveSettings: function() {
@@ -1877,12 +1886,12 @@ window.ollamaVision = {
     },
 
     disconnect: function() {
+        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         const connectBtn = document.getElementById('connect-btn');
         const disconnectBtn = document.getElementById('disconnect-btn');
         const modelSelect = document.getElementById('ollamavision-model');
         const pasteBtn = document.getElementById('paste-btn');
         const uploadBtn = document.getElementById('upload-btn');
-        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
 
         // Reset UI state
         connectBtn.disabled = false;
