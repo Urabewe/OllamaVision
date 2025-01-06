@@ -1,3 +1,75 @@
+// Add at the top of the file
+const dbName = 'OllamaVision';
+const dbVersion = 1;
+
+// Initialize IndexedDB
+async function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, dbVersion);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('images')) {
+                db.createObjectStore('images', { keyPath: 'id' });
+            }
+        };
+    });
+}
+
+// Add helper functions for IndexedDB operations
+const idb = {
+    async saveImage(id, imageData) {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['images'], 'readwrite');
+            const store = transaction.objectStore('images');
+            const request = store.put({ id, imageData });
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    },
+    
+    async getImage(id) {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['images'], 'readonly');
+            const store = transaction.objectStore('images');
+            const request = store.get(id);
+            
+            request.onsuccess = () => resolve(request.result?.imageData);
+            request.onerror = () => reject(request.error);
+        });
+    },
+    
+    async deleteImage(id) {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['images'], 'readwrite');
+            const store = transaction.objectStore('images');
+            const request = store.delete(id);
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    },
+    
+    async clearImages() {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['images'], 'readwrite');
+            const store = transaction.objectStore('images');
+            const request = store.clear();
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+};
+
 document.addEventListener("DOMContentLoaded", function () {
     function checkForOllamaVision() {
         const utilities = document.getElementById('utilities_tab');
@@ -2116,12 +2188,21 @@ window.ollamaVision = {
     },
 
     // Add these new methods to the ollamaVision object
-    addToHistory: function(imageData, response) {
+    addToHistory: async function(imageData, response) {
         try {
             let history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
             
-            // Get current parameters
-            const parameters = {
+            const id = Date.now();
+            
+            // Save image to IndexedDB
+            await idb.saveImage(id, imageData);
+            
+            // Add metadata to history
+            history.unshift({
+                id: id,
+                timestamp: new Date().toISOString(),
+                response: response,
+                parameters: {
                 temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
                 topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7'),
                 maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
@@ -2132,37 +2213,35 @@ window.ollamaVision = {
                 seed: parseInt(localStorage.getItem('ollamaVision_seed') || '-1'),
                 minP: parseFloat(localStorage.getItem('ollamaVision_minP') || '0.0'),
                 topA: parseFloat(localStorage.getItem('ollamaVision_topA') || '0.0')
-            };
-            
-            // Add new item to start of array
-            history.unshift({
-                id: Date.now(),
-                timestamp: new Date().toISOString(),
-                imageData: imageData,
-                response: response,
-                parameters: parameters,
+                },
                 backendType: localStorage.getItem('ollamaVision_backendType') || 'ollama'
             });
 
-            // Keep only last 20 items
+            // Keep only last 20 items and clean up old images
+            const itemsToRemove = history.slice(20);
             history = history.slice(0, 20);
             
-            // Save to localStorage
-            localStorage.setItem('ollamaVision_history', JSON.stringify(history));
+            // Clean up old images from IndexedDB
+            for (const item of itemsToRemove) {
+                await idb.deleteImage(item.id);
+            }
             
-            // Update UI
-            this.updateHistoryUI();
+            localStorage.setItem('ollamaVision_history', JSON.stringify(history));
+            await this.updateHistoryUI();
+            
         } catch (error) {
             console.error('Error adding to history:', error);
+            this.updateStatus('error', 'Error saving to history: ' + error.message);
         }
     },
 
-    updateHistoryUI: function() {
+    updateHistoryUI: async function() {
         const historyContainer = document.getElementById('history-items');
         if (!historyContainer) return;
 
         const history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
         
+        // Build HTML with loading placeholders
         historyContainer.innerHTML = history.map(item => `
             <div class="col-md-6 col-lg-3" id="history-${item.id}">
                 <div class="card h-100">
@@ -2183,20 +2262,42 @@ window.ollamaVision = {
                             </button>
                         </div>
                     </div>
-                    <img src="${item.imageData}" class="card-img-top" style="height: 120px; object-fit: contain; padding: 0.5rem;">
+                    <div class="image-placeholder" id="image-${item.id}">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                     <div class="card-body p-2">
                         <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 0.9em;">${item.response}</p>
                     </div>
                 </div>
             </div>
         `).join('');
+
+        // Load images asynchronously
+        for (const item of history) {
+            try {
+                const imageData = await idb.getImage(item.id);
+                if (imageData) {
+                    const placeholder = document.getElementById(`image-${item.id}`);
+                    if (placeholder) {
+                        placeholder.innerHTML = `<img src="${imageData}" class="card-img-top" style="height: 120px; object-fit: contain; padding: 0.5rem;">`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading image:', error);
+            }
+        }
     },
 
-    deleteHistoryItem: function(id) {
+    deleteHistoryItem: async function(id) {
         try {
             let history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
             history = history.filter(item => item.id !== id);
             localStorage.setItem('ollamaVision_history', JSON.stringify(history));
+            
+            // Delete image from IndexedDB
+            await idb.deleteImage(id);
             
             // Remove item from UI with animation
             const element = document.getElementById(`history-${id}`);
@@ -2209,26 +2310,40 @@ window.ollamaVision = {
             }
         } catch (error) {
             console.error('Error deleting history item:', error);
+            this.updateStatus('error', 'Error deleting history item: ' + error.message);
         }
     },
 
-    clearHistory: function() {
+    clearHistory: async function() {
         if (confirm('Are you sure you want to clear all history?')) {
+            try {
             localStorage.setItem('ollamaVision_history', '[]');
-            this.updateHistoryUI();
+                await idb.clearImages();
+                await this.updateHistoryUI();
+                this.updateStatus('success', 'History cleared successfully');
+            } catch (error) {
+                console.error('Error clearing history:', error);
+                this.updateStatus('error', 'Error clearing history: ' + error.message);
+            }
         }
     },
 
-    useHistoryItem: function(id) {
+    useHistoryItem: async function(id) {
         try {
             const history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
             const item = history.find(i => i.id === id);
             if (item) {
+                // Get image from IndexedDB
+                const imageData = await idb.getImage(item.id);
+                if (!imageData) {
+                    throw new Error('Image not found in storage');
+                }
+
                 // Set the image and response
                 const previewImage = document.getElementById('preview-image');
-                previewImage.src = item.imageData;
+                previewImage.src = imageData;
                 previewImage.style.display = 'block';
-                previewImage.dataset.imageData = item.imageData;
+                previewImage.dataset.imageData = imageData;
                 
                 const responseText = document.getElementById('response-text');
                 responseText.textContent = item.response;
