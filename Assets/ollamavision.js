@@ -148,6 +148,23 @@ async function addOllamaVisionTab(utilitiesTab) {
                     </div>
                 </div>
             </div>
+
+            <!-- Analysis History - Now inside the OllamaVision tab -->
+            <div id="analysis-history" class="mt-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Analysis History</span>
+                        <button class="basic-button" onclick="ollamaVision.clearHistory()">
+                            <i class="fas fa-trash"></i> Clear History
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="history-items" class="row g-3">
+                            <!-- History items will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Response Settings Modal -->
@@ -543,23 +560,6 @@ async function addOllamaVisionTab(utilitiesTab) {
                     <div class="modal-footer">
                         <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="basic-button" onclick="ollamaVision.saveResponseConfig()">Save</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add to the existing HTML template, after the analysis-response div: -->
-        <div id="analysis-history" class="mt-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Analysis History</span>
-                    <button class="basic-button" onclick="ollamaVision.clearHistory()">
-                        <i class="fas fa-trash"></i> Clear History
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div id="history-items" class="row g-3">
-                        <!-- History items will be added here -->
                     </div>
                 </div>
             </div>
@@ -2120,12 +2120,28 @@ window.ollamaVision = {
         try {
             let history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
             
+            // Get current parameters
+            const parameters = {
+                temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
+                topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7'),
+                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
+                frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0'),
+                presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0'),
+                repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1'),
+                topK: parseInt(localStorage.getItem('ollamaVision_topK') || '40'),
+                seed: parseInt(localStorage.getItem('ollamaVision_seed') || '-1'),
+                minP: parseFloat(localStorage.getItem('ollamaVision_minP') || '0.0'),
+                topA: parseFloat(localStorage.getItem('ollamaVision_topA') || '0.0')
+            };
+            
             // Add new item to start of array
             history.unshift({
                 id: Date.now(),
                 timestamp: new Date().toISOString(),
                 imageData: imageData,
-                response: response
+                response: response,
+                parameters: parameters,
+                backendType: localStorage.getItem('ollamaVision_backendType') || 'ollama'
             });
 
             // Keep only last 20 items
@@ -2217,14 +2233,44 @@ window.ollamaVision = {
                 const responseText = document.getElementById('response-text');
                 responseText.textContent = item.response;
                 
+                // Restore parameters and update UI
+                if (item.parameters) {
+                    // Update localStorage
+                    localStorage.setItem('ollamaVision_temperature', item.parameters.temperature);
+                    localStorage.setItem('ollamaVision_topP', item.parameters.topP);
+                    localStorage.setItem('ollamaVision_maxTokens', item.parameters.maxTokens);
+                    localStorage.setItem('ollamaVision_frequencyPenalty', item.parameters.frequencyPenalty);
+                    localStorage.setItem('ollamaVision_presencePenalty', item.parameters.presencePenalty);
+                    localStorage.setItem('ollamaVision_repeatPenalty', item.parameters.repeatPenalty);
+                    localStorage.setItem('ollamaVision_topK', item.parameters.topK);
+                    localStorage.setItem('ollamaVision_seed', item.parameters.seed);
+                    localStorage.setItem('ollamaVision_minP', item.parameters.minP);
+                    localStorage.setItem('ollamaVision_topA', item.parameters.topA);
+
+                    // Update UI elements
+                    document.getElementById('modelTemperature').value = item.parameters.temperature;
+                    document.getElementById('modelTopP').value = item.parameters.topP;
+                    document.getElementById('modelMaxTokens').value = item.parameters.maxTokens;
+                    document.getElementById('modelFrequencyPenalty').value = item.parameters.frequencyPenalty;
+                    document.getElementById('modelPresencePenalty').value = item.parameters.presencePenalty;
+                    document.getElementById('modelRepeatPenalty').value = item.parameters.repeatPenalty;
+                    document.getElementById('modelTopK').value = item.parameters.topK;
+                    document.getElementById('modelSeed').value = item.parameters.seed;
+                    document.getElementById('modelMinP').value = item.parameters.minP;
+                    document.getElementById('modelTopA').value = item.parameters.topA;
+                }
+                
                 document.getElementById('analysis-response').style.display = 'block';
                 document.getElementById('send-to-prompt-btn').disabled = false;
                 
                 // Scroll to top
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                this.updateStatus('success', 'Previous analysis restored with original parameters');
             }
         } catch (error) {
             console.error('Error using history item:', error);
+            this.updateStatus('error', 'Error restoring history item: ' + error.message);
         }
     }
 };
