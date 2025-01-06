@@ -35,10 +35,10 @@
   - Server must be properly configured for remote access
 
 ### For OpenAI:
-- Valid OpenAI API key with access to vision models
+- Valid OpenAI API key with access to vision models. Sign up and create an API key here: [OpenAI](https://openai.com/)
 
 ### For OpenRouter:
-- Valid OpenRouter API key
+- Valid OpenRouter API key. Sign up and create an API key here: [OpenRouter](https://openrouter.ai/)
 - Optional: Custom site name for API requests
 
 ## 🛠️ Installation
