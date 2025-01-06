@@ -120,7 +120,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                         <div class="mt-2">
                             <select id="ollamavision-model" class="auto-dropdown" 
-                                    style="width: auto; background-color: inherit; color: inherit;" disabled>
+                                    style="width: auto; background-color: inherit; color: inherit; font-size: 1.1rem;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
                         </div>
@@ -154,7 +154,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <label class="form-label translate">Image Source</label>
+                                                <label class="form-label translate" style="font-size: 1.1rem;">Image Source</label>
                                                 <div class="d-flex gap-2">
                                                     <button class="basic-button" 
                                                             onclick="ollamaVision.showModelSettings()" 
@@ -189,18 +189,18 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         </div>
                                         <div id="analysis-response" style="display: none;">
                                             <div class="card">
-                                                <div class="card-header">
+                                                <div class="card-header" style="font-size: 1.2rem;">
                                                     Analysis Result
                                                 </div>
                                                 <div class="card-body">
-                                                    <p id="response-text" class="mb-0"></p>
+                                                    <p id="response-text" class="mb-0" style="font-size: 1.1rem;"></p>
                                                 </div>
                                             </div>
                                             <div class="d-flex justify-content-end mt-3">
                                                 <button class="basic-button" 
                                                         onclick="ollamaVision.sendToPrompt()" 
                                                         id="send-to-prompt-btn" 
-                                                        disabled>
+                                                        disabled style="font-size: 1.1rem;">
                                                     Send to Prompt
                                                 </button>
                                             </div>
@@ -215,7 +215,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <div class="spinner-border spinner-border-sm me-2" role="status" id="analysis-spinner" style="display: none;">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <span id="status-text" style="font-size: 1.2em;"></span>
+                            <span id="status-text" style="font-size: 1.2rem;"></span>
                         </div>
                     </div>
                 </div>
@@ -2268,7 +2268,7 @@ window.ollamaVision = {
                         </div>
                     </div>
                     <div class="card-body p-2">
-                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 0.9em;">${item.response}</p>
+                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 1.1rem;">${item.response}</p>
                     </div>
                 </div>
             </div>
@@ -2305,7 +2305,7 @@ window.ollamaVision = {
                 element.style.transition = 'all 0.3s ease';
                 element.style.opacity = '0';
                 setTimeout(() => {
-                    this.updateHistoryUI();
+                    element.remove();  // Just remove the element instead of updating entire history UI
                 }, 300);
             }
         } catch (error) {
