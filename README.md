@@ -15,6 +15,7 @@
   - OpenAI: temperature, max_tokens, top_p, frequency_penalty, presence_penalty
   - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
+- Ability to set custom System Prompts to alter the behavior of the model.
 - Custom preset support with reordering capability
 - Direct-to-prompt generation
 - Zero impact on VRAM when not in use (when using unload model setting)
