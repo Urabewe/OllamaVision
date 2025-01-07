@@ -248,12 +248,18 @@ namespace Urabewe.OllamaVision.WebAPI
                     var presencePenalty = Math.Max(-2.0f, Math.Min(2.0f, data["presencePenalty"]?.ToObject<float?>() ?? 0.0f));
 
                     var messages = new JArray();
-                    messages.Add(new JObject
+                    
+                    // Only add system message if systemPrompt is provided
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
                     {
-                        ["role"] = "system",
-                        ["content"] = data["systemPrompt"]?.ToString() ?? 
-                            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you."
-                    });
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
+                    }
+
                     messages.Add(new JObject
                     {
                         ["role"] = "user",
@@ -299,12 +305,18 @@ namespace Urabewe.OllamaVision.WebAPI
                     var seed = data["seed"]?.ToObject<int?>() ?? -1;
 
                     var messages = new JArray();
-                    messages.Add(new JObject
+                    
+                    // Only add system message if systemPrompt is provided
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
                     {
-                        ["role"] = "system",
-                        ["content"] = data["systemPrompt"]?.ToString() ?? 
-                            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you."
-                    });
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
+                    }
+
                     messages.Add(new JObject
                     {
                         ["role"] = "user",
@@ -350,8 +362,6 @@ namespace Urabewe.OllamaVision.WebAPI
                         ["prompt"] = DEFAULT_PROMPT,
                         ["images"] = new JArray { base64Data },
                         ["stream"] = false,
-                        ["system"] = data["systemPrompt"]?.ToString() ?? 
-                            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.",
                         ["options"] = new JObject
                         {
                             ["temperature"] = temperature,
@@ -362,6 +372,13 @@ namespace Urabewe.OllamaVision.WebAPI
                             ["repeat_penalty"] = repeatPenalty
                         }
                     };
+
+                    // Only add system if systemPrompt is provided
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        requestBody["system"] = systemPrompt;
+                    }
 
                     var response = await client.PostAsync(
                         $"{ollamaUrl}/api/generate",

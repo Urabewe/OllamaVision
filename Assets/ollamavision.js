@@ -1053,6 +1053,12 @@ window.ollamaVision = {
                 topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7')
             };
 
+            // Only add systemPrompt if it's not empty
+            const systemPrompt = localStorage.getItem('ollamaVision_systemPrompt')?.trim();
+            if (systemPrompt) {
+                requestData.systemPrompt = systemPrompt;
+            }
+
             // Add backend-specific parameters
             if (backendType === 'openai') {
                 requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
@@ -1075,10 +1081,6 @@ window.ollamaVision = {
                 requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
                 requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
             }
-
-            // Add system prompt to request data
-            requestData.systemPrompt = localStorage.getItem('ollamaVision_systemPrompt') || 
-                "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.";
 
             // Show loading status
             this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
@@ -2047,10 +2049,12 @@ window.ollamaVision = {
 
         new bootstrap.Modal(document.getElementById('modelSettingsModal')).show();
 
-        // Load saved system prompt
-        const savedSystemPrompt = localStorage.getItem('ollamaVision_systemPrompt') || 
-            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.";
-        document.getElementById('modelSystemPrompt').value = savedSystemPrompt;
+        // Load existing system prompt if it exists, but don't clear it if it doesn't
+        const existingPrompt = localStorage.getItem('ollamaVision_systemPrompt');
+        const systemPromptField = document.getElementById('modelSystemPrompt');
+        if (existingPrompt) {
+            systemPromptField.value = existingPrompt;
+        }
     },
 
     saveModelSettings: function() {
@@ -2105,9 +2109,13 @@ window.ollamaVision = {
                 localStorage.setItem('ollamaVision_seed', document.getElementById('modelSeed').value);
             }
 
-            // Add system prompt
-            const systemPrompt = document.getElementById('modelSystemPrompt').value.trim();
-            localStorage.setItem('ollamaVision_systemPrompt', systemPrompt);
+            // Handle system prompt - only save if changed
+            const systemPrompt = document.getElementById('modelSystemPrompt').value;
+            if (systemPrompt && systemPrompt.trim()) {
+                localStorage.setItem('ollamaVision_systemPrompt', systemPrompt.trim());
+            } else if (systemPrompt === '') {  // Only remove if explicitly cleared by user
+                localStorage.removeItem('ollamaVision_systemPrompt');
+            }
 
             bootstrap.Modal.getInstance(document.getElementById('modelSettingsModal')).hide();
             this.updateStatus('success', 'Model settings saved successfully');
@@ -2145,6 +2153,10 @@ window.ollamaVision = {
                 document.getElementById('modelRepeatPenalty').value = '1.1';
             }
 
+            // Clear system prompt
+            document.getElementById('modelSystemPrompt').value = null;
+            localStorage.removeItem('ollamaVision_systemPrompt');
+
             // Save common defaults to localStorage
             localStorage.setItem('ollamaVision_temperature', '0.8');
             localStorage.setItem('ollamaVision_maxTokens', '500');
@@ -2169,11 +2181,6 @@ window.ollamaVision = {
                 localStorage.setItem('ollamaVision_topK', '40');
                 localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
             }
-
-            // Set default system prompt
-            const defaultSystemPrompt = "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.";
-            document.getElementById('modelSystemPrompt').value = defaultSystemPrompt;
-            localStorage.setItem('ollamaVision_systemPrompt', defaultSystemPrompt);
 
             this.updateStatus('success', 'Settings reset to defaults');
         } catch (error) {
@@ -2395,18 +2402,6 @@ window.ollamaVision = {
                     localStorage.setItem('ollamaVision_topK', item.parameters.topK);
                     localStorage.setItem('ollamaVision_seed', item.parameters.seed);
                     localStorage.setItem('ollamaVision_minP', item.parameters.minP);
-                    localStorage.setItem('ollamaVision_topA', item.parameters.topA);
-
-                    // Update UI elements
-                    document.getElementById('modelTemperature').value = item.parameters.temperature;
-                    document.getElementById('modelTopP').value = item.parameters.topP;
-                    document.getElementById('modelMaxTokens').value = item.parameters.maxTokens;
-                    document.getElementById('modelFrequencyPenalty').value = item.parameters.frequencyPenalty;
-                    document.getElementById('modelPresencePenalty').value = item.parameters.presencePenalty;
-                    document.getElementById('modelRepeatPenalty').value = item.parameters.repeatPenalty;
-                    document.getElementById('modelTopK').value = item.parameters.topK;
-                    document.getElementById('modelSeed').value = item.parameters.seed;
-                    document.getElementById('modelMinP').value = item.parameters.minP;
                     document.getElementById('modelTopA').value = item.parameters.topA;
                 }
                 
