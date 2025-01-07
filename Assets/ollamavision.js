@@ -479,6 +479,14 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <br>• Higher values: More diverse
                                     </small>
                                 </div>
+
+                                <div class="col-12 mb-3">
+                                    <label for="modelSystemPrompt" class="form-label mb-1">System Prompt</label>
+                                    <textarea class="auto-text-block modal_text_extra" id="modelSystemPrompt" 
+                                              rows="4" style="width: 100%;"
+                                              placeholder="Enter system prompt for the AI model"></textarea>
+                                    <small class="form-text text-muted">This prompt will be sent with every request to guide the AI's behavior.</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1067,6 +1075,10 @@ window.ollamaVision = {
                 requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
                 requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
             }
+
+            // Add system prompt to request data
+            requestData.systemPrompt = localStorage.getItem('ollamaVision_systemPrompt') || 
+                "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.";
 
             // Show loading status
             this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
@@ -2034,6 +2046,11 @@ window.ollamaVision = {
         });
 
         new bootstrap.Modal(document.getElementById('modelSettingsModal')).show();
+
+        // Load saved system prompt
+        const savedSystemPrompt = localStorage.getItem('ollamaVision_systemPrompt') || 
+            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.";
+        document.getElementById('modelSystemPrompt').value = savedSystemPrompt;
     },
 
     saveModelSettings: function() {
@@ -2087,6 +2104,10 @@ window.ollamaVision = {
                 localStorage.setItem('ollamaVision_repeatPenalty', repeatPenalty);
                 localStorage.setItem('ollamaVision_seed', document.getElementById('modelSeed').value);
             }
+
+            // Add system prompt
+            const systemPrompt = document.getElementById('modelSystemPrompt').value.trim();
+            localStorage.setItem('ollamaVision_systemPrompt', systemPrompt);
 
             bootstrap.Modal.getInstance(document.getElementById('modelSettingsModal')).hide();
             this.updateStatus('success', 'Model settings saved successfully');
@@ -2148,6 +2169,11 @@ window.ollamaVision = {
                 localStorage.setItem('ollamaVision_topK', '40');
                 localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
             }
+
+            // Set default system prompt
+            const defaultSystemPrompt = "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.";
+            document.getElementById('modelSystemPrompt').value = defaultSystemPrompt;
+            localStorage.setItem('ollamaVision_systemPrompt', defaultSystemPrompt);
 
             this.updateStatus('success', 'Settings reset to defaults');
         } catch (error) {

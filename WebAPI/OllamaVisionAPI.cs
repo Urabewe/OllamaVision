@@ -250,6 +250,12 @@ namespace Urabewe.OllamaVision.WebAPI
                     var messages = new JArray();
                     messages.Add(new JObject
                     {
+                        ["role"] = "system",
+                        ["content"] = data["systemPrompt"]?.ToString() ?? 
+                            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you."
+                    });
+                    messages.Add(new JObject
+                    {
                         ["role"] = "user",
                         ["content"] = new JArray {
                             new JObject { ["type"] = "text", ["text"] = DEFAULT_PROMPT },
@@ -295,6 +301,12 @@ namespace Urabewe.OllamaVision.WebAPI
                     var messages = new JArray();
                     messages.Add(new JObject
                     {
+                        ["role"] = "system",
+                        ["content"] = data["systemPrompt"]?.ToString() ?? 
+                            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you."
+                    });
+                    messages.Add(new JObject
+                    {
                         ["role"] = "user",
                         ["content"] = new JArray {
                             new JObject { ["type"] = "text", ["text"] = DEFAULT_PROMPT },
@@ -338,6 +350,8 @@ namespace Urabewe.OllamaVision.WebAPI
                         ["prompt"] = DEFAULT_PROMPT,
                         ["images"] = new JArray { base64Data },
                         ["stream"] = false,
+                        ["system"] = data["systemPrompt"]?.ToString() ?? 
+                            "You are a helpful image analysis assistant. Analyze any images given to you and respond with the information asked of you.",
                         ["options"] = new JObject
                         {
                             ["temperature"] = temperature,
