@@ -2,6 +2,9 @@
 const dbName = 'OllamaVision';
 const dbVersion = 1;
 
+// Add this constant at the top of the file
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDY0MCA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0MCIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMyQTJBMkEiLz48dGV4dCB4PSIzMjAiIHk9IjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTYiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiNDRjVCMkIiPk9sbGFtYVZpc2lvbjwvdGV4dD48cGF0aCBkPSJNMzIwIDEzOEM0OTUgMTM4IDQ5NSAzNzQgMzIwIDM3NEMxNDUgMzc0IDE0NSAxMzggMzIwIDEzOFoiIGZpbGw9IiM0MDQwNDAiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIyNTYiIHI9IjY4IiBmaWxsPSIjNEE0QTRBIi8+PGNpcmNsZSBjeD0iMzIwIiBjeT0iMjU2IiByPSIzOCIgZmlsbD0iIzNCM0IzQiIvPjxjaXJjbGUgY3g9IjM0MCIgY3k9IjIzNiIgcj0iMTIiIGZpbGw9IiM1QTVBNUEiLz48dGV4dCB4PSIzMjAiIHk9IjQyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM4MDgwODAiPkRyYWcgYW5kIGRyb3Agb3IgdXNlIHRoZSBidXR0b25zIHRvIGFkZCBhbiBpbWFnZTwvdGV4dD48L3N2Zz4=';
+
 // Initialize IndexedDB
 async function initDB() {
     return new Promise((resolve, reject) => {
@@ -113,7 +116,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <div class="tab-pane" id="Utilities-OllamaVision-Tab" role="tabpanel">
             <div class="card border-secondary mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span class="translate">Ollama Vision Analysis</span>
+                    <span class="translate" style="font-size: 1.5rem; font-weight: 500;">OllamaVision</span>
                     <div class="connection-status">
                         <div class="d-flex align-items-center gap-2">
                             <button class="basic-button" onclick="ollamaVision.connect()" id="connect-btn">
@@ -123,13 +126,19 @@ async function addOllamaVisionTab(utilitiesTab) {
                                     style="display: none; background-color: var(--bs-danger);">
                                 Disconnect
                             </button>
+                            <button class="basic-button" onclick="ollamaVision.showModelSettings()" id="model-settings-btn">
+                                <i class="fas fa-sliders-h"></i> Model Settings
+                            </button>
+                            <button class="basic-button" onclick="ollamaVision.showResponseSettings()" id="response-settings-btn">
+                                <i class="fas fa-cog"></i> Configure Response Type
+                            </button>
                             <button class="basic-button" onclick="ollamaVision.showSettings()" id="settings-btn">
                                 <i class="fas fa-cog"></i> Settings
                             </button>
                         </div>
                         <div class="mt-2">
                             <select id="ollamavision-model" class="auto-dropdown" 
-                                    style="width: auto; background-color: inherit; color: inherit; font-size: 1.1rem;" disabled>
+                                    style="width: auto; background-color: inherit; color: inherit; font-size: 1.2rem;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
                         </div>
@@ -137,83 +146,74 @@ async function addOllamaVisionTab(utilitiesTab) {
                 </div>
                 <div class="card-body">
                     <div class="container-fluid">
-                        <div class="row justify-content-center">
-                            <div class="col-10">
-                                <div class="row mb-3">
-                                    <div class="col-md-6 mx-auto text-center">
-                                        <div id="image-preview-area" class="card">
-                                            <div class="card-body">
-                                                <div class="preview-container" style="width: 512px; height: 512px; margin: 0 auto; position: relative;">
-                                                    <img id="preview-image" 
-                                                         class="img-fluid" 
-                                                         src="" 
-                                                         alt="Preview" 
-                                                         style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                                                </div>
-                                                <div id="image-info" class="mt-2 text-muted"></div>
-                                                <button class="basic-button mt-3" 
-                                                        onclick="ollamaVision.analyze()" 
-                                                        id="analyze-btn" 
-                                                        disabled>
-                                                    <span>ANALYZE IMAGE</span>
-                                                </button>
-                                            </div>
+                        <!-- Image Source Buttons Row -->
+                        <div class="row mb-3">
+                            <!-- Image Source Buttons Column -->
+                            <div class="col-5">
+                                <div class="d-flex gap-2 justify-content-end" style="margin-right: 20px;">  <!-- Changed from justify-content-start and margin-left to margin-right -->
+                                    <button class="basic-button d-flex align-items-center justify-content-center" 
+                                            onclick="ollamaVision.enablePaste()" 
+                                            disabled 
+                                            id="paste-btn"
+                                            style="transition: all 0.3s ease; min-width: 210px; font-size: 1.2rem; padding: 8px 12px;">
+                                        <i class="fas fa-paste me-2"></i>
+                                        Click to paste with CTRL+V
+                                    </button>
+                                    <button class="basic-button d-flex align-items-center justify-content-center" 
+                                            onclick="ollamaVision.uploadImage()" 
+                                            disabled 
+                                            id="upload-btn"
+                                            style="transition: all 0.3s ease; min-width: 210px; font-size: 1.2rem; padding: 8px 12px;">
+                                        <i class="fas fa-upload me-2"></i>
+                                        Upload Image File
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Area Row -->
+                        <div class="row">
+                            <div class="col-5">
+                                <div id="image-preview-area" class="card">
+                                    <div class="card-body">
+                                        <div class="preview-container" style="width: 512px; height: 512px; margin: 0 auto; position: relative;">
+                                            <img id="preview-image" 
+                                                 class="img-fluid" 
+                                                 src="" 
+                                                 alt="Preview" 
+                                                 style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                        </div>
+                                        <div id="image-info" class="mt-2 text-muted text-center"></div>
+                                        <div class="text-center mt-3">
+                                            <button class="basic-button" 
+                                                    onclick="ollamaVision.analyze()" 
+                                                    id="analyze-btn" 
+                                                    disabled>
+                                                <span>ANALYZE IMAGE</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <label class="form-label translate" style="font-size: 1.1rem;">Image Source</label>
-                                                <div class="d-flex gap-2">
-                                                    <button class="basic-button" 
-                                                            onclick="ollamaVision.showModelSettings()" 
-                                                            id="model-settings-btn">
-                                                        <i class="fas fa-sliders-h"></i> Model Settings
-                                                    </button>
-                                                    <button class="basic-button" 
-                                                            onclick="ollamaVision.showResponseSettings()" 
-                                                            id="response-settings-btn">
-                                                        <i class="fas fa-cog"></i> Configure Response Type
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="d-grid gap-2">
-                                                <button class="basic-button d-flex align-items-center justify-content-center" 
-                                                        onclick="ollamaVision.enablePaste()" 
-                                                        disabled 
-                                                        id="paste-btn"
-                                                        style="transition: all 0.3s ease;">
-                                                    <i class="fas fa-paste me-2"></i>
-                                                    Click to paste with CTRL+V
-                                                </button>
-                                                <button class="basic-button d-flex align-items-center justify-content-center" 
-                                                        onclick="ollamaVision.uploadImage()" 
-                                                        disabled 
-                                                        id="upload-btn"
-                                                        style="transition: all 0.3s ease;">
-                                                    <i class="fas fa-upload me-2"></i>
-                                                    Upload Image File
-                                                </button>
-                                            </div>
+                                </div>
+                            </div>
+
+                            <!-- Analysis Response Column -->
+                            <div class="col-6 offset-1">
+                                <div id="analysis-response" style="display: none;">
+                                    <div class="card">
+                                        <div class="card-header" style="font-size: 1.2rem;">
+                                            Analysis Result
                                         </div>
-                                        <div id="analysis-response" style="display: none;">
-                                            <div class="card">
-                                                <div class="card-header" style="font-size: 1.2rem;">
-                                                    Analysis Result
-                                                </div>
-                                                <div class="card-body">
-                                                    <p id="response-text" class="mb-0" style="font-size: 1.1rem;"></p>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex justify-content-end mt-3">
-                                                <button class="basic-button" 
-                                                        onclick="ollamaVision.sendToPrompt()" 
-                                                        id="send-to-prompt-btn" 
-                                                        disabled style="font-size: 1.1rem;">
-                                                    Send to Prompt
-                                                </button>
-                                            </div>
+                                        <div class="card-body">
+                                            <p id="response-text" class="mb-0" style="font-size: 1.2rem;"></p>
                                         </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <button class="basic-button" 
+                                                onclick="ollamaVision.sendToPrompt()" 
+                                                id="send-to-prompt-btn" 
+                                                disabled style="font-size: 1.2rem;">
+                                            Send to Prompt
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -251,7 +251,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Response Settings Modal -->
         <div class="modal fade" id="responseSettingsModal" tabindex="-1">
             <div class="modal-dialog">
-                <div class="modal-content" style="font-size: 1.1rem;">
+                <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Response Type Settings</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -296,7 +296,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Create Preset Modal -->
         <div class="modal fade" id="createPresetModal" tabindex="-1">
             <div class="modal-dialog">
-                <div class="modal-content" style="font-size: 1.1rem;">
+                <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Create Custom Preset</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -329,7 +329,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Preset Manager Modal -->
         <div class="modal fade" id="presetManagerModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content" style="font-size: 1.1rem;">
+                <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Manage Presets</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -360,7 +360,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Model Settings Modal -->
         <div class="modal fade" id="modelSettingsModal" tabindex="-1">
             <div class="modal-dialog">
-                <div class="modal-content" style="font-size: 1.1rem;">
+                <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Model Settings</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -501,7 +501,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Settings Modal -->
         <div class="modal fade" id="ollamaSettingsModal" tabindex="-1">
             <div class="modal-dialog">
-                <div class="modal-content" style="font-size: 1.1rem;">
+                <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">OllamaVision Settings</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -521,15 +521,16 @@ async function addOllamaVisionTab(utilitiesTab) {
                                 </div>
 
                                 <!-- Common Settings -->
+                                <!-- Compression toggle first -->
                                 <div class="col-md-6 mb-2">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="autoUnloadModel">
-                                        <label class="form-check-label" for="autoUnloadModel">
-                                            Automatically unload model after analysis
+                                        <input class="form-check-input" type="checkbox" id="compressImages">
+                                        <label class="form-check-label" for="compressImages">
+                                            Compress images before analysis
                                         </label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        This will free up memory but may increase load time for the next analysis
+                                        Reduces memory usage and improves stability.
                                     </small>
                                 </div>
 
@@ -547,6 +548,19 @@ async function addOllamaVisionTab(utilitiesTab) {
 
                                 <!-- Ollama-specific Settings -->
                                 <div id="ollama-connection-settings">
+                                    <!-- Move unload model toggle here -->
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="autoUnloadModel">
+                                            <label class="form-check-label" for="autoUnloadModel">
+                                                Automatically unload model after analysis
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            This will free up memory but may increase load time for the next analysis
+                                        </small>
+                                    </div>
+
                                     <div class="col-md-6 mb-2">
                                         <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" id="showAllModels">
@@ -616,7 +630,7 @@ async function addOllamaVisionTab(utilitiesTab) {
         <!-- Response Config Modal -->
         <div class="modal fade" id="responseConfigModal">
             <div class="modal-dialog">
-                <div class="modal-content" style="font-size: 1.1rem;">
+                <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
                         <h5 class="modal-title">Configure Response</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1010,9 +1024,15 @@ window.ollamaVision = {
         if (dataUrl) {
             previewImage.src = dataUrl;
             previewImage.style.display = 'block';
+            // Center text and increase size
+            imageInfo.style.textAlign = 'center';
+            imageInfo.style.fontSize = '1.5rem';
             imageInfo.textContent = `Image: ${imageName}`;
             previewImage.dataset.imageData = dataUrl;
             analyzeBtn.disabled = false;
+            // Center the analyze button
+            analyzeBtn.style.display = 'block';
+            analyzeBtn.style.margin = '0 auto';
             previewArea.classList.add('has-image');
         } else {
             previewImage.style.display = 'none';
@@ -1037,77 +1057,110 @@ window.ollamaVision = {
         }
     },
 
-    analyze: function() {
+    analyze: async function() {
         try {
             const imageData = document.getElementById('preview-image').dataset.imageData;
-            const model = document.getElementById('ollamavision-model').value;
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-            
-            // Base request data with common parameters
-            const requestData = {
-                imageData: imageData,
-                model: model,
-                backendType: backendType,
-                temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
-                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
-                topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7')
-            };
-
-            // Only add systemPrompt if it's not empty
-            const systemPrompt = localStorage.getItem('ollamaVision_systemPrompt')?.trim();
-            if (systemPrompt) {
-                requestData.systemPrompt = systemPrompt;
+            if (!imageData) {
+                this.updateStatus('error', 'No image data found');
+                return;
             }
 
-            // Add backend-specific parameters
-            if (backendType === 'openai') {
-                requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
-                requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
-                requestData.apiKey = localStorage.getItem('ollamaVision_openaiKey');
-            } 
-            else if (backendType === 'openrouter') {
-                requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
-                requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
-                requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                requestData.minP = parseFloat(localStorage.getItem('ollamaVision_minP') || '0.0');
-                requestData.topA = parseFloat(localStorage.getItem('ollamaVision_topA') || '0.0');
-                requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
-                requestData.apiKey = localStorage.getItem('ollamaVision_openrouterKey');
-            }
-            else { // ollama
-                requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
-                requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
-            }
+            // Add timeout to the request
+            const timeout = 30000; // 30 seconds
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-            // Show loading status
-            this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
+            try {
+                const model = document.getElementById('ollamavision-model').value;
+                const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+                const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
+                
+                // Only compress if the setting is enabled
+                const processedImageData = shouldCompress ? 
+                    await this.compressImage(imageData) : 
+                    imageData;
+                
+                // Base request data with common parameters
+                const requestData = {
+                    imageData: processedImageData,
+                    model: model,
+                    backendType: backendType,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7')
+                };
 
-            // Make the API call
-            genericRequest('AnalyzeImageAsync', requestData, 
-                (response) => {
-                    if (response.success) {
-                        this.updateStatus('success', 'Image description complete!');
-                        const responseArea = document.getElementById('analysis-response');
-                        const responseText = document.getElementById('response-text');
-                        const sendToPromptBtn = document.getElementById('send-to-prompt-btn');
-                        
-                        responseArea.style.display = 'block';
-                        responseText.textContent = response.response;
-                        sendToPromptBtn.disabled = false;
-
-                        // Add to history
-                        this.addToHistory(
-                            document.getElementById('preview-image').src,
-                            response.response
-                        );
-                    } else {
-                        this.updateStatus('error', 'Analysis failed: ' + response.error);
-                    }
+                // Only add systemPrompt if it's not empty
+                const systemPrompt = localStorage.getItem('ollamaVision_systemPrompt')?.trim();
+                if (systemPrompt) {
+                    requestData.systemPrompt = systemPrompt;
                 }
-            );
+
+                // Add backend-specific parameters
+                if (backendType === 'openai') {
+                    requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
+                    requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
+                    requestData.apiKey = localStorage.getItem('ollamaVision_openaiKey');
+                } 
+                else if (backendType === 'openrouter') {
+                    requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
+                    requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
+                    requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
+                    requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
+                    requestData.minP = parseFloat(localStorage.getItem('ollamaVision_minP') || '0.0');
+                    requestData.topA = parseFloat(localStorage.getItem('ollamaVision_topA') || '0.0');
+                    requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
+                    requestData.apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+                }
+                else { // ollama
+                    requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
+                    requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
+                    requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
+                    requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
+                }
+
+                // Show loading status
+                this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
+
+                // Make the API call
+                genericRequest('AnalyzeImageAsync', requestData, 
+                    (response) => {
+                        clearTimeout(timeoutId);
+                        if (response.success) {
+                            this.updateStatus('success', 'Image description complete!');
+                            const responseArea = document.getElementById('analysis-response');
+                            const responseText = document.getElementById('response-text');
+                            const sendToPromptBtn = document.getElementById('send-to-prompt-btn');
+                            
+                            responseArea.style.display = 'block';
+                            responseText.textContent = response.response;
+                            sendToPromptBtn.disabled = false;
+
+                            this.addToHistory(
+                                document.getElementById('preview-image').src,
+                                response.response
+                            );
+                        } else {
+                            let errorMessage = response.error;
+                            if (errorMessage.includes('stream')) {
+                                errorMessage += '\nTry enabling image compression in settings.';
+                            }
+                            this.updateStatus('error', 'Analysis failed: ' + errorMessage);
+                        }
+                    },
+                    (error) => {
+                        clearTimeout(timeoutId);
+                        if (error.name === 'AbortError') {
+                            this.updateStatus('error', 'Request timed out. Try:\n1. Enable image compression\n2. Check your connection\n3. Try again');
+                        } else {
+                            this.updateStatus('error', 'Error analyzing image: ' + error);
+                        }
+                    }
+                );
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
         } catch (error) {
             this.updateStatus('error', 'Error analyzing image: ' + error);
         }
@@ -1139,7 +1192,7 @@ window.ollamaVision = {
         const settingsHtml = `
             <div class="modal fade" id="ollamaSettingsModal" tabindex="-1">
                 <div class="modal-dialog">
-                    <div class="modal-content" style="font-size: 1.1rem;">
+                    <div class="modal-content" style="font-size: 1.2rem;">
                         <div class="modal-header">
                             <h5 class="modal-title">OllamaVision Settings</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1159,15 +1212,16 @@ window.ollamaVision = {
                                     </div>
 
                                     <!-- Common Settings -->
+                                    <!-- Compression toggle first -->
                                     <div class="col-md-6 mb-2">
                                         <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="autoUnloadModel">
-                                            <label class="form-check-label" for="autoUnloadModel">
-                                                Automatically unload model after analysis
+                                            <input class="form-check-input" type="checkbox" id="compressImages">
+                                            <label class="form-check-label" for="compressImages">
+                                                Compress images before analysis
                                             </label>
                                         </div>
                                         <small class="form-text text-muted">
-                                            This will free up memory but may increase load time for the next analysis
+                                            Reduces memory usage and improves stability. Max size: 1024x1024
                                         </small>
                                     </div>
 
@@ -1185,6 +1239,19 @@ window.ollamaVision = {
 
                                     <!-- Ollama-specific Settings -->
                                     <div id="ollama-connection-settings">
+                                        <!-- Move unload model toggle here -->
+                                        <div class="col-md-6 mb-2">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="autoUnloadModel">
+                                                <label class="form-check-label" for="autoUnloadModel">
+                                                    Automatically unload model after analysis
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                This will free up memory but may increase load time for the next analysis
+                                            </small>
+                                        </div>
+
                                         <div class="col-md-6 mb-2">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="showAllModels">
@@ -1265,6 +1332,7 @@ window.ollamaVision = {
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         const openaiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
         const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
+        const compressImages = localStorage.getItem('ollamaVision_compressImages') === 'true';
                 
         document.getElementById('autoUnloadModel').checked = autoUnload;
         document.getElementById('showAllModels').checked = showAllModels;
@@ -1275,6 +1343,7 @@ window.ollamaVision = {
         document.getElementById('showDefaultPresets').checked = showDefaultPresets;
         document.getElementById('openrouter-key').value = localStorage.getItem('ollamaVision_openrouterKey') || '';
         document.getElementById('openrouter-site').value = localStorage.getItem('ollamaVision_openrouterSite') || '';
+        document.getElementById('compressImages').checked = compressImages;
 
         // Show/hide appropriate settings
         this.toggleBackendSettings();
@@ -1303,7 +1372,7 @@ window.ollamaVision = {
             openrouterSettings.style.display = 'block';
         }
         
-        // Use the same format as everywhere else
+        // Update connect button text
         connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
     },
 
@@ -1317,7 +1386,8 @@ window.ollamaVision = {
         const openaiKey = document.getElementById('openai-key').value.trim();
         const openrouterKey = document.getElementById('openrouter-key').value.trim();
         const openrouterSite = document.getElementById('openrouter-site').value.trim();
-                
+        const compressImages = document.getElementById('compressImages').checked;
+        
         // Validate required fields based on backend type
         if (backendType === 'openai' && !openaiKey) {
             this.updateStatus('error', 'OpenAI API key is required');
@@ -1339,6 +1409,7 @@ window.ollamaVision = {
         localStorage.setItem('ollamaVision_openaiKey', openaiKey);
         localStorage.setItem('ollamaVision_openrouterKey', openrouterKey);
         localStorage.setItem('ollamaVision_openrouterSite', openrouterSite);
+        localStorage.setItem('ollamaVision_compressImages', compressImages);
         
         bootstrap.Modal.getInstance(document.getElementById('ollamaSettingsModal')).hide();
         this.updateStatus('success', 'Settings saved successfully');
@@ -1395,7 +1466,7 @@ window.ollamaVision = {
         const configHtml = `
             <div class="modal fade" id="responseConfigModal">
                 <div class="modal-dialog">
-                    <div class="modal-content" style="font-size: 1.1rem;">
+                    <div class="modal-content" style="font-size: 1.2rem;">
                         <div class="modal-header">
                             <h5 class="modal-title">Configure Response</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1558,6 +1629,10 @@ window.ollamaVision = {
                 .form-select optgroup {
                     background-color: inherit;
                     color: inherit;
+                }
+
+                .basic-button {
+                    font-size: 1.2rem !important;
                 }
             </style>
             <!-- ... rest of template ... -->
@@ -2194,10 +2269,10 @@ window.ollamaVision = {
         const previewImage = document.getElementById('preview-image');
         const imageInfo = document.getElementById('image-info');
         
-        // Set up initial text with inline styling
-        imageInfo.style.fontSize = '1.5rem';  // Make text larger
-        imageInfo.style.textAlign = 'center'; // Center the text
-        imageInfo.textContent = 'Drop an image here or use the buttons to the side.';
+        // Set up placeholder image using base64 data
+        previewImage.src = PLACEHOLDER_IMAGE;
+        previewImage.style.display = 'block';
+        imageInfo.textContent = '';  // Remove the text since it's in the SVG now
         
         // Add drag and drop event listeners
         previewArea.addEventListener('dragover', (e) => {
@@ -2310,7 +2385,7 @@ window.ollamaVision = {
                         </div>
                     </div>
                     <div class="card-body p-2">
-                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 1.1rem;">${item.response}</p>
+                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 1.2rem;">${item.response}</p>
                     </div>
                 </div>
             </div>
@@ -2417,6 +2492,41 @@ window.ollamaVision = {
             console.error('Error using history item:', error);
             this.updateStatus('error', 'Error restoring history item: ' + error.message);
         }
+    },
+
+    // Add this function to the ollamaVision object
+    compressImage: async function(imageData, maxWidth = 1024, maxHeight = 1024, quality = 0.8) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Calculate new dimensions
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to JPEG with specified quality
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = imageData;
+        });
     }
 };
 
