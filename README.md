@@ -15,13 +15,16 @@
   - OpenAI: temperature, max_tokens, top_p, frequency_penalty, presence_penalty
   - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
 - Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
-- Ability to set custom System Prompts to alter the behavior of the model.
+- System Prompt support for all backends to customize model behavior
 - Custom preset support with reordering capability
 - Direct-to-prompt generation
 - Zero impact on VRAM when not in use (when using unload model setting)
 - Image paste/upload support
 - Image Drag and drop support
 - Remote Ollama server connection support
+- Image compression option to prevent memory issues
+- Analysis history with thumbnails and parameter reuse
+- Enhanced error handling with helpful troubleshooting suggestions
 
 ## 📋 Prerequisites
 
