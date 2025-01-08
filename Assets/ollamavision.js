@@ -87,6 +87,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (connectBtn) {
                     connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
                 }
+
+                // Restore last selected response type
+                const lastUserPrompt = localStorage.getItem('ollamaVision_currentUserPrompt') || 'Default';
+                const userPromptSelect = document.getElementById('user-prompt');
+                if (userPromptSelect) {
+                    userPromptSelect.value = lastUserPrompt;
+                }
             });
             
             console.log('Utilities tab found, OllamaVision tab added');
@@ -129,8 +136,10 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <button class="basic-button" onclick="ollamaVision.showModelSettings()" id="model-settings-btn">
                                 <i class="fas fa-sliders-h"></i> Model Settings
                             </button>
-                            <button class="basic-button" onclick="ollamaVision.showResponseSettings()" id="response-settings-btn">
-                                <i class="fas fa-cog"></i> Configure Response Type
+                            <button class="basic-button" 
+                                    onclick="ollamaVision.showResponseSettings()" 
+                                    id="response-settings-btn">
+                                <i class="fas fa-cog"></i> Configure User Prompt
                             </button>
                             <button class="basic-button" onclick="ollamaVision.showSettings()" id="settings-btn">
                                 <i class="fas fa-cog"></i> Settings
@@ -185,7 +194,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         </div>
                                         <div id="image-info" class="mt-2 text-muted text-center"></div>
                                         <div class="text-center mt-3">
-                                            <button class="basic-button" 
+                                            <button class="basic-button" style="font-size: 1.2rem;"
                                                     onclick="ollamaVision.analyze()" 
                                                     id="analyze-btn" 
                                                     disabled>
@@ -253,7 +262,7 @@ async function addOllamaVisionTab(utilitiesTab) {
             <div class="modal-dialog">
                 <div class="modal-content" style="font-size: 1.2rem;">
                     <div class="modal-header">
-                        <h5 class="modal-title">Response Type Settings</h5>
+                        <h5 class="modal-title">User Prompt Settings</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
@@ -269,6 +278,9 @@ async function addOllamaVisionTab(utilitiesTab) {
                                             <button class="basic-button" onclick="ollamaVision.showPresetManager()">
                                                 Manage Presets
                                             </button>
+                                            <button class="basic-button" onclick="ollamaVision.showPrependManager()">
+                                                Prompt Prepends
+                                            </button>
                                         </div>
                                     </div>
                                     <select class="auto-dropdown modal_text_extra" id="promptPresets" 
@@ -278,7 +290,9 @@ async function addOllamaVisionTab(utilitiesTab) {
                                     </select>
                                 </div>
                                 <div class="col-12">
-                                    <label for="responsePrompt" class="form-label">Custom Response Prompt</label>
+                                    <label for="responsePrompt" class="form-label small text-muted">
+                                        Edit Preset Below, Edits Will Remain But Won't Be Saved
+                                    </label>
                                     <textarea class="auto-text-block modal_text_extra" id="responsePrompt" rows="6"></textarea>
                                     <small class="form-text text-muted">Enter the prompt that will be used to generate image descriptions.</small>
                                 </div>
@@ -667,6 +681,134 @@ async function addOllamaVisionTab(utilitiesTab) {
                 </div>
             </div>
         </div>
+
+        <!-- Prepend Manager Modal -->
+        <div class="modal fade" id="prependManagerModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="font-size: 1.2rem;">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Prompt Prepends</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="prependPresets" class="form-label">Saved Prepends</label>
+                                        <div class="btn-group">
+                                            <button class="basic-button" onclick="ollamaVision.showCreatePrepend()">
+                                                Create New Prepend
+                                            </button>
+                                            <button class="basic-button" onclick="ollamaVision.showPrependsManager()">
+                                                Manage Prepends
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <select class="auto-dropdown modal_text_extra" id="prependPresets" 
+                                            style="width: auto; min-width: 200px;" 
+                                            onchange="ollamaVision.loadPrepend()">
+                                        <!-- Options will be loaded dynamically -->
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="prependText" class="form-label">Prepend Text</label>
+                                    <textarea class="auto-text-block modal_text_extra" 
+                                              id="prependText" 
+                                              rows="4" 
+                                              maxlength="1000"
+                                              oninput="ollamaVision.updateCharacterCount('prependText', 'prependCharCount')"></textarea>
+                                    <div class="d-flex justify-content-end">
+                                        <small id="prependCharCount" class="text-muted">1000 characters remaining</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">
+                            Add text that will be automatically inserted before your selected user prompt. 
+                            Useful for adding consistent instructions or context to your prompts.
+                            Limited to 1000 characters to prevent token overflow and ensure reliable responses from the AI.
+                        </small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="basic-button" onclick="$('#prependManagerModal').modal('hide'); ollamaVision.showResponseSettings()">
+                            Cancel
+                        </button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.savePrepend()">Save Prepend</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Prepend Modal -->
+        <div class="modal fade" id="createPrependModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="font-size: 1.2rem;">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create New Prepend</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <label for="prependName" class="form-label">Prepend Name</label>
+                                    <input type="text" class="auto-text modal_text_extra" id="prependName" placeholder="Enter prepend name">
+                                </div>
+                                <div class="col-12">
+                                    <label for="newPrependText" class="form-label">Prepend Text</label>
+                                    <textarea class="auto-text-block modal_text_extra" 
+                                              id="newPrependText" 
+                                              rows="4" 
+                                              maxlength="1000"
+                                              oninput="ollamaVision.updateCharacterCount('newPrependText', 'newPrependCharCount')"></textarea>
+                                    <div class="d-flex justify-content-end">
+                                        <small id="newPrependCharCount" class="text-muted">1000 characters remaining</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="basic-button" onclick="$('#createPrependModal').modal('hide'); ollamaVision.showPrependManager()">
+                            Cancel
+                        </button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.saveNewPrepend()">Save Prepend</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Prepends Modal -->
+        <div class="modal fade" id="managePrependsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" style="font-size: 1.2rem;">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Manage Prepends</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card card-body mb-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label">User Prepends</label>
+                                    <div class="list-group auto-text modal_text_extra" id="user-prepends-list">
+                                        <!-- Prepends will be loaded here -->
+                                    </div>
+                                    <small class="form-text text-muted mt-2">
+                                        • Drag and drop prepends to reorder them<br>
+                                        • Click the trash icon to delete a prepend
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="basic-button" onclick="ollamaVision.closePrependsManager()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
     
     tabContentContainer.insertAdjacentHTML('beforeend', ollamaVisionTabContent);
@@ -727,6 +869,13 @@ async function addOllamaVisionTab(utilitiesTab) {
             window.ollamaVision.loadPresetPrompt();
         }
     }, 100); // Small delay to ensure DOM is ready
+
+    // After the tab content is added, restore the last selected response type
+    const lastUserPrompt = localStorage.getItem('ollamaVision_currentUserPrompt') || 'Default';
+    const userPromptSelect = document.getElementById('user-prompt');
+    if (userPromptSelect) {
+        userPromptSelect.value = lastUserPrompt;
+    }
 }
 
 window.ollamaVision = {
@@ -899,26 +1048,22 @@ window.ollamaVision = {
     },
 
     showResponseSettings: function() {
-        try {
-            genericRequest('GetResponsePrompt', {}, 
-                data => {
-                    if (data.success) {
-                        document.getElementById('responsePrompt').value = data.prompt;
-                        new bootstrap.Modal(document.getElementById('responseSettingsModal')).show();
-                    } else {
-                        console.error('Failed to load response settings:', data.error);
-                        this.updateStatus('error', 'Failed to load response settings: ' + data.error);
-                    }
-                },
-                error => {
-                    console.error('Request failed:', error);
-                    this.updateStatus('error', 'Failed to load response settings: ' + error);
-                }
-            );
-        } catch (error) {
-            console.error('Error in showResponseSettings:', error);
-            this.updateStatus('error', 'Error showing settings: ' + error);
+        // Get the current response type and prompt before showing modal
+        const currentUserPrompt = localStorage.getItem('ollamaVision_currentUserPrompt') || 'Default';
+        const userPromptSelect = document.getElementById('user-prompt');
+        
+        // Set the dropdown to the last selected value
+        if (userPromptSelect) {
+            userPromptSelect.value = currentUserPrompt;
         }
+
+        // Load the edited text if it exists, otherwise load the preset text
+        const editedText = localStorage.getItem('ollamaVision_editedResponseText');
+        if (editedText) {
+            document.getElementById('responsePrompt').value = editedText;
+        }
+        
+        $('#responseSettingsModal').modal('show');
     },
 
     loadPresetPrompt: function() {
@@ -946,15 +1091,12 @@ window.ollamaVision = {
     },
 
     saveResponseSettings: function() {
-        const prompt = document.getElementById('responsePrompt').value;
-        genericRequest('SaveResponsePrompt', { prompt: prompt }, data => {
-            if (data.success) {
-                this.updateStatus('success', 'Response settings saved successfully');
-                bootstrap.Modal.getInstance(document.getElementById('responseSettingsModal')).hide();
-            } else {
-                this.updateStatus('error', 'Failed to save response settings');
-            }
-        });
+        // Store the current edited text
+        const editedText = document.getElementById('responsePrompt').value;
+        localStorage.setItem('ollamaVision_editedResponseText', editedText);
+        
+        // Just close the modal
+        bootstrap.Modal.getInstance(document.getElementById('responseSettingsModal')).hide();
     },
 
     enablePaste: function() {
@@ -1079,22 +1221,29 @@ window.ollamaVision = {
                 const processedImageData = shouldCompress ? 
                     await this.compressImage(imageData) : 
                     imageData;
+
+                // Get the current prompt and any selected prepend
+                let prompt = document.getElementById('responsePrompt').value;
+                const selectedPrepend = document.getElementById('prependPresets')?.value;
+                let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+                const prepend = prepends.find(p => p.name === selectedPrepend);
+                
+                // Add prepend to prompt if one is selected
+                if (prepend) {
+                    prompt = prepend.text + ' ' + prompt;
+                }
                 
                 // Base request data with common parameters
                 const requestData = {
                     imageData: processedImageData,
                     model: model,
                     backendType: backendType,
+                    prompt: prompt,  // Use the combined prompt here
+                    systemPrompt: localStorage.getItem('ollamaVision_systemPrompt'),
                     temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
                     maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
                     topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7')
                 };
-
-                // Only add systemPrompt if it's not empty
-                const systemPrompt = localStorage.getItem('ollamaVision_systemPrompt')?.trim();
-                if (systemPrompt) {
-                    requestData.systemPrompt = systemPrompt;
-                }
 
                 // Add backend-specific parameters
                 if (backendType === 'openai') {
@@ -1159,7 +1308,11 @@ window.ollamaVision = {
                 );
             } catch (error) {
                 clearTimeout(timeoutId);
-                throw error;
+                if (error.name === 'AbortError') {
+                    this.updateStatus('error', 'Request timed out. Try:\n1. Enable image compression\n2. Check your connection\n3. Try again');
+                } else {
+                    this.updateStatus('error', 'Error analyzing image: ' + error);
+                }
             }
         } catch (error) {
             this.updateStatus('error', 'Error analyzing image: ' + error);
@@ -1887,12 +2040,15 @@ window.ollamaVision = {
     initializeSortable: function(userList) {
         new Sortable(userList, {
             animation: 150,
-            handle: '.basic-button',
+            handle: '.basic-button',  // Change back to .basic-button
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
             onEnd: (evt) => {
-                console.log('Drag ended, saving new order...');
+                if (evt.target.id === 'user-presets-list') {
                 this.savePresetOrder();
+                } else if (evt.target.id === 'user-prepends-list') {
+                    this.savePrependOrder();
+                }
             }
         });
     },
@@ -2527,19 +2683,293 @@ window.ollamaVision = {
             };
             img.src = imageData;
         });
-    }
+    },
+
+    // Add these functions to the ollamaVision object
+    showPrependManager: function() {
+        $('#responseSettingsModal').modal('hide');
+        $('#prependManagerModal').modal('show');
+        
+        // First update the dropdown
+        this.updatePrependsDropdown();
+        
+        // Then set the last selected value
+        const lastSelectedPrepend = localStorage.getItem('ollamaVision_currentPrepend');
+        const prependSelect = document.getElementById('prependPresets');
+        
+        // Set the dropdown to the last selected value
+        if (prependSelect && lastSelectedPrepend) {
+            prependSelect.value = lastSelectedPrepend;
+            // Load either edited text or original prepend text
+            const editedPrependText = localStorage.getItem('ollamaVision_editedPrependText');
+            if (editedPrependText) {
+                document.getElementById('prependText').value = editedPrependText;
+                // Initialize counter with edited text
+                this.updateCharacterCount('prependText', 'prependCharCount');
+            } else {
+                const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+                const prepend = prepends.find(p => p.name === lastSelectedPrepend);
+                if (prepend) {
+                    document.getElementById('prependText').value = prepend.text;
+                    // Initialize counter with prepend text
+                    this.updateCharacterCount('prependText', 'prependCharCount');
+                }
+            }
+        } else {
+            // Initialize counter with empty text
+            this.updateCharacterCount('prependText', 'prependCharCount');
+        }
+    },
+
+    showCreatePrepend: function() {
+        $('#prependManagerModal').modal('hide');
+        $('#createPrependModal').modal('show');
+        // Initialize counter for new prepend text area
+        this.updateCharacterCount('newPrependText', 'newPrependCharCount');
+    },
+
+    loadPrependsManager: function() {
+        const userList = document.getElementById('user-prepends-list');
+        
+        if (!userList) {
+            console.error('User prepends list not found');
+            return;
+        }
+        
+        // Clear the list
+        userList.innerHTML = '';
+        
+        // Load user prepends
+        const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+        
+        if (prepends.length === 0) {
+            userList.innerHTML = `
+                <div class="list-group-item text-muted">
+                    No prepends created yet. Create a prepend to see it here.
+                </div>`;
+            return;
+        }
+        
+        userList.innerHTML = prepends.map(prepend => `
+            <div class="list-group-item d-flex justify-content-between align-items-center modal_text_extra auto-text" 
+                 data-prepend="${prepend.name}">
+                <div class="d-flex align-items-center">
+                    <span class="basic-button me-2" 
+                          style="cursor: grab; padding: 4px 8px; min-width: 30px; text-align: center;"
+                          title="Drag to reorder">
+                        <i class="fas fa-grip-lines"></i>
+                    </span>
+                    <div class="auto-text">
+                        <div class="fw-bold">${prepend.name}</div>
+                        <div class="small text-muted">${prepend.text.substring(0, 100)}${prepend.text.length > 100 ? '...' : ''}</div>
+                    </div>
+                </div>
+                <button class="basic-button" 
+                        onclick="ollamaVision.deletePrepend('${prepend.name}')" 
+                        style="padding: 4px 8px; background-color: var(--bs-danger) !important;"
+                        title="Delete this prepend">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `).join('');
+
+        // Initialize Sortable
+        if (typeof Sortable !== 'undefined') {
+            this.initializeSortable(userList);
+        } else {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+            script.onload = () => {
+                this.initializeSortable(userList);
+            };
+            document.head.appendChild(script);
+        }
+    },
+    
+    initializeSortable: function(userList) {
+        new Sortable(userList, {
+            animation: 150,
+            handle: '.basic-button',  // Change back to .basic-button
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: (evt) => {
+                if (evt.target.id === 'user-presets-list') {
+                this.savePresetOrder();
+                } else if (evt.target.id === 'user-prepends-list') {
+                    this.savePrependOrder();
+                }
+            }
+        });
+    },
+
+    savePrependOrder: function() {
+        const userList = document.getElementById('user-presets-list');
+        const presetOrder = Array.from(userList.children).map(item => item.dataset.preset);
+        
+        let customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
+        
+        // Create a new array with the correct order
+        const orderedPresets = presetOrder.map(presetName => 
+            customPresets.find(preset => preset.name === presetName)
+        ).filter(Boolean); // Remove any undefined entries
+        
+        // Save the new order
+        localStorage.setItem('ollamaVision_customPresets', JSON.stringify(orderedPresets));
+        
+        // Update both the dropdown and preset manager
+        this.updatePresetsDropdown();
+    },
+
+    updatePrependsDropdown: function() {
+        const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+        const dropdown = document.getElementById('prependPresets');
+        dropdown.innerHTML = '<option value="">Select a prepend...</option>';
+        
+        prepends.forEach(prepend => {
+            const option = document.createElement('option');
+            option.value = prepend.name;
+            option.textContent = prepend.name;
+            dropdown.appendChild(option);
+        });
+    },
+
+    loadPrepend: function() {
+        const selectedName = document.getElementById('prependPresets').value;
+        if (!selectedName) return;
+        
+        // Store the selected prepend
+        localStorage.setItem('ollamaVision_currentPrepend', selectedName);
+        
+        const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+        const prepend = prepends.find(p => p.name === selectedName);
+        
+        if (prepend) {
+            // Load the original preset text
+            document.getElementById('prependText').value = prepend.text;
+            // Initialize character counter
+            this.updateCharacterCount('prependText', 'prependCharCount');
+            // Clear any edited text
+            localStorage.removeItem('ollamaVision_editedPrependText');
+        }
+    },
+
+    savePrepend: function() {
+        const text = document.getElementById('prependText').value.trim();
+        
+        if (!text) {
+            this.updateStatus('error', 'Please enter text for the prepend');
+            return;
+        }
+        
+        // Store the edited text
+        localStorage.setItem('ollamaVision_editedPrependText', text);
+        
+        // Close prepend modal and return to response settings modal
+        $('#prependManagerModal').modal('hide');
+        setTimeout(() => {
+            $('#responseSettingsModal').modal('show');
+        }, 250);
+        
+        this.updateStatus('success', 'Prepend saved successfully');
+    },
+
+    saveNewPrepend: function() {
+        const name = document.getElementById('prependName').value.trim();
+        const text = document.getElementById('newPrependText').value.trim();
+        
+        if (!name || !text) {
+            this.updateStatus('error', 'Please enter both name and text for the prepend');
+            return;
+        }
+        
+        let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+        
+        if (prepends.some(p => p.name === name)) {
+            this.updateStatus('error', 'A prepend with this name already exists');
+            return;
+        }
+        
+        prepends.push({ name, text, order: prepends.length });
+        localStorage.setItem('ollamaVision_prepends', JSON.stringify(prepends));
+        
+        document.getElementById('prependName').value = '';
+        document.getElementById('newPrependText').value = '';
+        
+        this.updateStatus('success', 'New prepend created successfully');
+        $('#createPrependModal').modal('hide');
+        this.showPrependManager();
+    },
+
+    deletePrepend: function(name) {
+        let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+        prepends = prepends.filter(p => p.name !== name);
+        localStorage.setItem('ollamaVision_prepends', JSON.stringify(prepends));
+        
+        // Refresh the manager UI
+        this.loadPrependsManager();
+        // Update the dropdown
+        this.updatePrependsDropdown();
+    },
+
+    // Add this function to handle showing the Prepends Manager modal
+    showPrependsManager: function() {
+        $('#prependManagerModal').modal('hide');
+        
+        // Get the last selected prepend
+        const lastSelectedPrepend = localStorage.getItem('ollamaVision_currentPrepend');
+        
+        // Load the prepends before showing the modal
+        this.loadPrependsManager();
+        
+        setTimeout(() => {
+            const modal = new bootstrap.Modal(document.getElementById('managePrependsModal'));
+            modal.show();
+        }, 250);
+    },
+
+    // Add this function to handle closing the manage prepends modal
+    closePrependsManager: function() {
+        $('#managePrependsModal').modal('hide');
+        setTimeout(() => {
+            $('#prependManagerModal').modal('show');
+        }, 250);
+    },
+
+    // Add this function to handle character counting
+    updateCharacterCount: function(textareaId, counterId, maxLength = 1000) {
+        const textarea = document.getElementById(textareaId);
+        const counter = document.getElementById(counterId);
+        const remaining = maxLength - textarea.value.length;
+        counter.textContent = `${remaining} characters remaining`;
+        
+        // Add warning color if close to limit
+        if (remaining < 100) {
+            counter.style.color = 'var(--bs-warning)';
+        } else {
+            counter.style.color = 'inherit';
+        }
+        
+        // Truncate if over limit
+        if (textarea.value.length > maxLength) {
+            textarea.value = textarea.value.substring(0, maxLength);
+        }
+    },
 };
 
 // Add this event listener after initialization
-document.getElementById('response-type').addEventListener('change', function(e) {
+document.getElementById('user-prompt').addEventListener('change', function(e) {
     const value = e.target.value;
+    localStorage.setItem('ollamaVision_currentUserPrompt', value);
+    
     if (value.startsWith('custom_')) {
         const presetName = value.replace('custom_', '');
         const presets = JSON.parse(localStorage.getItem('ollamaVision_presets') || '[]');
         const preset = presets.find(p => p.name === presetName);
         if (preset) {
-            // Use the custom preset prompt
-            localStorage.setItem('ollamaVision_currentPrompt', preset.prompt);
+            // Load the original preset text
+            document.getElementById('responsePrompt').value = preset.prompt;
+            // Clear any edited text
+            localStorage.removeItem('ollamaVision_editedResponseText');
         }
     }
 });

@@ -21,7 +21,6 @@ namespace Urabewe.OllamaVision.WebAPI
     public class OllamaVisionAPI
     {
         private static readonly HttpClient client = new HttpClient();
-        private static string DEFAULT_PROMPT = "Give a brief, detailed description of this image. Make it all one paragraph and format it for image generation prompts.";
         
         private static readonly Dictionary<string, string> PRESET_PROMPTS = new Dictionary<string, string>
         {
@@ -51,27 +50,27 @@ namespace Urabewe.OllamaVision.WebAPI
             Logs.Info("Registering OllamaVision API calls...");
             API.RegisterAPICall(ConnectToOllamaAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(AnalyzeImageAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
-            API.RegisterAPICall(GetResponsePrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
-            API.RegisterAPICall(SaveResponsePrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(GetUserPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(SaveUserPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetPresetPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(UnloadModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
-        [API.APIDescription("Gets the current response prompt setting", "Returns the current prompt used for image analysis")]
-        public static async Task<JObject> GetResponsePrompt(JObject data)
+        [API.APIDescription("Gets the current user prompt setting", "Returns the current prompt used for image analysis")]
+        public static async Task<JObject> GetUserPrompt(JObject data)
         {
             try 
             {
                 return new JObject
                 {
                     ["success"] = true,
-                    ["prompt"] = DEFAULT_PROMPT
+                    ["prompt"] = "Give a brief, detailed description of this image. Make it all one paragraph and format it for image generation prompts."
                 };
             }
             catch (Exception ex)
             {
-                Logs.Error($"Error in GetResponsePrompt: {ex.Message}");
+                Logs.Error($"Error in GetUserPrompt: {ex.Message}");
                 return new JObject
                 {
                     ["success"] = false,
@@ -129,12 +128,11 @@ namespace Urabewe.OllamaVision.WebAPI
             }
         }
 
-        [API.APIDescription("Saves the response prompt setting", "Returns success status of saving the prompt")]
-        public static async Task<JObject> SaveResponsePrompt(JObject data)
+        [API.APIDescription("Saves the user prompt setting", "Returns success status of saving the prompt")]
+        public static async Task<JObject> SaveUserPrompt(JObject data)
         {
             try
             {
-                DEFAULT_PROMPT = data["prompt"]?.ToString() ?? DEFAULT_PROMPT;
                 return new JObject
                 {
                     ["success"] = true
@@ -210,6 +208,17 @@ namespace Urabewe.OllamaVision.WebAPI
         {
             try
             {
+                // Get the prompt from request data
+                var prompt = data["prompt"]?.ToString();
+                if (string.IsNullOrEmpty(prompt))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing prompt"
+                    };
+                }
+
                 // Extract and validate image data
                 var imageData = data["imageData"]?.ToString();
                 if (string.IsNullOrEmpty(imageData))
@@ -307,7 +316,7 @@ namespace Urabewe.OllamaVision.WebAPI
                         {
                             ["role"] = "user",
                             ["content"] = new JArray {
-                                new JObject { ["type"] = "text", ["text"] = DEFAULT_PROMPT },
+                                new JObject { ["type"] = "text", ["text"] = prompt },
                                 new JObject {
                                     ["type"] = "image_url",
                                     ["image_url"] = new JObject {
@@ -364,7 +373,7 @@ namespace Urabewe.OllamaVision.WebAPI
                         {
                             ["role"] = "user",
                             ["content"] = new JArray {
-                                new JObject { ["type"] = "text", ["text"] = DEFAULT_PROMPT },
+                                new JObject { ["type"] = "text", ["text"] = prompt },
                                 new JObject {
                                     ["type"] = "image_url",
                                     ["image_url"] = new JObject {
@@ -402,7 +411,7 @@ namespace Urabewe.OllamaVision.WebAPI
                         var requestBody = new JObject
                         {
                             ["model"] = model,
-                            ["prompt"] = DEFAULT_PROMPT,
+                            ["prompt"] = prompt,
                             ["images"] = new JArray { base64Data },
                             ["stream"] = false,
                             ["options"] = new JObject
