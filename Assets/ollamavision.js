@@ -155,7 +155,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                             onclick="ollamaVision.enablePaste()" 
                                             disabled 
                                             id="paste-btn"
-                                            style="transition: all 0.3s ease; min-width: 210px; font-size: 1.2rem; padding: 8px 12px;">
+                                            style="transition: all 0.3s ease; min-width: 170px; font-size: 1.2rem; padding: 8px 12px;">
                                         <i class="fas fa-paste me-2"></i>
                                         Click to paste with CTRL+V
                                     </button>
@@ -163,7 +163,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                             onclick="ollamaVision.uploadImage()" 
                                             disabled 
                                             id="upload-btn"
-                                            style="transition: all 0.3s ease; min-width: 210px; font-size: 1.2rem; padding: 8px 12px;">
+                                            style="transition: all 0.3s ease; min-width: 170px; font-size: 1.2rem; padding: 8px 12px;">
                                         <i class="fas fa-upload me-2"></i>
                                         Upload Image File
                                     </button>
