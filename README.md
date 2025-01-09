@@ -91,7 +91,7 @@
    - Set maximum tokens for response length
    - Adjust repeat penalty to prevent repetition
    - Set custom seed for reproducible results
-3. Choose your response type:
+3. Choose your User Prompt:
    - Use the default preset
    - Select from included presets
    - Create and manage custom presets
@@ -108,13 +108,13 @@
 ### 🎨 Using the Results
 1. Once analysis completes, click **"Send to Prompt"**
 2. The AI-generated description will appear in the Generate tab
-3. Use the description as-is or customize it for your needs
+3. Use the description as-is or customize it for your needs directly inside OllamaVision
 
 ### 🔑 Quick Tips
 - If you're using local LLM ensure Ollama is running BEFORE trying connect
-- Larger images may take longer to process
+- Larger images may take longer to process use compression if running into memory errors
 - Custom presets are saved between sessions
-- You can edit descriptions before generating images
+- You can edit descriptions before generating images directly in the Analysis Results text area
 
 That's it! Connect → Choose Model → Select Response Type → Load Image → Analyze. Simple yet powerful.
 
