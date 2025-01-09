@@ -111,11 +111,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
                 }
 
-                // Restore last selected response type
-                const lastUserPrompt = localStorage.getItem('ollamaVision_currentUserPrompt') || 'Default';
-                const userPromptSelect = document.getElementById('user-prompt');
-                if (userPromptSelect) {
-                    userPromptSelect.value = lastUserPrompt;
+                // Restore last selected preset in the dropdown
+                const lastSelectedPreset = localStorage.getItem('ollamaVision_currentPreset') || 'Default';
+                const promptPresets = document.getElementById('promptPresets');
+                if (promptPresets) {
+                    promptPresets.value = lastSelectedPreset;
                 }
 
                 // Load initial prepend
@@ -912,17 +912,18 @@ async function addOllamaVisionTab(utilitiesTab) {
                 select.appendChild(userGroup);
             }
 
-            // Set default preset and load its prompt
-            select.value = 'Default';
+            // Load the last selected preset
+            const lastSelectedPreset = localStorage.getItem('ollamaVision_currentPreset') || 'Default';
+            select.value = lastSelectedPreset;
             window.ollamaVision.loadPresetPrompt();
         }
     }, 100); // Small delay to ensure DOM is ready
 
     // After the tab content is added, restore the last selected response type
-    const lastUserPrompt = localStorage.getItem('ollamaVision_currentUserPrompt') || 'Default';
-    const userPromptSelect = document.getElementById('user-prompt');
-    if (userPromptSelect) {
-        userPromptSelect.value = lastUserPrompt;
+    const lastSelectedPreset = localStorage.getItem('ollamaVision_currentPreset') || 'Default';
+    const promptPresets = document.getElementById('promptPresets');
+    if (promptPresets) {
+        promptPresets.value = lastSelectedPreset;
     }
 }
 
@@ -1117,6 +1118,9 @@ window.ollamaVision = {
     loadPresetPrompt: function() {
         const preset = document.getElementById('promptPresets').value;
         if (!preset) return;
+        
+        // Save the current selection
+        localStorage.setItem('ollamaVision_currentPreset', preset);
         
         // Check if it's a custom preset first
         const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
@@ -2830,7 +2834,7 @@ window.ollamaVision = {
         });
     },
 
-    savePrependOrder: function() {
+    savePresetOrder: function() {
         const userList = document.getElementById('user-presets-list');
         const presetOrder = Array.from(userList.children).map(item => item.dataset.preset);
         
