@@ -209,11 +209,22 @@ async function addOllamaVisionTab(utilitiesTab) {
                             <div class="col-6 offset-1">
                                 <div id="analysis-response" style="display: none;">
                                     <div class="card">
-                                        <div class="card-header" style="font-size: 1.2rem;">
-                                            Analysis Result
+                                        <div class="card-header d-flex justify-content-between align-items-center" style="font-size: 1.2rem;">
+                                            <span>Analysis Result</span>
+                                            <div class="btn-group">
+                                                <button class="basic-button" onclick="ollamaVision.resetResponse()" title="Reset to original response">
+                                                    <i class="fas fa-undo"></i> Reset
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="card-body">
-                                            <p id="response-text" class="mb-0" style="font-size: 1.2rem;"></p>
+                                            <div style="position: relative; width: 100%; min-height: 300px;">
+                                                <textarea id="response-text" 
+                                                          class="auto-text-block modal_text_extra" 
+                                                          style="width: 100%; min-height: 300px; resize: vertical; font-size: 1.1rem;"
+                                                          spellcheck="true"></textarea>
+                                            </div>
+                                            <div id="streaming-response" style="display: none; white-space: pre-wrap;"></div>
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-end mt-3">
@@ -1189,11 +1200,11 @@ window.ollamaVision = {
 
     sendToPrompt: function() {
         const responseText = document.getElementById('response-text');
-        if (responseText && responseText.textContent) {
+        if (responseText && responseText.value) {  // Changed from textContent to value
             document.getElementById('text2imagetabbutton').click();
             const generatePromptTextarea = document.getElementById("input_prompt");
             if (generatePromptTextarea) {
-                generatePromptTextarea.value = responseText.textContent;
+                generatePromptTextarea.value = responseText.value;  // Changed from textContent to value
                 generatePromptTextarea.dispatchEvent(new Event('input'));
             }
         }
@@ -1207,112 +1218,93 @@ window.ollamaVision = {
                 return;
             }
 
-            // Add timeout to the request
-            const timeout = 30000; // 30 seconds
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            const model = document.getElementById('ollamavision-model').value;
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
+            
+            // Only compress if the setting is enabled
+            const processedImageData = shouldCompress ? 
+                await this.compressImage(imageData) : 
+                imageData;
 
-            try {
-                const model = document.getElementById('ollamavision-model').value;
-                const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-                const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
-                
-                // Only compress if the setting is enabled
-                const processedImageData = shouldCompress ? 
-                    await this.compressImage(imageData) : 
-                    imageData;
+            // Get the current prompt and any selected prepend
+            let prompt = document.getElementById('responsePrompt').value;
+            const selectedPrepend = document.getElementById('prependPresets')?.value;
+            let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+            const prepend = prepends.find(p => p.name === selectedPrepend);
+            
+            // Add prepend to prompt if one is selected
+            if (prepend) {
+                prompt = prepend.text + ' ' + prompt;
+            }
 
-                // Get the current prompt and any selected prepend
-                let prompt = document.getElementById('responsePrompt').value;
-                const selectedPrepend = document.getElementById('prependPresets')?.value;
-                let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
-                const prepend = prepends.find(p => p.name === selectedPrepend);
-                
-                // Add prepend to prompt if one is selected
-                if (prepend) {
-                    prompt = prepend.text + ' ' + prompt;
-                }
-                
-                // Base request data with common parameters
-                const requestData = {
-                    imageData: processedImageData,
-                    model: model,
-                    backendType: backendType,
-                    prompt: prompt,  // Use the combined prompt here
-                    systemPrompt: localStorage.getItem('ollamaVision_systemPrompt'),
-                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
-                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
-                    topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7')
-                };
+            // Show loading status
+            this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
 
-                // Add backend-specific parameters
-                if (backendType === 'openai') {
-                    requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
-                    requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
-                    requestData.apiKey = localStorage.getItem('ollamaVision_openaiKey');
-                } 
-                else if (backendType === 'openrouter') {
-                    requestData.frequencyPenalty = parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0');
-                    requestData.presencePenalty = parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0');
-                    requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                    requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                    requestData.minP = parseFloat(localStorage.getItem('ollamaVision_minP') || '0.0');
-                    requestData.topA = parseFloat(localStorage.getItem('ollamaVision_topA') || '0.0');
-                    requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
-                    requestData.apiKey = localStorage.getItem('ollamaVision_openrouterKey');
-                }
-                else { // ollama
-                    requestData.seed = parseInt(localStorage.getItem('ollamaVision_seed') || '-1');
-                    requestData.topK = parseInt(localStorage.getItem('ollamaVision_topK') || '40');
-                    requestData.repeatPenalty = parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1');
-                    requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
-                }
+            // Clear previous response
+            const responseText = document.getElementById('response-text');
+            const streamingResponse = document.getElementById('streaming-response');
+            responseText.value = '';
+            streamingResponse.textContent = '';
+            responseText.style.display = 'none';
+            streamingResponse.style.display = 'block';
+            
+            // Show response area
+            document.getElementById('analysis-response').style.display = 'block';
 
-                // Show loading status
-                this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
-
-                // Make the API call
-                genericRequest('AnalyzeImageAsync', requestData, 
-                    (response) => {
-                        clearTimeout(timeoutId);
-                        if (response.success) {
-                            this.updateStatus('success', 'Image description complete!');
-                            const responseArea = document.getElementById('analysis-response');
-                            const responseText = document.getElementById('response-text');
-                            const sendToPromptBtn = document.getElementById('send-to-prompt-btn');
-                            
-                            responseArea.style.display = 'block';
-                            responseText.textContent = response.response;
-                            sendToPromptBtn.disabled = false;
-
-                            this.addToHistory(
-                                document.getElementById('preview-image').src,
-                                response.response
-                            );
-                        } else {
-                            let errorMessage = response.error;
-                            if (errorMessage.includes('stream')) {
-                                errorMessage += '\nTry enabling image compression in settings.';
-                            }
-                            this.updateStatus('error', 'Analysis failed: ' + errorMessage);
-                        }
+            // Make the API call
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('StreamAnalyzeImageAsync', 
+                    {
+                        model: model,
+                        backendType: backendType,
+                        imageData: processedImageData,
+                        prompt: prompt,
+                        temperature: localStorage.getItem('ollamaVision_temperature') || '0.8',
+                        maxTokens: localStorage.getItem('ollamaVision_maxTokens') || '500',
+                        topP: localStorage.getItem('ollamaVision_topP') || '0.7',
+                        systemPrompt: localStorage.getItem('ollamaVision_systemPrompt') || '',
+                        frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0',
+                        presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || '0.0',
+                        repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || '1.1',
+                        topK: localStorage.getItem('ollamaVision_topK') || '40',
+                        seed: localStorage.getItem('ollamaVision_seed') || '-1',
+                        minP: localStorage.getItem('ollamaVision_minP') || '0.0',
+                        topA: localStorage.getItem('ollamaVision_topA') || '0.0',
+                        apiKey: backendType === 'openai' ? 
+                            localStorage.getItem('ollamaVision_openaiKey') : 
+                            backendType === 'openrouter' ? 
+                                localStorage.getItem('ollamaVision_openrouterKey') : '',
+                        siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                        ollamaUrl: backendType === 'ollama' ? 
+                            `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}` : ''
                     },
-                    (error) => {
-                        clearTimeout(timeoutId);
-                        if (error.name === 'AbortError') {
-                            this.updateStatus('error', 'Request timed out. Try:\n1. Enable image compression\n2. Check your connection\n3. Try again');
-                        } else {
-                            this.updateStatus('error', 'Error analyzing image: ' + error);
-                        }
-                    }
+                    (data) => resolve(data),
+                    (error) => reject(error)
                 );
-            } catch (error) {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
-                    this.updateStatus('error', 'Request timed out. Try:\n1. Enable image compression\n2. Check your connection\n3. Try again');
-                } else {
-                    this.updateStatus('error', 'Error analyzing image: ' + error);
-                }
+            });
+
+            if (response.success) {
+                // Update the response text
+                responseText.value = response.response;
+                this.storeOriginalResponse(response.response);
+                
+                // Show textarea, hide streaming div
+                responseText.style.display = 'block';
+                streamingResponse.style.display = 'none';
+                
+                // Enable send to prompt button
+                document.getElementById('send-to-prompt-btn').disabled = false;
+                
+                // Add to history
+                this.addToHistory(
+                    document.getElementById('preview-image').src,
+                    response.response
+                );
+                
+                this.updateStatus('success', 'Analysis complete!');
+            } else {
+                this.updateStatus('error', 'Analysis failed: ' + response.error);
             }
         } catch (error) {
             this.updateStatus('error', 'Error analyzing image: ' + error);
@@ -2619,7 +2611,8 @@ window.ollamaVision = {
                 previewImage.dataset.imageData = imageData;
                 
                 const responseText = document.getElementById('response-text');
-                responseText.textContent = item.response;
+                this.storeOriginalResponse(item.response);  // Store original response
+                responseText.value = item.response;  // Changed from textContent to value
                 
                 // Restore parameters and update UI
                 if (item.parameters) {
@@ -2952,6 +2945,21 @@ window.ollamaVision = {
         // Truncate if over limit
         if (textarea.value.length > maxLength) {
             textarea.value = textarea.value.substring(0, maxLength);
+        }
+    },
+
+    // Add these new methods:
+    
+    // Store the original response when received
+    storeOriginalResponse: function(response) {
+        localStorage.setItem('ollamaVision_originalResponse', response);
+    },
+
+    // Reset the response to the original
+    resetResponse: function() {
+        const originalResponse = localStorage.getItem('ollamaVision_originalResponse');
+        if (originalResponse) {
+            document.getElementById('response-text').value = originalResponse;
         }
     },
 };

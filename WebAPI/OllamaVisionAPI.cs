@@ -8,6 +8,8 @@ using SwarmUI.Accounts;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
+using Microsoft.AspNetCore.Http;
 
 namespace Urabewe.OllamaVision.WebAPI
 {
@@ -54,6 +56,7 @@ namespace Urabewe.OllamaVision.WebAPI
             API.RegisterAPICall(SaveUserPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetPresetPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(UnloadModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(StreamAnalyzeImageAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
@@ -601,6 +604,297 @@ namespace Urabewe.OllamaVision.WebAPI
                     ["error"] = ex.Message
                 };
             }
+        }
+
+        [API.APIDescription("Streams analysis of an image using vision models", "Returns the AI's analysis of the image as a stream")]
+        public static async Task<JObject> StreamAnalyzeImageAsync(JObject data)
+        {
+            try
+            {
+                // Extract parameters
+                var model = data["model"]?.ToString();
+                var backendType = data["backendType"]?.ToString() ?? "ollama";
+                var imageData = data["imageData"]?.ToString();
+                var prompt = data["prompt"]?.ToString();
+                var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+
+                // Validate required parameters
+                if (string.IsNullOrEmpty(model) || string.IsNullOrEmpty(imageData) || string.IsNullOrEmpty(prompt))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing required parameters"
+                    };
+                }
+
+                // Process image data
+                string base64Data;
+                if (imageData.StartsWith("data:image"))
+                {
+                    var parts = imageData.Split(',');
+                    if (parts.Length != 2)
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "Invalid image data format"
+                        };
+                    }
+                    base64Data = parts[1];
+                }
+                else
+                {
+                    base64Data = imageData;
+                }
+
+                // Extract model parameters
+                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
+                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500));
+                var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
+
+                string response = "";
+
+                if (backendType == "openai")
+                {
+                    response = await GetOpenAIResponse(
+                        model, prompt, base64Data, data["apiKey"]?.ToString(),
+                        temperature, maxTokens, topP,
+                        data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
+                        data["presencePenalty"]?.ToObject<float?>() ?? 0.0f,
+                        data["systemPrompt"]?.ToString()
+                    );
+                }
+                else if (backendType == "openrouter")
+                {
+                    response = await GetOpenRouterResponse(
+                        model, prompt, base64Data, data["apiKey"]?.ToString(),
+                        temperature, maxTokens, topP,
+                        data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
+                        data["presencePenalty"]?.ToObject<float?>() ?? 0.0f,
+                        data["topK"]?.ToObject<int?>() ?? 40,
+                        data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
+                        data["minP"]?.ToObject<float?>() ?? 0.0f,
+                        data["topA"]?.ToObject<float?>() ?? 0.0f,
+                        data["seed"]?.ToObject<int?>() ?? -1,
+                        data["siteName"]?.ToString() ?? "SwarmUI",
+                        data["systemPrompt"]?.ToString()
+                    );
+                }
+                else // Ollama
+                {
+                    response = await GetOllamaResponse(
+                        model, prompt, base64Data, ollamaUrl,
+                        temperature, maxTokens, topP,
+                        data["topK"]?.ToObject<int?>() ?? 40,
+                        data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
+                        data["seed"]?.ToObject<int?>() ?? -1,
+                        data["systemPrompt"]?.ToString()
+                    );
+                }
+
+                return new JObject
+                {
+                    ["success"] = true,
+                    ["response"] = response
+                };
+            }
+            catch (Exception ex)
+            {
+                Logs.Error($"Error in StreamAnalyzeImageAsync: {ex.Message}");
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = ex.Message
+                };
+            }
+        }
+
+        private static async Task<string> GetOpenAIResponse(string model, string prompt, string base64Data, string apiKey, 
+            float temperature, int maxTokens, float topP, float frequencyPenalty, float presencePenalty, string systemPrompt)
+        {
+            var messages = new JArray();
+            if (!string.IsNullOrEmpty(systemPrompt))
+            {
+                messages.Add(new JObject
+                {
+                    ["role"] = "system",
+                    ["content"] = systemPrompt
+                });
+            }
+
+            messages.Add(new JObject
+            {
+                ["role"] = "user",
+                ["content"] = new JArray {
+                    new JObject { ["type"] = "text", ["text"] = prompt },
+                    new JObject {
+                        ["type"] = "image_url",
+                        ["image_url"] = new JObject {
+                            ["url"] = $"data:image/jpeg;base64,{base64Data}"
+                        }
+                    }
+                }
+            });
+
+            var requestData = new JObject
+            {
+                ["model"] = model,
+                ["messages"] = messages,
+                ["max_tokens"] = maxTokens,
+                ["temperature"] = temperature,
+                ["top_p"] = topP,
+                ["frequency_penalty"] = frequencyPenalty,
+                ["presence_penalty"] = presencePenalty
+            };
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+            var response = await client.PostAsync(
+                "https://api.openai.com/v1/chat/completions",
+                new StringContent(requestData.ToString(), System.Text.Encoding.UTF8, "application/json")
+            );
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"OpenAI API request failed: {content}");
+            }
+
+            var result = JObject.Parse(content);
+            return result["choices"]?[0]?["message"]?["content"]?.ToString() ?? 
+                throw new Exception("No response content from OpenAI");
+        }
+
+        private static async Task<string> GetOpenRouterResponse(string model, string prompt, string base64Data, string apiKey,
+            float temperature, int maxTokens, float topP, float frequencyPenalty, float presencePenalty,
+            int topK, float repeatPenalty, float minP, float topA, int seed, string siteName, string systemPrompt)
+        {
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                throw new Exception("OpenRouter API key is required");
+            }
+
+            var messages = new JArray();
+            if (!string.IsNullOrEmpty(systemPrompt))
+            {
+                messages.Add(new JObject
+                {
+                    ["role"] = "system",
+                    ["content"] = systemPrompt
+                });
+            }
+
+            messages.Add(new JObject
+            {
+                ["role"] = "user",
+                ["content"] = new JArray {
+                    new JObject { ["type"] = "text", ["text"] = prompt },
+                    new JObject {
+                        ["type"] = "image_url",
+                        ["image_url"] = new JObject {
+                            ["url"] = $"data:image/jpeg;base64,{base64Data}"
+                        }
+                    }
+                }
+            });
+
+            var requestData = new JObject
+            {
+                ["model"] = model,
+                ["messages"] = messages,
+                ["max_tokens"] = maxTokens,
+                ["temperature"] = temperature,
+                ["top_p"] = topP,
+                ["frequency_penalty"] = frequencyPenalty,
+                ["presence_penalty"] = presencePenalty,
+                ["top_k"] = topK,
+                ["repetition_penalty"] = repeatPenalty,
+                ["min_p"] = minP,
+                ["top_a"] = topA
+            };
+
+            if (seed != -1)
+            {
+                requestData["seed"] = seed;
+            }
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+            client.DefaultRequestHeaders.Add("HTTP-Referer", "https://swarmui.local");
+            client.DefaultRequestHeaders.Add("X-Title", siteName);
+
+            var response = await client.PostAsync(
+                "https://openrouter.ai/api/v1/chat/completions",
+                new StringContent(requestData.ToString(), System.Text.Encoding.UTF8, "application/json")
+            );
+
+            var content = await response.Content.ReadAsStringAsync();
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                // Check if it's a model-specific error and try a fallback
+                var errorObj = JObject.Parse(content);
+                var errorMessage = errorObj["error"]?["message"]?.ToString();
+                if (errorMessage?.Contains("SambaNova") == true)
+                {
+                    // Return empty string to allow fallback behavior
+                    return string.Empty;
+                }
+                throw new Exception($"OpenRouter API request failed: {errorMessage ?? "Unknown error"}");
+            }
+
+            try
+            {
+                var result = JObject.Parse(content);
+                return result["choices"]?[0]?["message"]?["content"]?.ToString() ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static async Task<string> GetOllamaResponse(string model, string prompt, string base64Data, string ollamaUrl,
+            float temperature, int maxTokens, float topP, int topK, float repeatPenalty, int seed, string systemPrompt)
+        {
+            var requestData = new JObject
+            {
+                ["model"] = model,
+                ["prompt"] = prompt,
+                ["images"] = new JArray { base64Data },
+                ["stream"] = false,
+                ["options"] = new JObject
+                {
+                    ["temperature"] = temperature,
+                    ["top_p"] = topP,
+                    ["top_k"] = topK,
+                    ["num_predict"] = maxTokens,
+                    ["repeat_penalty"] = repeatPenalty,
+                    ["seed"] = seed
+                }
+            };
+
+            if (!string.IsNullOrEmpty(systemPrompt))
+            {
+                requestData["system"] = systemPrompt;
+            }
+
+            var response = await client.PostAsync(
+                $"{ollamaUrl}/api/generate",
+                new StringContent(requestData.ToString(), System.Text.Encoding.UTF8, "application/json")
+            );
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Ollama API request failed: {content}");
+            }
+
+            var result = JObject.Parse(content);
+            return result["response"]?.ToString() ?? 
+                throw new Exception("No response content from Ollama");
         }
     }
 } 
