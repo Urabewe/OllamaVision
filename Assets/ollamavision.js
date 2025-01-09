@@ -73,6 +73,29 @@ const idb = {
     }
 };
 
+// Add this function to handle loading the initial prepend
+async function loadInitialPrepend() {
+    // Get the last selected prepend
+    const lastSelectedPrepend = localStorage.getItem('ollamaVision_currentPrepend');
+    if (lastSelectedPrepend) {
+        // Set the dropdown value
+        const prependSelect = document.getElementById('prependPresets');
+        if (prependSelect) {
+            prependSelect.value = lastSelectedPrepend;
+        }
+
+        // Get the prepend text
+        const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
+        const prepend = prepends.find(p => p.name === lastSelectedPrepend);
+        if (prepend) {
+            // Get the edited text if it exists, otherwise use the original prepend text
+            const editedPrependText = localStorage.getItem('ollamaVision_editedPrependText') || prepend.text;
+            return editedPrependText;
+        }
+    }
+    return '';
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     async function checkForOllamaVision() {
         const utilities = document.getElementById('utilities_tab');
@@ -81,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // Add tab show event listener
             const tab = document.getElementById('ollamavision_tab');
-            tab.addEventListener('shown.bs.tab', function () {
+            tab.addEventListener('shown.bs.tab', async function () {
                 const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
                 const connectBtn = document.getElementById('connect-btn');
                 if (connectBtn) {
@@ -93,6 +116,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 const userPromptSelect = document.getElementById('user-prompt');
                 if (userPromptSelect) {
                     userPromptSelect.value = lastUserPrompt;
+                }
+
+                // Load initial prepend
+                const prependText = await loadInitialPrepend();
+                if (prependText) {
+                    const responsePrompt = document.getElementById('responsePrompt');
+                    if (responsePrompt) {
+                        // Get the current prompt
+                        let currentPrompt = responsePrompt.value;
+                        // Add prepend if it's not already there
+                        if (!currentPrompt.startsWith(prependText)) {
+                            responsePrompt.value = prependText + ' ' + currentPrompt;
+                        }
+                    }
                 }
             });
             
@@ -1227,15 +1264,13 @@ window.ollamaVision = {
                 await this.compressImage(imageData) : 
                 imageData;
 
-            // Get the current prompt and any selected prepend
+            // Get the current prompt
             let prompt = document.getElementById('responsePrompt').value;
-            const selectedPrepend = document.getElementById('prependPresets')?.value;
-            let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
-            const prepend = prepends.find(p => p.name === selectedPrepend);
             
-            // Add prepend to prompt if one is selected
-            if (prepend) {
-                prompt = prepend.text + ' ' + prompt;
+            // Get the current prepend
+            const prependText = await loadInitialPrepend();
+            if (prependText) {
+                prompt = prependText + ' ' + prompt;
             }
 
             // Show loading status
@@ -1307,7 +1342,7 @@ window.ollamaVision = {
                 this.updateStatus('error', 'Analysis failed: ' + response.error);
             }
         } catch (error) {
-            this.updateStatus('error', 'Error analyzing image: ' + error);
+            this.updateStatus('error', `Failed to analyze image: ${error.message}`);
         }
     },
 
