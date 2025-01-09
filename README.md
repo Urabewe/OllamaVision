@@ -174,7 +174,6 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 
 ## 🔮 Planned Features
 - Batch image processing
-- Send image to OllamaVision button
 - Style combination analysis
 
 ## 🙏 Acknowledgments
