@@ -5,6 +5,22 @@
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
+## 🌟 Table of Contents
+- [Features](#-features)
+- [Prerequisites](#-prerequisites)
+- [Installation](#️-installation)
+- [Usage Guide](#-usage-guide)
+  - [Getting Started](#-getting-started)
+  - [Setup & Configuration](#-setup--configuration)
+  - [Image Analysis](#-image-analysis)
+  - [Using the Results](#-using-the-results)
+  - [Quick Tips](#-quick-tips)
+- [Example Outputs](#-example-outputs)
+  - [Color Palette Analysis](#-color-palette-analysis)
+  - [Facial Features Analysis](#-facial-features-analysis)
+- [Planned Features](#-planned-features)
+- [Acknowledgments](#-acknowledgments)
+
 ## 🌟 Features
 - Multiple backend options:
   - Local LLM with Ollama (including remote Ollama installations)
