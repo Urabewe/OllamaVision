@@ -5,6 +5,22 @@
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
+## 🌟 Table of Contents
+- [Features](#-features)
+- [Prerequisites](#-prerequisites)
+- [Installation](#️-installation)
+- [Usage Guide](#-usage-guide)
+  - [Getting Started](#-getting-started)
+  - [Setup & Configuration](#-setup--configuration)
+  - [Image Analysis](#-image-analysis)
+  - [Using the Results](#-using-the-results)
+  - [Quick Tips](#-quick-tips)
+- [Example Outputs](#-example-outputs)
+  - [Color Palette Analysis](#-color-palette-analysis)
+  - [Facial Features Analysis](#-facial-features-analysis)
+- [Planned Features](#-planned-features)
+- [Acknowledgments](#-acknowledgments)
+
 ## 🌟 Features
 - Multiple backend options:
   - Local LLM with Ollama (including remote Ollama installations)
@@ -14,8 +30,9 @@
   - Ollama: temperature, top_p, top_k, max_tokens, repeat_penalty, seed
   - OpenAI: temperature, max_tokens, top_p, frequency_penalty, presence_penalty
   - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
-- Multiple preset analysis modes (Artistic Style, Facial Features, Color Palette, etc.)
+- Multiple preset User Prompts (Artistic Style, Facial Features, Color Palette, etc.)
 - System Prompt support for all backends to customize model behavior
+- Prompt Prepending for adding instructions in the front of all requests
 - Custom preset support with reordering capability
 - Direct-to-prompt generation
 - Zero impact on VRAM when not in use (when using unload model setting)
@@ -74,7 +91,7 @@
    - Set maximum tokens for response length
    - Adjust repeat penalty to prevent repetition
    - Set custom seed for reproducible results
-3. Choose your response type:
+3. Choose your User Prompt:
    - Use the default preset
    - Select from included presets
    - Create and manage custom presets
@@ -91,13 +108,13 @@
 ### 🎨 Using the Results
 1. Once analysis completes, click **"Send to Prompt"**
 2. The AI-generated description will appear in the Generate tab
-3. Use the description as-is or customize it for your needs
+3. Use the description as-is or customize it for your needs directly inside OllamaVision
 
 ### 🔑 Quick Tips
 - If you're using local LLM ensure Ollama is running BEFORE trying connect
-- Larger images may take longer to process
+- Larger images may take longer to process use compression if running into memory errors
 - Custom presets are saved between sessions
-- You can edit descriptions before generating images
+- You can edit descriptions before generating images directly in the Analysis Results text area
 
 That's it! Connect → Choose Model → Select Response Type → Load Image → Analyze. Simple yet powerful.
 
@@ -157,7 +174,6 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 
 ## 🔮 Planned Features
 - Batch image processing
-- Send image to OllamaVision button
 - Style combination analysis
 
 ## 🙏 Acknowledgments
