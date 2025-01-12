@@ -75,6 +75,12 @@ const idb = {
 
 // Add this function to handle loading the initial prepend
 async function loadInitialPrepend() {
+    // First check if prepends are enabled
+    const prependsEnabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+    if (!prependsEnabled) {
+        return '';  // Return empty string if prepends are disabled
+    }
+
     // Get the last selected prepend
     const lastSelectedPrepend = localStorage.getItem('ollamaVision_currentPrepend');
     if (lastSelectedPrepend) {
@@ -163,6 +169,14 @@ async function addOllamaVisionTab(utilitiesTab) {
                     <span class="translate" style="font-size: 1.5rem; font-weight: 500;">OllamaVision</span>
                     <div class="connection-status">
                         <div class="d-flex align-items-center gap-2">
+                            <div style="height: 100%;">
+                                <button class="basic-button d-flex align-items-center justify-content-center" 
+                                        onclick="ollamaVision.showLLMToysModal()" 
+                                        id="llm-toys-btn" 
+                                        style="font-size: 1.2rem; height: 5.5rem; margin: 0.35rem 0 -1.75rem 0;">
+                                    LLM Toys
+                                </button>
+                            </div>
                             <button class="basic-button" onclick="ollamaVision.connect()" id="connect-btn">
                                 Connect to Ollama
                             </button>
@@ -184,12 +198,13 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                         <div class="mt-2">
                             <select id="ollamavision-model" class="auto-dropdown" 
-                                    style="width: auto; background-color: inherit; color: inherit; font-size: 1.2rem;" disabled>
+                                    style="width: auto; background-color: inherit; color: inherit; font-size: 1.2rem; float: right;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
                         </div>
                     </div>
                 </div>
+
                 <div class="card-body">
                     <div class="container-fluid">
                         <!-- Image Source Buttons Row -->
@@ -231,12 +246,15 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         </div>
                                         <div id="image-info" class="mt-2 text-muted text-center"></div>
                                         <div class="text-center mt-3">
-                                            <button class="basic-button" style="font-size: 1.2rem;"
-                                                    onclick="ollamaVision.analyze()" 
-                                                    id="analyze-btn" 
-                                                    disabled>
-                                                <span>ANALYZE IMAGE</span>
-                                            </button>
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <button class="basic-button" 
+                                                        onclick="ollamaVision.analyze()" 
+                                                        id="analyze-btn" 
+                                                        disabled 
+                                                        style="font-size: 1.2rem;">
+                                                    <span>ANALYZE IMAGE</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -689,47 +707,6 @@ async function addOllamaVisionTab(utilitiesTab) {
             </div>
         </div>
 
-        <!-- Response Config Modal -->
-        <div class="modal fade" id="responseConfigModal">
-            <div class="modal-dialog">
-                <div class="modal-content" style="font-size: 1.2rem;">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Configure Response</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="card card-body mb-3 py-2">
-                            <div class="row g-2">
-                                <div class="col-12 mb-2">
-                                    <label class="form-label">Custom Prompt</label>
-                                    <textarea id="custom-prompt" class="auto-text-block modal_text_extra" rows="6"></textarea>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Save as Preset</label>
-                                    <div class="input-group">
-                                        <input type="text" id="preset-name" class="auto-text modal_text_extra" placeholder="Preset name">
-                                        <button class="basic-button" onclick="ollamaVision.savePreset()">
-                                            Save Preset
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Saved Presets</label>
-                                    <div id="saved-presets" class="list-group">
-                                        <!-- Presets will be loaded here -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="basic-button" onclick="ollamaVision.saveResponseConfig()">Save</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Prepend Manager Modal -->
         <div class="modal fade" id="prependManagerModal" tabindex="-1">
             <div class="modal-dialog">
@@ -740,6 +717,12 @@ async function addOllamaVisionTab(utilitiesTab) {
                     </div>
                     <div class="modal-body">
                         <div class="card card-body mb-3 py-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enablePrepends" checked>
+                                <label class="form-check-label" for="enablePrepends">
+                                    Enable Prompt Prepends
+                                </label>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-12 mb-2">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -754,7 +737,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         </div>
                                     </div>
                                     <select class="auto-dropdown modal_text_extra" id="prependPresets" 
-                                            style="width: auto; min-width: 200px;" 
+                                            style="width: auto; min-width: 200px; opacity: 1;" 
                                             onchange="ollamaVision.loadPrepend()">
                                         <!-- Options will be loaded dynamically -->
                                     </select>
@@ -765,6 +748,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                               id="prependText" 
                                               rows="4" 
                                               maxlength="1000"
+                                              style="opacity: 1;"
                                               oninput="ollamaVision.updateCharacterCount('prependText', 'prependCharCount')"></textarea>
                                     <div class="d-flex justify-content-end">
                                         <small id="prependCharCount" class="text-muted">1000 characters remaining</small>
@@ -782,7 +766,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                         <button type="button" class="basic-button" onclick="$('#prependManagerModal').modal('hide'); ollamaVision.showResponseSettings()">
                             Cancel
                         </button>
-                        <button type="button" class="basic-button" onclick="ollamaVision.savePrepend()">Save Prepend</button>
+                        <button type="button" class="basic-button" onclick="ollamaVision.savePrepend()">Save</button>
                     </div>
                 </div>
             </div>
@@ -1271,10 +1255,13 @@ window.ollamaVision = {
             // Get the current prompt
             let prompt = document.getElementById('responsePrompt').value;
             
-            // Get the current prepend
-            const prependText = await loadInitialPrepend();
-            if (prependText) {
-                prompt = prependText + ' ' + prompt;
+            // Only add prepend if enabled
+            const prependsEnabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+            if (prependsEnabled) {
+                const prependText = await loadInitialPrepend();
+                if (prependText) {
+                    prompt = prependText + ' ' + prompt;
+                }
             }
 
             // Show loading status
@@ -1644,149 +1631,6 @@ window.ollamaVision = {
             this.updateStatus('error', 'Error unloading model: ' + error);
             console.error('Unload model error:', error);
         }
-    },
-
-    configureResponse: function() {
-        const configHtml = `
-            <div class="modal fade" id="responseConfigModal">
-                <div class="modal-dialog">
-                    <div class="modal-content" style="font-size: 1.2rem;">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Configure Response</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="card card-body mb-3 py-2">
-                                <div class="row g-2">
-                                    <div class="col-12 mb-2">
-                                        <label class="form-label">Custom Prompt</label>
-                                        <textarea id="custom-prompt" class="auto-text-block modal_text_extra" rows="6"></textarea>
-                                    </div>
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label">Save as Preset</label>
-                                        <div class="input-group">
-                                            <input type="text" id="preset-name" class="auto-text modal_text_extra" placeholder="Preset name">
-                                            <button class="basic-button" onclick="ollamaVision.savePreset()">
-                                                Save Preset
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label">Saved Presets</label>
-                                        <div id="saved-presets" class="list-group">
-                                            <!-- Presets will be loaded here -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="basic-button" onclick="ollamaVision.saveResponseConfig()">Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        if (!document.getElementById('responseConfigModal')) {
-            document.body.insertAdjacentHTML('beforeend', configHtml);
-        }
-
-        // Load current prompt and saved presets
-        this.loadResponseConfig();
-        new bootstrap.Modal(document.getElementById('responseConfigModal')).show();
-    },
-
-    loadResponseConfig: function() {
-        genericRequest('GetResponsePrompt', {}, (response) => {
-            if (response.success) {
-                document.getElementById('custom-prompt').value = response.prompt;
-            }
-        });
-
-        // Load saved presets
-        const presets = JSON.parse(localStorage.getItem('ollamaVision_presets') || '[]');
-        const presetsContainer = document.getElementById('saved-presets');
-        
-        if (presets.length === 0) {
-            presetsContainer.innerHTML = '<div class="text-muted p-2">No saved presets</div>';
-            return;
-        }
-
-        presetsContainer.innerHTML = presets.map(preset => `
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>${preset.name}</strong>
-                    <small class="d-block text-muted">${preset.prompt.substring(0, 50)}...</small>
-                </div>
-                <div class="btn-group">
-                    <button class="basic-button" onclick="ollamaVision.usePreset('${preset.name}')">
-                        Use
-                    </button>
-                    <button class="basic-button" onclick="ollamaVision.deletePreset('${preset.name}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    },
-
-    savePreset: function() {
-        const presetName = document.getElementById('newPresetName').value.trim();
-        const presetPrompt = document.getElementById('newPresetPrompt').value.trim();
-        
-        if (!presetName || !presetPrompt) {
-            alert('Please enter both a name and prompt for the preset.');
-            return;
-        }
-        
-        // Add USER: prefix when saving the preset
-        const fullPresetName = presetName.startsWith('USER: ') ? presetName : `USER: ${presetName}`;
-        
-        const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-        
-        // Check if a preset with this name already exists
-        if (customPresets.some(p => p.name === fullPresetName)) {
-            alert('A preset with this name already exists.');
-            return;
-        }
-        
-        // Save the preset with the USER: prefix included in the name
-        customPresets.push({
-            name: fullPresetName,
-            prompt: presetPrompt
-        });
-        
-        localStorage.setItem('ollamaVision_customPresets', JSON.stringify(customPresets));
-        
-        // Update UI
-        this.updatePresetsDropdown();
-        
-        // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('createPresetModal'));
-        if (modal) modal.hide();
-    },
-
-    usePreset: function(name) {
-        const presets = JSON.parse(localStorage.getItem('ollamaVision_presets') || '[]');
-        const preset = presets.find(p => p.name === name);
-        
-        if (preset) {
-            document.getElementById('custom-prompt').value = preset.prompt;
-        }
-    },
-
-    deletePreset: function(name) {
-        if (!confirm('Are you sure you want to delete this preset?')) {
-            return;
-        }
-
-        let presets = JSON.parse(localStorage.getItem('ollamaVision_presets') || '[]');
-        presets = presets.filter(p => p.name !== name);
-        localStorage.setItem('ollamaVision_presets', JSON.stringify(presets));
-        
-        this.loadResponseConfig();
-        this.updateStatus('success', 'Preset deleted successfully');
     },
 
     getTemplate: function() {
@@ -2751,12 +2595,18 @@ window.ollamaVision = {
             // Initialize counter with empty text
             this.updateCharacterCount('prependText', 'prependCharCount');
         }
+        
+        this.initializePrependToggle();  // Add this line
     },
 
     showCreatePrepend: function() {
+        const enabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+        if (!enabled) {
+            this.updateStatus('info', 'Prepends are currently disabled');
+            return;
+        }
         $('#prependManagerModal').modal('hide');
         $('#createPrependModal').modal('show');
-        // Initialize counter for new prepend text area
         this.updateCharacterCount('newPrependText', 'newPrependCharCount');
     },
 
@@ -2866,6 +2716,11 @@ window.ollamaVision = {
     },
 
     loadPrepend: function() {
+        const enabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+        if (!enabled) {
+            return;
+        }
+
         const selectedName = document.getElementById('prependPresets').value;
         if (!selectedName) return;
         
@@ -2886,26 +2741,34 @@ window.ollamaVision = {
     },
 
     savePrepend: function() {
+        const enabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
         const text = document.getElementById('prependText').value.trim();
         
-        if (!text) {
-            this.updateStatus('error', 'Please enter text for the prepend');
-            return;
+        if (enabled) {
+            // Only validate and save text if prepends are enabled
+            if (!text) {
+                this.updateStatus('error', 'Please enter text for the prepend');
+                return;
+            }
+            localStorage.setItem('ollamaVision_editedPrependText', text);
         }
         
-        // Store the edited text
-        localStorage.setItem('ollamaVision_editedPrependText', text);
-        
-        // Close prepend modal and return to response settings modal
+        // Always close modals and return to response settings
         $('#prependManagerModal').modal('hide');
         setTimeout(() => {
             $('#responseSettingsModal').modal('show');
         }, 250);
         
-        this.updateStatus('success', 'Prepend saved successfully');
+        // Show appropriate success message
+        this.updateStatus('success', enabled ? 'Prepend saved successfully' : 'Settings saved');
     },
 
     saveNewPrepend: function() {
+        const enabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+        if (!enabled) {
+            this.updateStatus('info', 'Prepends are currently disabled');
+            return;
+        }
         const name = document.getElementById('prependName').value.trim();
         const text = document.getElementById('newPrependText').value.trim();
         
@@ -2933,6 +2796,11 @@ window.ollamaVision = {
     },
 
     deletePrepend: function(name) {
+        const enabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+        if (!enabled) {
+            this.updateStatus('info', 'Prepends are currently disabled');
+            return;
+        }
         let prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
         prepends = prepends.filter(p => p.name !== name);
         localStorage.setItem('ollamaVision_prepends', JSON.stringify(prepends));
@@ -3001,6 +2869,622 @@ window.ollamaVision = {
             document.getElementById('response-text').value = originalResponse;
         }
     },
+
+    // Add this method to the ollamaVision object
+    showFusionModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('fusionModal')) {
+            const fusionModalHtml = `
+                <div class="modal fade" id="fusionModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Image Fusion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <!-- Style Analysis -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 400px;">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Style Analysis</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                                    <img id="style-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('style')">
+                                                        <i class="fas fa-upload"></i> Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('style')">
+                                                        <i class="fas fa-paste"></i> Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('style')" id="analyze-style-btn" disabled>
+                                                        Analyze Style
+                                                    </button>
+                                                </div>
+                                                <textarea class="auto-text-block modal_text_extra mt-2" id="style-analysis" rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subject Analysis -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 400px;">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Subject Analysis</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                                    <img id="subject-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('subject')">
+                                                        <i class="fas fa-upload"></i> Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('subject')">
+                                                        <i class="fas fa-paste"></i> Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('subject')" id="analyze-subject-btn" disabled>
+                                                        Analyze Subject
+                                                    </button>
+                                                </div>
+                                                <textarea class="auto-text-block modal_text_extra mt-2" id="subject-analysis" rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Setting Analysis -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 400px;">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Setting Analysis</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                                    <img id="setting-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('setting')">
+                                                        <i class="fas fa-upload"></i> Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('setting')">
+                                                        <i class="fas fa-paste"></i> Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('setting')" id="analyze-setting-btn" disabled>
+                                                        Analyze Setting
+                                                    </button>
+                                                </div>
+                                                <textarea class="auto-text-block modal_text_extra mt-2" id="setting-analysis" rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <button class="basic-button w-100" onclick="ollamaVision.combineFusionAnalyses()" id="combine-analyses-btn" disabled>
+                                            Combine Analyses
+                                        </button>
+                                        <textarea class="auto-text-block modal_text_extra mt-2" id="combined-analysis" rows="6"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="basic-button" onclick="ollamaVision.sendFusionToPrompt()" id="send-fusion-btn" disabled>
+                                    Send to Prompt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', fusionModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('fusionModal')).show();
+    },
+
+    uploadFusionImage: function(type) {
+        const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+        this.updateStatus('info', `Click to upload ${capitalizedType} image...`);
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.handleFusionImageUpload(file, type);
+            }
+        };
+        input.click();
+    },
+
+    handleFusionImageUpload: function(file, type) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const preview = document.getElementById(`${type}-preview`);
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+            preview.dataset.imageData = dataUrl;
+            
+            document.getElementById(`analyze-${type}-btn`).disabled = false;
+            const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+            this.updateStatus('success', `${capitalizedType} image loaded successfully`);
+        };
+        reader.readAsDataURL(file);
+    },
+
+    pasteFusionImage: function(type) {
+        const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+        this.updateStatus('info', `Ready to paste ${capitalizedType} image (CTRL+V)...`);
+        const pasteHandler = (e) => {
+            const items = e.clipboardData.items;
+            let imageFile = null;
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    imageFile = items[i].getAsFile();
+                    break;
+                }
+            }
+
+            if (imageFile) {
+                this.handleFusionImageUpload(imageFile, type);
+                document.removeEventListener('paste', pasteHandler);
+            } else {
+                this.updateStatus('error', 'No image found in clipboard');
+            }
+        };
+
+        document.addEventListener('paste', pasteHandler);
+    },
+
+    analyzeFusionImage: async function(type) {
+        try {
+            const preview = document.getElementById(`${type}-preview`);
+            const imageData = preview.dataset.imageData;
+            if (!imageData) {
+                this.updateStatus('error', 'No image data found');
+                return;
+            }
+
+            this.updateStatus('info', `Analyzing ${type} image...`, true);
+
+            const model = document.getElementById('ollamavision-model').value;
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            
+            // Get the appropriate preset prompt based on type
+            const presetName = type === 'style' ? 'Style Analysis' : 
+                              type === 'subject' ? 'Subject Analysis' : 
+                              'Setting Analysis';
+            
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('GetFusionPrompt', { preset: presetName }, 
+                    (data) => resolve(data),
+                    (error) => reject(error)
+                );
+            });
+
+            if (!response.success) {
+                throw new Error('Failed to get preset prompt');
+            }
+
+            const analysisResponse = await new Promise((resolve, reject) => {
+                genericRequest('AnalyzeImageAsync', {
+                    model: model,
+                    backendType: backendType,
+                    imageData: imageData,
+                    prompt: response.prompt,
+                    temperature: localStorage.getItem('ollamaVision_temperature') || 0.8,
+                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || 500,
+                    topP: localStorage.getItem('ollamaVision_topP') || 0.7,
+                    frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || 0.0,
+                    presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || 0.0,
+                    repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || 1.1,
+                    topK: localStorage.getItem('ollamaVision_topK') || 40,
+                    seed: localStorage.getItem('ollamaVision_seed') || -1,
+                    minP: localStorage.getItem('ollamaVision_minP') || 0.0,
+                    topA: localStorage.getItem('ollamaVision_topA') || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (analysisResponse.success) {
+                document.getElementById(`${type}-analysis`).value = analysisResponse.response;
+                this.updateCombineButton();
+                const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+                this.updateStatus('success', `${capitalizedType} analysis completed`);
+            } else {
+                throw new Error(analysisResponse.error);
+            }
+        } catch (error) {
+            const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+            this.updateStatus('error', `Failed to analyze ${capitalizedType}: ${error.message}`);
+        }
+    },
+
+    updateCombineButton: function() {
+        const styleAnalysis = document.getElementById('style-analysis').value;
+        const subjectAnalysis = document.getElementById('subject-analysis').value;
+        const settingAnalysis = document.getElementById('setting-analysis').value;
+        
+        document.getElementById('combine-analyses-btn').disabled = 
+            !(styleAnalysis && subjectAnalysis && settingAnalysis);
+    },
+
+    combineFusionAnalyses: async function() {
+        try {
+            this.updateStatus('info', 'Combining analyses...', true);
+            
+            const styleAnalysis = document.getElementById('style-analysis').value;
+            const subjectAnalysis = document.getElementById('subject-analysis').value;
+            const settingAnalysis = document.getElementById('setting-analysis').value;
+            
+            const model = document.getElementById('ollamavision-model').value;
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+
+            const requestData = {
+                model: model,
+                backendType: backendType,
+                styleAnalysis: styleAnalysis,
+                subjectAnalysis: subjectAnalysis,
+                settingAnalysis: settingAnalysis,
+                temperature: localStorage.getItem('ollamaVision_temperature') || 0.8,
+                maxTokens: localStorage.getItem('ollamaVision_maxTokens') || 500,
+                topP: localStorage.getItem('ollamaVision_topP') || 0.7,
+                frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || 0.0,
+                presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || 0.0,
+                repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || 1.1,
+                topK: localStorage.getItem('ollamaVision_topK') || 40,
+                seed: localStorage.getItem('ollamaVision_seed') || -1,
+                minP: localStorage.getItem('ollamaVision_minP') || 0.0,
+                topA: localStorage.getItem('ollamaVision_topA') || 0.0,
+                apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                siteName: localStorage.getItem('ollamaVision_openrouterSite')
+            };
+
+            // Only add ollamaUrl for Ollama backend
+            if (backendType === 'ollama') {
+                requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
+            }
+
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('CombineAnalysesAsync', requestData,
+                    (data) => resolve(data),
+                    (error) => reject(error));
+            });
+
+            if (response.success) {
+                document.getElementById('combined-analysis').value = response.response;
+                document.getElementById('send-fusion-btn').disabled = false;
+                this.updateStatus('success', 'Analyses combined successfully');
+            } else {
+                throw new Error(response.error?.replace(/[{}"\[\]]/g, ''));
+            }
+        } catch (error) {
+            this.updateStatus('error', `Failed to combine analyses: ${error.message}`);
+        }
+    },
+
+    sendFusionToPrompt: function() {
+        const combinedAnalysis = document.getElementById('combined-analysis').value;
+        if (combinedAnalysis) {
+            const text2imageTab = document.getElementById('text2imagetabbutton');
+            if (text2imageTab) {
+                text2imageTab.click();
+                setTimeout(() => {
+                    const generatePromptTextarea = document.getElementById("input_prompt");
+                    if (generatePromptTextarea) {
+                        generatePromptTextarea.value = combinedAnalysis;
+                        generatePromptTextarea.dispatchEvent(new Event('input'));
+                        this.updateStatus('success', 'Analysis sent to prompt');
+                    }
+                }, 100); // Small delay to ensure tab switch is complete
+            }
+            bootstrap.Modal.getInstance(document.getElementById('fusionModal')).hide();
+        }
+    },
+
+    togglePrepends: function() {
+        const enabled = document.getElementById('enablePrepends').checked;
+        localStorage.setItem('ollamaVision_prependsEnabled', enabled);
+        
+        // Get the elements to enable/disable
+        const prependSelect = document.getElementById('prependPresets');
+        const prependText = document.getElementById('prependText');
+        
+        // Enable or disable the elements with visual feedback
+        prependSelect.disabled = !enabled;
+        prependText.disabled = !enabled;
+        
+        // Add visual feedback with opacity
+        prependSelect.style.opacity = enabled ? '1' : '0.6';
+        prependText.style.opacity = enabled ? '1' : '0.6';
+    },
+
+    initializePrependToggle: function() {
+        const enabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
+        const toggle = document.getElementById('enablePrepends');
+        toggle.checked = enabled;
+        
+        // Set initial state of elements
+        const prependSelect = document.getElementById('prependPresets');
+        const prependText = document.getElementById('prependText');
+        
+        // Set both disabled state and opacity
+        prependSelect.disabled = !enabled;
+        prependText.disabled = !enabled;
+        
+        // Add initial opacity state
+        prependSelect.style.opacity = enabled ? '1' : '0.6';
+        prependText.style.opacity = enabled ? '1' : '0.6';
+        
+        // Add event listener
+        toggle.addEventListener('change', this.togglePrepends.bind(this));
+    },
+
+    showLLMToysModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('llmToysModal')) {
+            const llmToysModalHtml = `
+                <div class="modal fade" id="llmToysModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">LLM Toys</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="basic-button" 
+                                            onclick="ollamaVision.showFusionModal(); $('#llmToysModal').modal('hide');" 
+                                            style="font-size: 1.2rem;">
+                                        Image Fusion
+                                    </button>
+                                    <button class="basic-button" 
+                                            onclick="ollamaVision.showStoryTimeModal(); $('#llmToysModal').modal('hide');" 
+                                            style="font-size: 1.2rem;">
+                                        Story Time
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', llmToysModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('llmToysModal')).show();
+    },
+
+    showStoryTimeModal: function() {
+        if (!document.getElementById('storyTimeModal')) {
+            const storyTimeModalHtml = `
+                <div class="modal fade" id="storyTimeModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl" style="max-width: 95vw;">  <!-- Add this style -->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Story Time</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <!-- Image Upload Section - make it narrower -->
+                                    <div class="col-md-4">  <!-- Changed from col-md-5 to col-md-4 -->
+                                        <div class="card" style="min-width: 450px;">  <!-- Reduced min-width further -->
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 400px; position: relative;">
+                                                    <img id="story-preview" class="img-fluid" 
+                                                         src="${PLACEHOLDER_IMAGE}"
+                                                         style="width: 100%; height: 100%; object-fit: contain;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-3 mt-4">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadStoryImage()" 
+                                                            style="font-size: 1.2rem; padding: 10px 20px;">
+                                                        Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteStoryImage()" 
+                                                            style="font-size: 1.2rem; padding: 10px 20px;">
+                                                        Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-4">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.generateStory()" 
+                                                            id="generate-story-btn" 
+                                                            style="font-size: 1.4rem; padding: 15px;"
+                                                            disabled>
+                                                        Tell me a story
+                                                    </button>
+                                                    <div class="text-muted text-center mt-2" style="font-size: 1.1rem;">
+                                                        For best results set max tokens to -1 in model settings
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Story Display Section - make it wider -->
+                                    <div class="col-md-8">  <!-- Changed from col-md-7 to col-md-8 -->
+                                        <textarea id="story-text" 
+                                                class="auto-text-block modal_text_extra" 
+                                                style="width: 100%; min-width: 800px; min-height: 600px; resize: vertical; font-size: 1.4rem; padding: 20px; line-height: 1.6;"
+                                                readonly></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', storyTimeModalHtml);
+
+            // Add drag and drop functionality
+            const previewContainer = document.getElementById('story-preview').parentElement;
+            
+            previewContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                previewContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+            });
+
+            previewContainer.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                previewContainer.style.backgroundColor = '';
+            });
+
+            previewContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                previewContainer.style.backgroundColor = '';
+
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    this.handleStoryImageUpload(file);
+                } else {
+                    this.updateStatus('error', 'Please drop an image file');
+                }
+            });
+        }
+
+        new bootstrap.Modal(document.getElementById('storyTimeModal')).show();
+    },
+
+    uploadStoryImage: function() {
+        this.updateStatus('info', 'Click to upload an image...');
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.handleStoryImageUpload(file);
+            }
+        };
+        input.click();
+    },
+
+    handleStoryImageUpload: function(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const preview = document.getElementById('story-preview');
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+            preview.dataset.imageData = dataUrl;
+            
+            document.getElementById('generate-story-btn').disabled = false;
+            this.updateStatus('success', 'Image loaded successfully');
+        };
+        reader.readAsDataURL(file);
+    },
+
+    pasteStoryImage: function() {
+        this.updateStatus('info', 'Ready to paste image (CTRL+V)...');
+        const pasteHandler = (e) => {
+            const items = e.clipboardData.items;
+            let imageFile = null;
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    imageFile = items[i].getAsFile();
+                    break;
+                }
+            }
+
+            if (imageFile) {
+                this.handleStoryImageUpload(imageFile);
+                document.removeEventListener('paste', pasteHandler);
+            } else {
+                this.updateStatus('error', 'No image found in clipboard');
+            }
+        };
+
+        document.addEventListener('paste', pasteHandler);
+    },
+
+    generateStory: async function() {
+        try {
+            const preview = document.getElementById('story-preview');
+            const imageData = preview.dataset.imageData;
+            if (!imageData) {
+                this.updateStatus('error', 'No image loaded');
+                return;
+            }
+
+            this.updateStatus('info', 'Generating story...', true);
+            
+            const model = document.getElementById('ollamavision-model').value;
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+
+            // Get the story prompt from backend
+            const promptResponse = await new Promise((resolve, reject) => {
+                genericRequest('GetStoryPrompt', {}, 
+                    (data) => resolve(data),
+                    (error) => reject(error));
+            });
+
+            if (!promptResponse.success) {
+                throw new Error('Failed to get story prompt');
+            }
+
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('AnalyzeImageAsync', {
+                    model: model,
+                    backendType: backendType,
+                    imageData: imageData,
+                    prompt: promptResponse.prompt,
+                    temperature: localStorage.getItem('ollamaVision_temperature') || 0.8,
+                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || 500,
+                    topP: localStorage.getItem('ollamaVision_topP') || 0.7,
+                    frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || 0.0,
+                    presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || 0.0,
+                    repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || 1.1,
+                    topK: localStorage.getItem('ollamaVision_topK') || 40,
+                    seed: localStorage.getItem('ollamaVision_seed') || -1,
+                    minP: localStorage.getItem('ollamaVision_minP') || 0.0,
+                    topA: localStorage.getItem('ollamaVision_topA') || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                document.getElementById('story-text').value = response.response;
+                this.updateStatus('success', 'Story generated successfully');
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            this.updateStatus('error', `Failed to generate story: ${error.message}`);
+        }
+    }
 };
 
 // Add this event listener after initialization
