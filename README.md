@@ -20,6 +20,7 @@
   - [Facial Features Analysis](#-facial-features-analysis)
 - [Planned Features](#-planned-features)
 - [Acknowledgments](#-acknowledgments)
+- [LLM Toys Guide] (#-llm-toys-guide)
 
 ## 🌟 Features
 - Multiple backend options:
@@ -120,7 +121,7 @@
 - You can edit descriptions before generating images directly in the Analysis Results text area
 - For Story Time, set max tokens to -1 in model settings for best results
 
-### 🎮 LLM Toys Guide
+## 🎮 LLM Toys Guide
 
 #### 🎨 Image Fusion
 1. Load your images using paste, upload, or drag & drop
