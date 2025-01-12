@@ -31,6 +31,9 @@
   - OpenAI: temperature, max_tokens, top_p, frequency_penalty, presence_penalty
   - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
 - Multiple preset User Prompts (Artistic Style, Facial Features, Color Palette, etc.)
+- Creative LLM Toys:
+  - **Image Fusion**: Combine separate analyses of style, subject, and setting into cohesive prompts
+  - **Story Time**: Transform images into detailed narratives with beginning, middle, and end
 - System Prompt support for all backends to customize model behavior
 - Prompt Prepending for adding instructions in the front of all requests
 - Custom preset support with reordering capability
@@ -115,6 +118,24 @@
 - Larger images may take longer to process use compression if running into memory errors
 - Custom presets are saved between sessions
 - You can edit descriptions before generating images directly in the Analysis Results text area
+- For Story Time, set max tokens to -1 in model settings for best results
+
+### 🎮 LLM Toys Guide
+
+#### 🎨 Image Fusion
+1. Load your images using paste, upload, or drag & drop
+2. Analyze each image separately
+3. Edit the descriptions to your liking
+4. Click **"Combine Analyses"** to create a single prompt
+5. Edit the prompt to your liking
+6. Click **"Send to Prompt"** to generate an image
+7. Perfect for creating rich, multi-layered image generation prompts
+
+#### 📚 Story Time
+1. Load your image using paste, upload, or drag & drop
+2. Click **"Tell me a story"**
+3. Stories are displayed in a wide-format reading area for comfort
+4. Pro tip: Set max tokens to -1 in model settings for optimal story generation
 
 That's it! Connect → Choose Model → Select Response Type → Load Image → Analyze. Simple yet powerful.
 
