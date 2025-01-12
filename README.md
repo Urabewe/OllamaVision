@@ -15,12 +15,14 @@
   - [Image Analysis](#-image-analysis)
   - [Using the Results](#-using-the-results)
   - [Quick Tips](#-quick-tips)
+- [LLM Toys Guide](#-llm-toys-guide)
+  - [Image Fusion](#-image-fusion)
+  - [Story Time](#-story-time)
 - [Example Outputs](#-example-outputs)
   - [Color Palette Analysis](#-color-palette-analysis)
   - [Facial Features Analysis](#-facial-features-analysis)
 - [Planned Features](#-planned-features)
 - [Acknowledgments](#-acknowledgments)
-- [LLM Toys Guide] (#-llm-toys-guide)
 
 ## 🌟 Features
 - Multiple backend options:
