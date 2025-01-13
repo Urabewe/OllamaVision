@@ -360,7 +360,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         Edit Preset Below, Edits Will Remain But Won't Be Saved
                                     </label>
                                     <textarea class="auto-text-block modal_text_extra" id="responsePrompt" rows="6"></textarea>
-                                    <small class="form-text text-muted">Enter the prompt that will be used to generate image descriptions.</small>
+                                    <small class="form-text text-muted">Enter the prompt that will be used to generate image descriptions. (Not included with LLM Toys)</small>
                                 </div>
                             </div>
                         </div>
@@ -565,7 +565,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                     <textarea class="auto-text-block modal_text_extra" id="modelSystemPrompt" 
                                               rows="4" style="width: 100%;"
                                               placeholder="Enter system prompt for the AI model"></textarea>
-                                    <small class="form-text text-muted">This prompt will be sent with every request to guide the AI's behavior.</small>
+                                    <small class="form-text text-muted">This prompt will be sent with every request to guide the AI's behavior. (Not sent with LLM Toys)</small>
                                 </div>
                             </div>
                         </div>
@@ -759,7 +759,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                         <small class="form-text text-muted">
                             Add text that will be automatically inserted before your selected user prompt. 
                             Useful for adding consistent instructions or context to your prompts.
-                            Limited to 1000 characters to prevent token overflow and ensure reliable responses from the AI.
+                            Limited to 1000 characters to prevent token overflow and ensure reliable responses from the AI (Not included with LLM Toys).
                         </small>
                     </div>
                     <div class="modal-footer">
@@ -1237,14 +1237,29 @@ window.ollamaVision = {
 
     analyze: async function() {
         try {
+            // Check backend connection first
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend (fix the logic)
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
             const imageData = document.getElementById('preview-image').dataset.imageData;
             if (!imageData) {
                 this.updateStatus('error', 'No image data found');
                 return;
             }
 
-            const model = document.getElementById('ollamavision-model').value;
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
             const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
             
             // Only compress if the setting is enabled
@@ -1271,14 +1286,7 @@ window.ollamaVision = {
             const responseText = document.getElementById('response-text');
             const streamingResponse = document.getElementById('streaming-response');
             responseText.value = '';
-            streamingResponse.textContent = '';
-            responseText.style.display = 'none';
-            streamingResponse.style.display = 'block';
-            
-            // Show response area
-            document.getElementById('analysis-response').style.display = 'block';
 
-            // Make the API call
             const response = await new Promise((resolve, reject) => {
                 genericRequest('StreamAnalyzeImageAsync', 
                     {
@@ -1311,6 +1319,11 @@ window.ollamaVision = {
             });
 
             if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    this.updateStatus('error', "The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                    return;
+                }
+
                 // Update the response text
                 responseText.value = response.response;
                 this.storeOriginalResponse(response.response);
@@ -1329,36 +1342,58 @@ window.ollamaVision = {
                 );
                 
                 this.updateStatus('success', 'Analysis complete!');
-
-                // Add unload check
                 await this.unloadModelIfEnabled(model);
             } else {
                 this.updateStatus('error', 'Analysis failed: ' + response.error);
             }
         } catch (error) {
-            this.updateStatus('error', `Failed to analyze image: ${error.message}`);
+            this.updateStatus('error', error.message);
         }
     },
 
     updateStatus: function(type, message, showSpinner = false) {
-        const statusArea = document.getElementById('analysis-status');
-        const statusText = document.getElementById('status-text');
-        const spinner = document.getElementById('analysis-spinner');
+        // Determine which status bar to update based on active modal
+        let statusElement, spinnerElement, statusTextElement;
         
-        statusArea.style.display = 'block';
-        statusText.textContent = message;
-        spinner.style.display = showSpinner ? 'block' : 'none';
+        if (document.getElementById('storyTimeModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('story-status');
+            spinnerElement = document.getElementById('story-spinner');
+            statusTextElement = document.getElementById('story-status-text');
+        } else if (document.getElementById('fusionModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('fusion-status');
+            spinnerElement = document.getElementById('fusion-spinner');
+            statusTextElement = document.getElementById('fusion-status-text');
+        } else {
+            // Default to main window status
+            statusElement = document.getElementById('analysis-status');
+            spinnerElement = document.getElementById('analysis-spinner');
+            statusTextElement = document.getElementById('status-text');
+        }
+
+        if (!statusElement) return;
+
+        statusElement.style.display = 'block';
         
-        statusArea.className = 'alert mt-3 text-center ';
-        switch(type) {
-            case 'error':
-                statusArea.className += 'alert-danger';
-                break;
-            case 'success':
-                statusArea.className += 'alert-success';
-                break;
-            default:
-                statusArea.className += 'alert-info';
+        // Map type to Bootstrap alert classes
+        const alertClass = type === 'error' ? 'alert-danger' : 
+                          type === 'success' ? 'alert-success' : 
+                          'alert-info';
+        
+        statusElement.className = `alert ${alertClass} mt-3 text-center`;
+        
+        if (spinnerElement) {
+            spinnerElement.style.display = showSpinner ? 'block' : 'none';
+        }
+        
+        if (statusTextElement) {
+            statusTextElement.textContent = message;
+        }
+
+        // Only auto-hide success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
         }
     },
 
@@ -2981,6 +3016,15 @@ window.ollamaVision = {
                                     </div>
                                 </div>
                             </div>
+                            <!-- Add status bar -->
+                            <div id="fusion-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="fusion-spinner" style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span id="fusion-status-text" style="font-size: 1.2rem;"></span>
+                                </div>
+                            </div>
                             <div class="modal-footer">
                                 <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                                 <button type="button" class="basic-button" onclick="ollamaVision.sendFusionToPrompt()" id="send-fusion-btn" disabled>
@@ -3055,6 +3099,23 @@ window.ollamaVision = {
 
     analyzeFusionImage: async function(type) {
         try {
+            // Check backend connection first
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend (fix the logic)
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
             const preview = document.getElementById(`${type}-preview`);
             const imageData = preview.dataset.imageData;
             if (!imageData) {
@@ -3064,10 +3125,6 @@ window.ollamaVision = {
 
             this.updateStatus('info', `Analyzing ${type} image...`, true);
 
-            const model = document.getElementById('ollamavision-model').value;
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-            
-            // Get the appropriate preset prompt based on type
             const presetName = type === 'style' ? 'Style Analysis' : 
                               type === 'subject' ? 'Subject Analysis' : 
                               'Setting Analysis';
@@ -3135,15 +3192,29 @@ window.ollamaVision = {
 
     combineFusionAnalyses: async function() {
         try {
+            // Check backend connection first
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend (fix the logic)
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
             this.updateStatus('info', 'Combining analyses...', true);
             
             const styleAnalysis = document.getElementById('style-analysis').value;
             const subjectAnalysis = document.getElementById('subject-analysis').value;
             const settingAnalysis = document.getElementById('setting-analysis').value;
             
-            const model = document.getElementById('ollamavision-model').value;
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-
             // Get all model settings from localStorage
             const requestData = {
                 model: model,
@@ -3185,6 +3256,10 @@ window.ollamaVision = {
             });
 
             if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
                 // Handle potential JSON string response
                 let combinedText = response.response;
                 try {
@@ -3201,14 +3276,12 @@ window.ollamaVision = {
                 document.getElementById('combined-analysis').value = combinedText;
                 document.getElementById('send-fusion-btn').disabled = false;
                 this.updateStatus('success', 'Analyses combined successfully');
-
-                // Add unload check
                 await this.unloadModelIfEnabled(model);
             } else {
                 throw new Error(response.error?.replace(/[{}"\[\]]/g, ''));
             }
         } catch (error) {
-            this.updateStatus('error', `Failed to combine analyses: ${error.message}`);
+            this.updateStatus('error', error.message);
         }
     },
 
@@ -3363,6 +3436,15 @@ window.ollamaVision = {
                                     </div>
                                 </div>
                             </div>
+                            <!-- Add status bar -->
+                            <div id="story-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="story-spinner" style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span id="story-status-text" style="font-size: 1.2rem;"></span>
+                                </div>
+                            </div>
                             <div class="modal-footer">
                                 <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                             </div>
@@ -3459,6 +3541,23 @@ window.ollamaVision = {
 
     generateStory: async function() {
         try {
+            // Check backend connection first
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend (fix the logic)
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
             const preview = document.getElementById('story-preview');
             const imageData = preview.dataset.imageData;
             if (!imageData) {
@@ -3468,8 +3567,13 @@ window.ollamaVision = {
 
             this.updateStatus('info', 'Generating story...', true);
             
-            const model = document.getElementById('ollamavision-model').value;
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            // Add check for OpenRouter free tier issues
+            if (backendType === 'openrouter') {
+                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+                if (apiKey?.startsWith('sk-or-v1-free')) {
+                    console.warn('Using OpenRouter free tier - may experience rate limits and inconsistent responses');
+                }
+            }
 
             // Get the story prompt from backend
             const promptResponse = await new Promise((resolve, reject) => {
@@ -3482,6 +3586,7 @@ window.ollamaVision = {
                 throw new Error('Failed to get story prompt');
             }
 
+            // Make the actual request
             const response = await new Promise((resolve, reject) => {
                 genericRequest('AnalyzeImageAsync', {
                     model: model,
@@ -3507,16 +3612,30 @@ window.ollamaVision = {
             });
 
             if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
                 document.getElementById('story-text').value = response.response;
                 this.updateStatus('success', 'Story generated successfully');
-
-                // Add unload check
                 await this.unloadModelIfEnabled(model);
             } else {
-                throw new Error(response.error);
+                // Enhanced error handling for OpenRouter
+                if (backendType === 'openrouter') {
+                    if (response.error?.toLowerCase().includes('rate') || 
+                        response.error?.toLowerCase().includes('limit') ||
+                        response.error?.toLowerCase().includes('quota')) {
+                        throw new Error('OpenRouter rate limit reached. Please wait a few minutes and try again.');
+                    } else if (response.error?.toLowerCase().includes('timeout')) {
+                        throw new Error('Request timed out. This can happen with free tier usage. Please try again.');
+                    } else if (!response.error && !response.response) {
+                        throw new Error('No response from OpenRouter. This might be due to free tier limitations.');
+                    }
+                }
+                throw new Error(response.error || 'Unknown error occurred');
             }
         } catch (error) {
-            this.updateStatus('error', `Failed to generate story: ${error.message}`);
+            this.updateStatus('error', error.message);
         }
     },
 
@@ -3543,6 +3662,74 @@ window.ollamaVision = {
             }
         }
     },
+
+    showImageFusion: function() {
+        if (!document.getElementById('fusionModal')) {
+            const fusionModalHtml = `
+                <div class="modal fade" id="fusionModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Image Fusion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Existing content -->
+                            </div>
+                            <!-- Add status bar -->
+                            <div id="fusion-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="fusion-spinner" style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span id="fusion-status-text" style="font-size: 1.2rem;"></span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', fusionModalHtml);
+            // ... rest of the function
+        }
+    },
+
+    showStoryTime: function() {
+        if (!document.getElementById('storyTimeModal')) {
+            const storyTimeModalHtml = `
+                <div class="modal fade" id="storyTimeModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl" style="max-width: 95vw;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Story Time</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Existing content -->
+                            </div>
+                            <!-- Add status bar -->
+                            <div id="story-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="story-spinner" style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span id="story-status-text" style="font-size: 1.2rem;"></span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', storyTimeModalHtml);
+            // ... rest of the function
+        }
+    }
 };
 
 // Add this event listener after initialization

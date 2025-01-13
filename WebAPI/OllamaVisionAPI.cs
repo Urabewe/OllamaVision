@@ -37,9 +37,9 @@ namespace Urabewe.OllamaVision.WebAPI
 
         private static readonly Dictionary<string, string> FUSION_PROMPTS = new Dictionary<string, string>
         {
-            ["Style Analysis"] = "Analyze only the artistic style of this image.\n\n Ignore the subject and setting and any other objects in the image.\n\n Do not describe what's in the image only the photographic style, art style, filters used, lighting, and not the content of the image.\n\n Focus on techniques, artistic elements, lighting style, color theory, and composition techniques.\n\n Only consider how the image looks and not what is in the image.\n\n If the image is of a known artist mention them, example:If it is a Van Gogh painting mention that it is a Van Gogh painting.\n\n Provide what you see in the image and don't mention the mood, how it makes you feel, the overall concept.\n\n Don't add any emotions into your description just facts.\n\n Ignore any text, signatures, or watermarks. \n\n Give your results in a one paragraph description of the image.",
-            ["Subject Analysis"] = "Do not describe the background, setting, or anything else except the subject or subjects in the image.\n\n If there is anything in the background ignore it, if the background is blank, ignore it, always ignore the background in the image.\n\n Only include a description of the subject, who they are, if they are a known person, and what they are wearing.\n\n Ignore everything but the subject or subjects.\n\n Analyze only the main subject or subjects in this image.\n\n The only thing that matters in this image is the subject or subjects.\n\n Also include their appearance, poses, expressions, clothing, and detailed characteristics.\n\n Format it as a detailed description for image generation.",
-            ["Setting Analysis"] = "Analyze only the setting and background in this image.\n\n Do not focus on any people, characters, animals, or anything else that doesn't pertain to the setting in the image.\n\n Focus on the environment, atmosphere, time of day, weather, and contextual elements.\n\n Describe Ignore any subjects in the image.\n\n Format it as a detailed description for image generation."
+            ["Style Analysis"] = "Only respond about the style of the image do not respond about who what when or where: focus solely on technical and artistic characteristics such as the color palette (e.g., vibrant, muted, monochromatic, pastel, etc.), lighting (e.g., soft, dramatic, high contrast, natural, etc.), camera angle or perspective (e.g., wide shot, close-up, bird's-eye view, etc.), artistic or photographic techniques used (e.g., brushstroke style, texture, sharpness, depth of field, etc.), if the artist is using a specific style, if the artist is a known artist mention it, and the overall mood or aesthetic conveyed; do not include any details about the subject, setting, or other contextual information. Focus only on the visual and stylistic elements.",
+            ["Subject Analysis"] = "Analyze the image and provide a detailed description of its subject, only respond about who or what is in the image: focus exclusively on who or what is depicted, including their physical characteristics, colors, textures, shapes, poses, expressions, or any notable features; ensuring the focus remains solely on the subject; do not include any information about the artistic style, setting, background, or other contextual elements.",
+            ["Setting Analysis"] = "Analyze the image and provide a thorough description of its setting, do not respond about who or what is in the image or the overall style of the image: focus entirely on the environment and location, including natural elements like landscapes, terrain, vegetation, bodies of water, and skies, as well as man-made structures such as buildings, roads, and objects within the scene; describe the weather, time of day, lighting conditions, colors, and textures that define the surroundings; include spatial details like depth, scale, and perspective; do not include any information about the subject (who or what is depicted) or the artistic style, techniques, or visual effects used in the image."
         };
 
         private static readonly List<string> PRESET_ORDER = new List<string>
@@ -53,7 +53,7 @@ namespace Urabewe.OllamaVision.WebAPI
             "Facial Features"
         };
 
-        private static readonly string STORY_PROMPT = @"Based solely on the image provided, craft a long to medium long length story that brings the scene, characters, and mood to life. The story should be engaging, imaginative, and vivid, with a clear structure: a compelling beginning, an intriguing middle, and a satisfying conclusion. It should be long enough to immerse the reader approximately 3,500 to 5,000 words, but concise enough to be read in one sitting (around 10 minutes). Avoid referring to the storytelling process or mentioning the image explicitly—let the narrative stand independently.\n\n Pick a different genre each time you respond, pick from comedy, horror, sci-fi, fantasy, or any other genre.\n\n Vary your writing style and choose from a variety of methods.\n\n Instructions:\n1. Focus only on the visual details in the image and interpret them creatively into a coherent story.\n2. Use descriptive language to create atmosphere and bring the scene and characters to life.\n3. Maintain a balance between action, dialogue, and description for a dynamic narrative.\n\nExample Structure:\n[Introduction]\nSet the stage with vivid descriptions of the scene, introduce the main character(s), and hint at the conflict or goal.\n\n[Main Story]\nDevelop the plot with engaging events, challenges, or conflicts that arise. Use dialogue and interactions to reveal character depth.\n\n[Conclusion]\nResolve the story conflict or bring closure to the narrative in a satisfying way.\n\n Don't give a description of the image in your results.\n\n Do not talk about the fact you are making a story.\n\n Only respond with the story you create.\n\n Now, write the story.";
+        private static readonly string STORY_PROMPT = @"Generate a fully developed story inspired solely by the provided image. Craft a vivid and engaging narrative that brings the scene, characters, and mood to life. Ensure the story has a clear structure: an intriguing beginning, a compelling middle, and a satisfying resolution. Use the main subject(s) and setting from the image as the central focus of the story. For known figures or characters, incorporate them into the narrative accordingly. Vary the genre and style with each response to ensure originality and diversity, alternating between genres like comedy, horror, sci-fi, fantasy, drama, adventure, and mystery. Tailor the narrative style to fit the chosen genre or add an unexpected twist for variety.\n\n### Guidelines:\n- Introduction: Set the scene with vivid descriptions, introduce the main character(s), and hint at the central conflict, mystery, or goal.\n- Main Story: Develop the plot through engaging events, challenges, or conflicts. Use dialogue and character interactions for depth.\n- Conclusion: Resolve the conflict or provide closure in a satisfying way.\n\n### Additional Notes:\n- Use vivid, descriptive language to create atmosphere and bring the setting, characters, and events to life.\n- Balance action, dialogue, and description for a dynamic narrative.\n- Aim for randomness and variety in genres and storytelling approaches, using techniques like shifting perspectives, unreliable narrators, or non-linear structures.\n- Avoid formulaic repetition; focus on originality and emotional resonance.\n\n### Output Specifications:\n- Word count: 2,000 to 3,000 words.\n- Ensure the story feels complete and polished with a clear beginning, middle, and end.\n- Base the narrative entirely on the visual elements of the image. Don't talk about the image, only return the story.\n Make the story as long as possible, but don't make it too long.";
 
         public static void Register()
         {
@@ -931,23 +931,33 @@ namespace Urabewe.OllamaVision.WebAPI
                 }
 
                 // Create a consistent prompt for all backends
-                var prompt = @"You will be sent 3 image descriptions.
+                var prompt = @"You will be sent three image descriptions: Style Analysis, Subject Analysis, and Setting Analysis.
 
-You will combine them into one single prompt.
+Your task is to combine these into a single cohesive prompt for image generation. Follow these rules:
 
-Make sure you include enough details from each section for the style, subject, and setting to create a full scene.
-The prompt should be formatted for use in image generation.
+Style Analysis:
+Focus on technical details such as the color palette, lighting, camera angle, and art style.
+Do not include anything about the subject or setting or any objects in the image.
+Do not mention anything about the mood or feeling. Only technical details no interpretations.
 
-Respond with only the combined prompt, nothing else.
-Do not tell me you are giving me a prompt, just give me the prompt. Do not tell me about the mood or feeling. Only technical details no interpretations.
+Subject Analysis:
+Describe the main focus of the image (who or what is depicted).
+Include any color details from the subject description unless the style specifies a black-and-white or monochromatic image.
+Do not include setting or style details.
+Do not include anything about the background or environment.
+Do not mention anything about the mood or feeling. Only technical details no interpretations.
 
-If the Style Analysis contains details of a black and white image or a monochromatic image or anything else that hints at an image without color then strip all mention of color from the combined prompt and do not mention any colors except the black and white part.
+Setting Analysis:
+Describe the environment where the subject is located.
+Include colors and visual elements from the setting unless the style specifies a black-and-white or monochromatic image.
+Do not mention subject or style details.
+Do not mention anything about the mood or feeling. Only technical details no interpretations.
 
-Maintain the style-subject-setting structure, remove redundancies, combine the descriptions into one cohesive paragraph and ensure flow, and make it a single paragraph, keep the description descriptive but concise:
+Combine the three descriptions into a single paragraph in the style-subject-setting order. Ensure the final prompt is descriptive yet concise, eliminating redundancies and flowing naturally. Output only the combined prompt without commentary or explanation.
 
 Style Analysis: " + styleAnalysis + "\n\n" +
-                "Subject Analysis: " + subjectAnalysis + "\n\n" +
-                "Setting Analysis: " + settingAnalysis;
+"Subject Analysis: " + subjectAnalysis + "\n\n" +
+"Setting Analysis: " + settingAnalysis;
 
                 // Handle different backends
                 if (backendType == "openai")
