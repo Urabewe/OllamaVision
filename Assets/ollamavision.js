@@ -1260,31 +1260,21 @@ window.ollamaVision = {
                 return;
             }
 
-            // Show the analysis response area FIRST and ensure it stays visible
+            // Show and setup analysis response area
             const analysisResponse = document.getElementById('analysis-response');
-            analysisResponse.style.display = 'block';
-
-            // Clear and set up response areas
             const responseText = document.getElementById('response-text');
             const streamingResponse = document.getElementById('streaming-response');
             
-            // Reset text areas
+            analysisResponse.style.display = 'block';
             responseText.value = '';
             streamingResponse.textContent = '';
-            
-            // Show streaming area, hide response area initially
             responseText.style.display = 'none';
             streamingResponse.style.display = 'block';
 
-            // Show loading status
             this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
 
-            // Rest of your existing code...
-
-            // Get the current prompt
+            // Get and process prompt
             let prompt = document.getElementById('responsePrompt').value;
-            
-            // Only add prepend if enabled
             const prependsEnabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
             if (prependsEnabled) {
                 const prependText = await loadInitialPrepend();
@@ -1293,13 +1283,13 @@ window.ollamaVision = {
                 }
             }
 
+            // Process image data
             const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
-            
-            // Only compress if the setting is enabled
             const processedImageData = shouldCompress ? 
                 await this.compressImage(imageData) : 
                 imageData;
 
+            // Make API request
             const response = await new Promise((resolve, reject) => {
                 genericRequest('StreamAnalyzeImageAsync', 
                     {
@@ -1337,25 +1327,15 @@ window.ollamaVision = {
                     return;
                 }
 
-                // Update the response text
-                const responseText = document.getElementById('response-text');
-                const streamingResponse = document.getElementById('streaming-response');
-                
+                // Update response display
                 responseText.value = response.response;
                 this.storeOriginalResponse(response.response);
-                
-                // Make sure these are explicitly set
                 responseText.style.display = 'block';
                 streamingResponse.style.display = 'none';
                 
-                // Enable send to prompt button
+                // Enable send to prompt button and update history
                 document.getElementById('send-to-prompt-btn').disabled = false;
-                
-                // Add to history
-                this.addToHistory(
-                    document.getElementById('preview-image').src,
-                    response.response
-                );
+                this.addToHistory(document.getElementById('preview-image').src, response.response);
                 
                 this.updateStatus('success', 'Analysis complete!');
                 await this.unloadModelIfEnabled(model);
@@ -1405,10 +1385,14 @@ window.ollamaVision = {
             statusTextElement.textContent = message;
         }
 
-        // Only auto-hide success messages
+        // Only auto-hide success messages after 5 seconds
+        // Keep error messages visible until next action
+        // Keep info/loading messages visible until explicitly changed
         if (type === 'success') {
             setTimeout(() => {
-                statusElement.style.display = 'none';
+                if (statusElement.classList.contains('alert-success')) {
+                    statusElement.style.display = 'none';
+                }
             }, 5000);
         }
     },
