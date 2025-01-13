@@ -1329,6 +1329,9 @@ window.ollamaVision = {
                 );
                 
                 this.updateStatus('success', 'Analysis complete!');
+
+                // Add unload check
+                await this.unloadModelIfEnabled(model);
             } else {
                 this.updateStatus('error', 'Analysis failed: ' + response.error);
             }
@@ -3109,6 +3112,9 @@ window.ollamaVision = {
                 this.updateCombineButton();
                 const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
                 this.updateStatus('success', `${capitalizedType} analysis completed`);
+
+                // Add unload check
+                await this.unloadModelIfEnabled(model);
             } else {
                 throw new Error(analysisResponse.error);
             }
@@ -3138,30 +3144,39 @@ window.ollamaVision = {
             const model = document.getElementById('ollamavision-model').value;
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
 
+            // Get all model settings from localStorage
             const requestData = {
                 model: model,
                 backendType: backendType,
                 styleAnalysis: styleAnalysis,
                 subjectAnalysis: subjectAnalysis,
                 settingAnalysis: settingAnalysis,
-                temperature: localStorage.getItem('ollamaVision_temperature') || 0.8,
-                maxTokens: localStorage.getItem('ollamaVision_maxTokens') || 500,
-                topP: localStorage.getItem('ollamaVision_topP') || 0.7,
-                frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || 0.0,
-                presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || 0.0,
-                repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || 1.1,
-                topK: localStorage.getItem('ollamaVision_topK') || 40,
-                seed: localStorage.getItem('ollamaVision_seed') || -1,
-                minP: localStorage.getItem('ollamaVision_minP') || 0.0,
-                topA: localStorage.getItem('ollamaVision_topA') || 0.0,
+                // Convert string values to proper types
+                temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || 500,
+                topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                systemPrompt: localStorage.getItem('ollamaVision_systemPrompt') || '',
                 apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
-                siteName: localStorage.getItem('ollamaVision_openrouterSite')
+                siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI'
             };
 
-            // Only add ollamaUrl for Ollama backend
+            // Add ollamaUrl for Ollama backend
             if (backendType === 'ollama') {
                 requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
             }
+
+            // Log parameters for debugging (remove in production)
+            console.log('Sending parameters:', {
+                ...requestData,
+                apiKey: requestData.apiKey ? '[HIDDEN]' : undefined
+            });
 
             const response = await new Promise((resolve, reject) => {
                 genericRequest('CombineAnalysesAsync', requestData,
@@ -3170,9 +3185,25 @@ window.ollamaVision = {
             });
 
             if (response.success) {
-                document.getElementById('combined-analysis').value = response.response;
+                // Handle potential JSON string response
+                let combinedText = response.response;
+                try {
+                    // Check if the response is a JSON string and needs parsing
+                    if (typeof combinedText === 'string' && combinedText.trim().startsWith('{')) {
+                        const parsedResponse = JSON.parse(combinedText);
+                        combinedText = parsedResponse.response || parsedResponse;
+                    }
+                } catch (e) {
+                    // If parsing fails, use the original response text
+                    Logs.Debug("Response parsing failed, using original text");
+                }
+
+                document.getElementById('combined-analysis').value = combinedText;
                 document.getElementById('send-fusion-btn').disabled = false;
                 this.updateStatus('success', 'Analyses combined successfully');
+
+                // Add unload check
+                await this.unloadModelIfEnabled(model);
             } else {
                 throw new Error(response.error?.replace(/[{}"\[\]]/g, ''));
             }
@@ -3457,16 +3488,16 @@ window.ollamaVision = {
                     backendType: backendType,
                     imageData: imageData,
                     prompt: promptResponse.prompt,
-                    temperature: localStorage.getItem('ollamaVision_temperature') || 0.8,
-                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || 500,
-                    topP: localStorage.getItem('ollamaVision_topP') || 0.7,
-                    frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || 0.0,
-                    presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || 0.0,
-                    repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || 1.1,
-                    topK: localStorage.getItem('ollamaVision_topK') || 40,
-                    seed: localStorage.getItem('ollamaVision_seed') || -1,
-                    minP: localStorage.getItem('ollamaVision_minP') || 0.0,
-                    topA: localStorage.getItem('ollamaVision_topA') || 0.0,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || 500,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
                     apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
                     siteName: localStorage.getItem('ollamaVision_openrouterSite'),
                     ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
@@ -3478,13 +3509,40 @@ window.ollamaVision = {
             if (response.success) {
                 document.getElementById('story-text').value = response.response;
                 this.updateStatus('success', 'Story generated successfully');
+
+                // Add unload check
+                await this.unloadModelIfEnabled(model);
             } else {
                 throw new Error(response.error);
             }
         } catch (error) {
             this.updateStatus('error', `Failed to generate story: ${error.message}`);
         }
-    }
+    },
+
+    // Add this helper function at the top level of ollamaVision object
+    unloadModelIfEnabled: async function(model) {
+        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+        const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
+        
+        if (backendType === 'ollama' && autoUnload) {
+            try {
+                await new Promise((resolve, reject) => {
+                    genericRequest('UnloadModelAsync', 
+                        { 
+                            model: model,
+                            ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error)
+                    );
+                });
+                console.log(`Model ${model} unloaded successfully`);
+            } catch (error) {
+                console.error(`Failed to unload model: ${error}`);
+            }
+        }
+    },
 };
 
 // Add this event listener after initialization

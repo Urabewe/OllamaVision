@@ -930,29 +930,44 @@ namespace Urabewe.OllamaVision.WebAPI
                     };
                 }
 
-                // Create the prompt for combining the analyses
-                var prompt = "You will be sent 3 image descriptions.\n\n You will combine them into one single prompt.\n\n Make sure you include enough details for each section for the style, subject, and setting to create a full scene.\n The prompt should be formatted for use in image generation.\n\n Respond with only the combined prompt, nothing else.\n\n Do not tell me you are giving me a prompt, just give me the prompt. Do not tell me about the mood or feeling. Only technical details no interpratations.\n\n If the Style Analysis contains details of a black and white image or a monochromatic image or anything else that hints at an image without color then strip all mention of color from the combined prompt and do not mention any colors except the black and white part. " +
-                            "Maintain the style-subject-setting structure, remove redundancies, combine the descriptions into one cohesive paragraph and ensure flow, and make it a single paragraph, keep the description descriptive but concise:\n\n" +
-                            $"Style Analysis: {styleAnalysis}\n\n" +
-                            $"Subject Analysis: {subjectAnalysis}\n\n" +
-                            $"Setting Analysis: {settingAnalysis}";
+                // Create a consistent prompt for all backends
+                var prompt = @"You will be sent 3 image descriptions.
 
+You will combine them into one single prompt.
+
+Make sure you include enough details from each section for the style, subject, and setting to create a full scene.
+The prompt should be formatted for use in image generation.
+
+Respond with only the combined prompt, nothing else.
+Do not tell me you are giving me a prompt, just give me the prompt. Do not tell me about the mood or feeling. Only technical details no interpretations.
+
+If the Style Analysis contains details of a black and white image or a monochromatic image or anything else that hints at an image without color then strip all mention of color from the combined prompt and do not mention any colors except the black and white part.
+
+Maintain the style-subject-setting structure, remove redundancies, combine the descriptions into one cohesive paragraph and ensure flow, and make it a single paragraph, keep the description descriptive but concise:
+
+Style Analysis: " + styleAnalysis + "\n\n" +
+                "Subject Analysis: " + subjectAnalysis + "\n\n" +
+                "Setting Analysis: " + settingAnalysis;
+
+                // Handle different backends
                 if (backendType == "openai")
                 {
-                    var apiKey = data["apiKey"]?.ToString();
-                    if (string.IsNullOrEmpty(apiKey))
+                    var messages = new JArray();
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
                     {
-                        return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
                     }
 
-                    var messages = new JArray
+                    messages.Add(new JObject
                     {
-                        new JObject
-                        {
-                            ["role"] = "user",
-                            ["content"] = prompt
-                        }
-                    };
+                        ["role"] = "user",
+                        ["content"] = prompt
+                    });
 
                     var requestBody = new JObject
                     {
@@ -964,6 +979,12 @@ namespace Urabewe.OllamaVision.WebAPI
                         ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float>() ?? 0.0f,
                         ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
                     };
+
+                    var apiKey = data["apiKey"]?.ToString();
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
+                    }
 
                     var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
                     request.Headers.Add("Authorization", $"Bearer {apiKey}");
@@ -990,22 +1011,22 @@ namespace Urabewe.OllamaVision.WebAPI
                 }
                 else if (backendType == "openrouter")
                 {
-                    var apiKey = data["apiKey"]?.ToString();
-                    var siteName = data["siteName"]?.ToString() ?? "SwarmUI";
-
-                    if (string.IsNullOrEmpty(apiKey))
+                    var messages = new JArray();
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
                     {
-                        return new JObject { ["success"] = false, ["error"] = "OpenRouter API key is required" };
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
                     }
 
-                    var messages = new JArray
+                    messages.Add(new JObject
                     {
-                        new JObject
-                        {
-                            ["role"] = "user",
-                            ["content"] = prompt
-                        }
-                    };
+                        ["role"] = "user",
+                        ["content"] = prompt
+                    });
 
                     var requestBody = new JObject
                     {
@@ -1015,8 +1036,18 @@ namespace Urabewe.OllamaVision.WebAPI
                         ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
                         ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
                         ["top_k"] = data["topK"]?.ToObject<int>() ?? 40,
-                        ["repetition_penalty"] = data["repeatPenalty"]?.ToObject<float>() ?? 1.1f
+                        ["repetition_penalty"] = data["repeatPenalty"]?.ToObject<float>() ?? 1.1f,
+                        ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float>() ?? 0.0f,
+                        ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
                     };
+
+                    var apiKey = data["apiKey"]?.ToString();
+                    var siteName = data["siteName"]?.ToString() ?? "SwarmUI";
+
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject { ["success"] = false, ["error"] = "OpenRouter API key is required" };
+                    }
 
                     var request = new HttpRequestMessage(HttpMethod.Post, "https://openrouter.ai/api/v1/chat/completions");
                     request.Headers.Add("Authorization", $"Bearer {apiKey}");
@@ -1045,11 +1076,11 @@ namespace Urabewe.OllamaVision.WebAPI
                 }
                 else // Ollama
                 {
-                    // Create request body for text-only operation
                     var requestBody = new JObject
                     {
                         ["model"] = model,
                         ["prompt"] = prompt,
+                        ["stream"] = false,
                         ["options"] = new JObject
                         {
                             ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
@@ -1060,6 +1091,13 @@ namespace Urabewe.OllamaVision.WebAPI
                             ["seed"] = data["seed"]?.ToObject<int>() ?? -1
                         }
                     };
+
+                    // Add system prompt if provided
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        requestBody["system"] = systemPrompt;
+                    }
 
                     var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
                     var response = await client.PostAsync(
@@ -1078,13 +1116,36 @@ namespace Urabewe.OllamaVision.WebAPI
                         };
                     }
 
-                    var result = JObject.Parse(await response.Content.ReadAsStringAsync());
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var responseLines = responseContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    var combinedResponse = "";
+
+                    // Process each line of the response
+                    foreach (var line in responseLines)
+                    {
+                        try
+                        {
+                            var jsonResponse = JObject.Parse(line);
+                            if (jsonResponse["response"] != null)
+                            {
+                                combinedResponse += jsonResponse["response"].ToString();
+                            }
+                        }
+                        catch (JsonReaderException)
+                        {
+                            // If line isn't valid JSON, skip it
+                            continue;
+                        }
+                    }
+
                     return new JObject
                     {
                         ["success"] = true,
-                        ["response"] = result["response"]?.ToString()
+                        ["response"] = combinedResponse
                     };
                 }
+
+                // ... rest of the method
             }
             catch (Exception ex)
             {
