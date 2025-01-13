@@ -1241,7 +1241,7 @@ window.ollamaVision = {
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
             const model = document.getElementById('ollamavision-model').value;
             
-            // Check if we're connected to a backend (fix the logic)
+            // Check if we're connected to a backend
             const disconnectBtn = document.getElementById('disconnect-btn');
             if (disconnectBtn.style.display === 'none') {
                 this.updateStatus('error', 'Backend not connected!');
@@ -1260,12 +1260,26 @@ window.ollamaVision = {
                 return;
             }
 
-            const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
+            // Show the analysis response area FIRST and ensure it stays visible
+            const analysisResponse = document.getElementById('analysis-response');
+            analysisResponse.style.display = 'block';
+
+            // Clear and set up response areas
+            const responseText = document.getElementById('response-text');
+            const streamingResponse = document.getElementById('streaming-response');
             
-            // Only compress if the setting is enabled
-            const processedImageData = shouldCompress ? 
-                await this.compressImage(imageData) : 
-                imageData;
+            // Reset text areas
+            responseText.value = '';
+            streamingResponse.textContent = '';
+            
+            // Show streaming area, hide response area initially
+            responseText.style.display = 'none';
+            streamingResponse.style.display = 'block';
+
+            // Show loading status
+            this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
+
+            // Rest of your existing code...
 
             // Get the current prompt
             let prompt = document.getElementById('responsePrompt').value;
@@ -1279,13 +1293,12 @@ window.ollamaVision = {
                 }
             }
 
-            // Show loading status
-            this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
-
-            // Clear previous response
-            const responseText = document.getElementById('response-text');
-            const streamingResponse = document.getElementById('streaming-response');
-            responseText.value = '';
+            const shouldCompress = localStorage.getItem('ollamaVision_compressImages') === 'true';
+            
+            // Only compress if the setting is enabled
+            const processedImageData = shouldCompress ? 
+                await this.compressImage(imageData) : 
+                imageData;
 
             const response = await new Promise((resolve, reject) => {
                 genericRequest('StreamAnalyzeImageAsync', 
@@ -1325,10 +1338,13 @@ window.ollamaVision = {
                 }
 
                 // Update the response text
+                const responseText = document.getElementById('response-text');
+                const streamingResponse = document.getElementById('streaming-response');
+                
                 responseText.value = response.response;
                 this.storeOriginalResponse(response.response);
                 
-                // Show textarea, hide streaming div
+                // Make sure these are explicitly set
                 responseText.style.display = 'block';
                 streamingResponse.style.display = 'none';
                 
