@@ -3650,7 +3650,8 @@ window.ollamaVision = {
                     genericRequest('UnloadModelAsync', 
                         { 
                             model: model,
-                            ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                            ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`,
+                            keep_alive: 0  // Add this to ensure immediate unloading
                         },
                         (data) => resolve(data),
                         (error) => reject(error)
