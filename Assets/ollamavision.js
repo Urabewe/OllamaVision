@@ -2914,7 +2914,7 @@ window.ollamaVision = {
         if (!document.getElementById('fusionModal')) {
             const fusionModalHtml = `
                 <div class="modal fade" id="fusionModal" tabindex="-1">
-                    <div class="modal-dialog modal-xl">
+                    <div class="modal-dialog modal-xl" style="max-width: min(95vw, 1400px);">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Image Fusion</h5>
@@ -3384,7 +3384,7 @@ window.ollamaVision = {
         if (!document.getElementById('storyTimeModal')) {
             const storyTimeModalHtml = `
                 <div class="modal fade" id="storyTimeModal" tabindex="-1">
-                    <div class="modal-dialog modal-xl" style="max-width: 95vw;">  <!-- Add this style -->
+                    <div class="modal-dialog modal-xl" style="max-width: min(95vw, 1400px); min-width: 1400px;">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Story Time</h5>
@@ -3392,14 +3392,13 @@ window.ollamaVision = {
                             </div>
                             <div class="modal-body">
                                 <div class="row">
-                                    <!-- Image Upload Section - make it narrower -->
-                                    <div class="col-md-4">  <!-- Changed from col-md-5 to col-md-4 -->
-                                        <div class="card" style="min-width: 450px;">  <!-- Reduced min-width further -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 450px;">
                                             <div class="card-body">
-                                                <div class="preview-container" style="width: 100%; height: 400px; position: relative;">
+                                                <div class="preview-container" style="max-width: 100%; height: 400px; position: relative;">
                                                     <img id="story-preview" class="img-fluid" 
                                                          src="${PLACEHOLDER_IMAGE}"
-                                                         style="width: 100%; height: 100%; object-fit: contain;">
+                                                         style="height: 100%; object-fit: contain; max-width: 100%;">
                                                 </div>
                                                 <div class="d-flex justify-content-center gap-3 mt-4">
                                                     <button class="basic-button" onclick="ollamaVision.uploadStoryImage()" 
@@ -3431,7 +3430,7 @@ window.ollamaVision = {
                                     <div class="col-md-8">  <!-- Changed from col-md-7 to col-md-8 -->
                                         <textarea id="story-text" 
                                                 class="auto-text-block modal_text_extra" 
-                                                style="width: 100%; min-width: 800px; min-height: 600px; resize: vertical; font-size: 1.4rem; padding: 20px; line-height: 1.6;"
+                                                style="max-width: 100%; min-width: 800px; min-height: 600px; resize: vertical; font-size: 1.4rem; padding: 20px; line-height: 1.6;"
                                                 readonly></textarea>
                                     </div>
                                 </div>
@@ -3668,14 +3667,107 @@ window.ollamaVision = {
         if (!document.getElementById('fusionModal')) {
             const fusionModalHtml = `
                 <div class="modal fade" id="fusionModal" tabindex="-1">
-                    <div class="modal-dialog modal-xl">
+                    <div class="modal-dialog modal-xl" style="max-width: min(95vw, 1400px);">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Image Fusion</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <!-- Existing content -->
+                                <div class="row">
+                                    <!-- Style Analysis -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 400px;">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Style Analysis</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                                    <img id="style-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('style')">
+                                                        <i class="fas fa-upload"></i> Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('style')">
+                                                        <i class="fas fa-paste"></i> Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('style')" id="analyze-style-btn" disabled>
+                                                        Analyze Style
+                                                    </button>
+                                                </div>
+                                                <textarea class="auto-text-block modal_text_extra mt-2" id="style-analysis" rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subject Analysis -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 400px;">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Subject Analysis</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                                    <img id="subject-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('subject')">
+                                                        <i class="fas fa-upload"></i> Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('subject')">
+                                                        <i class="fas fa-paste"></i> Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('subject')" id="analyze-subject-btn" disabled>
+                                                        Analyze Subject
+                                                    </button>
+                                                </div>
+                                                <textarea class="auto-text-block modal_text_extra mt-2" id="subject-analysis" rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Setting Analysis -->
+                                    <div class="col-md-4">
+                                        <div class="card" style="min-width: 400px;">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Setting Analysis</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                                    <img id="setting-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                </div>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('setting')">
+                                                        <i class="fas fa-upload"></i> Upload
+                                                    </button>
+                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('setting')">
+                                                        <i class="fas fa-paste"></i> Paste
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('setting')" id="analyze-setting-btn" disabled>
+                                                        Analyze Setting
+                                                    </button>
+                                                </div>
+                                                <textarea class="auto-text-block modal_text_extra mt-2" id="setting-analysis" rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <button class="basic-button w-100" onclick="ollamaVision.combineFusionAnalyses()" id="combine-analyses-btn" disabled>
+                                            Combine Analyses
+                                        </button>
+                                        <textarea class="auto-text-block modal_text_extra mt-2" id="combined-analysis" rows="6"></textarea>
+                                    </div>
+                                </div>
                             </div>
                             <!-- Add status bar -->
                             <div id="fusion-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
@@ -3688,21 +3780,25 @@ window.ollamaVision = {
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="basic-button" onclick="ollamaVision.sendFusionToPrompt()" id="send-fusion-btn" disabled>
+                                    Send to Prompt
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>`;
 
             document.body.insertAdjacentHTML('beforeend', fusionModalHtml);
-            // ... rest of the function
         }
+
+        new bootstrap.Modal(document.getElementById('fusionModal')).show();
     },
 
     showStoryTime: function() {
         if (!document.getElementById('storyTimeModal')) {
             const storyTimeModalHtml = `
                 <div class="modal fade" id="storyTimeModal" tabindex="-1">
-                    <div class="modal-dialog modal-xl" style="max-width: 95vw;">
+                    <div class="modal-dialog modal-xl" style="max-width: min(95vw, 1400px); min-width: 1400px;">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Story Time</h5>
@@ -3728,7 +3824,6 @@ window.ollamaVision = {
                 </div>`;
 
             document.body.insertAdjacentHTML('beforeend', storyTimeModalHtml);
-            // ... rest of the function
         }
     }
 };
