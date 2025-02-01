@@ -288,7 +288,7 @@ namespace Urabewe.OllamaVision.WebAPI
 
                     // Parse common model settings
                     var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
-                    var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500));
+                    var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? -1));
                     var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
 
                     // Validate required parameters
@@ -631,7 +631,7 @@ namespace Urabewe.OllamaVision.WebAPI
 
                 // Common parameters with defaults
                 var temperature = data["temperature"]?.ToObject<float>() ?? 0.8f;
-                var maxTokens = data["maxTokens"]?.ToObject<int>() ?? 500;
+                var maxTokens = data["maxTokens"]?.ToObject<int>() ?? -1;
                 var topP = data["topP"]?.ToObject<float>() ?? 0.7f;
 
                 // Build request based on backend type
@@ -947,7 +947,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     {
                         ["model"] = model,
                         ["messages"] = messages,
-                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? 500,
+                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? -1,
                         ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
                         ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
                         ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float>() ?? 0.0f,
@@ -1006,7 +1006,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     {
                         ["model"] = model,
                         ["messages"] = messages,
-                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? 500,
+                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? -1,
                         ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
                         ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
                         ["top_k"] = data["topK"]?.ToObject<int>() ?? 40,
@@ -1060,7 +1060,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                             ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
                             ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
                             ["top_k"] = data["topK"]?.ToObject<int>() ?? 40,
-                            ["num_predict"] = data["maxTokens"]?.ToObject<int>() ?? 500,
+                            ["num_predict"] = data["maxTokens"]?.ToObject<int>() ?? -1,
                             ["repeat_penalty"] = data["repeatPenalty"]?.ToObject<float>() ?? 1.1f,
                             ["seed"] = data["seed"]?.ToObject<int>() ?? -1
                         }
@@ -1239,7 +1239,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     ["prompt"] = prompt,
                     ["systemPrompt"] = systemPrompt,
                     ["temperature"] = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f)),
-                    ["maxTokens"] = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500)),
+                    ["maxTokens"] = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? -1)),
                     ["topP"] = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f))
                 };
 

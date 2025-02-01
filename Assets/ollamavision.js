@@ -500,8 +500,8 @@ async function addOllamaVisionTab(utilitiesTab) {
                                 <div class="col-md-4 mb-2">
                                     <label for="modelMaxTokens" class="form-label mb-1">Max Tokens</label>
                                     <input type="number" class="auto-text modal_text_extra" id="modelMaxTokens" 
-                                           min="-1" max="4096" step="1" value="500">
-                                    <small class="form-text text-muted">Maximum response length (Default: 500)
+                                           min="-1" max="4096" step="1" value="-1">
+                                    <small class="form-text text-muted">Maximum response length (Default: -1)
                                         <br>• -1: Unlimited
                                         <br>• 1-4096: Token limit
                                     </small>
@@ -1297,7 +1297,7 @@ window.ollamaVision = {
                     imageData: processedImageData,
                     prompt: prompt,
                     temperature: localStorage.getItem('ollamaVision_temperature') || '0.8',
-                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || '500',
+                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || '-1',
                     topP: localStorage.getItem('ollamaVision_topP') || '0.7',
                     systemPrompt: localStorage.getItem('ollamaVision_systemPrompt') || '',
                     frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0',
@@ -2131,7 +2131,7 @@ window.ollamaVision = {
         const savedSeed = localStorage.getItem('ollamaVision_seed') || '-1';
         const savedTopP = localStorage.getItem('ollamaVision_topP') || '0.7';
         const savedTopK = localStorage.getItem('ollamaVision_topK') || '40';
-        const savedMaxTokens = localStorage.getItem('ollamaVision_maxTokens') || '500';
+        const savedMaxTokens = localStorage.getItem('ollamaVision_maxTokens') || '-1';
         const savedRepeatPenalty = localStorage.getItem('ollamaVision_repeatPenalty') || '1.1';
         
         // Set values
@@ -2271,7 +2271,7 @@ window.ollamaVision = {
 
             // Set common defaults
             document.getElementById('modelTemperature').value = '0.8';
-            document.getElementById('modelMaxTokens').value = '500';
+            document.getElementById('modelMaxTokens').value = '-1';
             document.getElementById('modelTopP').value = '0.7';
 
             // Set backend-specific defaults
@@ -2300,7 +2300,7 @@ window.ollamaVision = {
 
             // Save common defaults to localStorage
             localStorage.setItem('ollamaVision_temperature', '0.8');
-            localStorage.setItem('ollamaVision_maxTokens', '500');
+            localStorage.setItem('ollamaVision_maxTokens', '-1');
             localStorage.setItem('ollamaVision_topP', '0.7');
 
             // Save backend-specific defaults
@@ -2388,7 +2388,7 @@ window.ollamaVision = {
                 parameters: {
                 temperature: parseFloat(localStorage.getItem('ollamaVision_temperature') || '0.8'),
                 topP: parseFloat(localStorage.getItem('ollamaVision_topP') || '0.7'),
-                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '500'),
+                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens') || '-1'),
                 frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0'),
                 presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty') || '0.0'),
                 repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty') || '1.1'),
@@ -3262,7 +3262,7 @@ window.ollamaVision = {
                     imageData: imageData,
                     prompt: response.prompt,
                     temperature: localStorage.getItem('ollamaVision_temperature') || 0.8,
-                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || 500,
+                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || -1,
                     topP: localStorage.getItem('ollamaVision_topP') || 0.7,
                     frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || 0.0,
                     presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || 0.0,
@@ -3338,7 +3338,7 @@ window.ollamaVision = {
                 backendType: backendType,
                 fusionType: fusionType,
                 temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
-                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || 500,
+                maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
                 topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
                 frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
                 presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
@@ -3709,7 +3709,7 @@ window.ollamaVision = {
                     imageData: imageData,
                     prompt: promptResponse.prompt,
                     temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
-                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || 500,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
                     topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
                     frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
                     presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
