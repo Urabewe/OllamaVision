@@ -157,6 +157,8 @@ Perfect for:
 #### 🎭 Character Creator
 Create detailed characters with customizable attributes:
 - Name, Sex, Species, Setting, Alignment, Class/Role
+- Editable input fields for custom characters
+- Editable response field to edit character before saving
 - Smart controls with field locking and randomization
 - Detailed output including personality, physical description, abilities, and backstory
 - Export characters to text files
