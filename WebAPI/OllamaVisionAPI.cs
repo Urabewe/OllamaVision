@@ -22,7 +22,7 @@ namespace Urabewe.OllamaVision.WebAPI
     [API.APIClass("API routes related to OllamaVision extension")]
     public class OllamaVisionAPI
     {
-        private static readonly HttpClient client = new HttpClient();
+        private static readonly HttpClient client = new HttpClient() { Timeout = TimeSpan.FromMinutes(5) };
         
         private static readonly Dictionary<string, string> PRESET_PROMPTS = new Dictionary<string, string>
         {
