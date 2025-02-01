@@ -4144,14 +4144,20 @@ Customize your settings and click generate to create a character!
                                             </div>
 
                                             <!-- Action Buttons -->
-                                            <button class="basic-button" onclick="ollamaVision.randomizeAll()" 
-                                                    style="font-size: 1.2rem;">
-                                                🎲 Random All
-                                            </button>
-                                            <button class="basic-button" onclick="ollamaVision.generateCharacter()" 
-                                                    style="font-size: 1.2rem;">
-                                                ✨ Generate Character
-                                            </button>
+                                            <div class="d-flex justify-content-between gap-2">
+                                                <button class="basic-button" onclick="ollamaVision.randomizeAll()" 
+                                                        style="font-size: 1.2rem;">
+                                                    🎲 Random All
+                                                </button>
+                                                <button class="basic-button" onclick="ollamaVision.generateCharacter()" 
+                                                        style="font-size: 1.2rem;">
+                                                    ✨ Generate Character
+                                                </button>
+                                                <button class="basic-button" onclick="ollamaVision.extractImagePrompt()"
+                                                        style="font-size: 1.2rem; float: right;">
+                                                    🎨 Extract Prompt
+                                                </button>
+                                            </div>
                                             
                                             <!-- Add status bar -->
                                             <div id="character-status" class="alert alert-info" style="display: none;">
@@ -4510,6 +4516,37 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                 statusBar.style.display = 'none';
             }
         }, 2000);
+    },
+
+    extractImagePrompt: function() {
+        const characterText = document.getElementById('character-output').textContent;
+        if (!characterText) {
+            this.updateStatus('error', 'No character description found');
+            return;
+        }
+
+        // Look for the AI Image Prompt section
+        const promptMatch = characterText.match(/AI Image Prompt:[\s\n]*["\*]*([^"]*)["\*]*/i);
+        if (promptMatch && promptMatch[1]) {
+            // Clean up the extracted prompt
+            let imagePrompt = promptMatch[1].trim();
+            
+            // Close the character modal
+            bootstrap.Modal.getInstance(document.getElementById('characterCreatorModal')).hide();
+            
+            // Send to the text2image tab
+            document.getElementById('text2imagetabbutton').click();
+            setTimeout(() => {
+                const generatePromptTextarea = document.getElementById("input_prompt");
+                if (generatePromptTextarea) {
+                    generatePromptTextarea.value = imagePrompt;
+                    generatePromptTextarea.dispatchEvent(new Event('input'));
+                    this.updateStatus('success', 'Image prompt extracted and sent to prompt');
+                }
+            }, 100);
+        } else {
+            this.updateStatus('error', 'No image prompt found in character description');
+        }
     }
 };
 
