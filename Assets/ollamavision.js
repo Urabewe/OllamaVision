@@ -4020,32 +4020,32 @@ Customize your settings and click generate to create a character!
                                                 <input type="text" list="species-options" class="form-select bg-dark modal_text_extra" id="character-species" style="background: inherit; color: inherit;">
                                                 <datalist id="species-options">
                                                     <option value="Random"></option>
-                                                    <option value="Human"></option>
-                                                    <option value="Elf"></option>
+                                                    <option value="Alien"></option>
+                                                    <option value="Android"></option>
+                                                    <option value="Angel"></option>
+                                                    <option value="Beastkin"></option>
+                                                    <option value="Cyborg"></option>
+                                                    <option value="Dark Elf"></option>
+                                                    <option value="Demon"></option>
+                                                    <option value="Djinn"></option>
+                                                    <option value="Dragonborn"></option>
                                                     <option value="Dwarf"></option>
+                                                    <option value="Elf"></option>
+                                                    <option value="Fairy"></option>
+                                                    <option value="Ghost"></option>
+                                                    <option value="Ghoul"></option>
                                                     <option value="Goblin"></option>
                                                     <option value="Golem"></option>
-                                                    <option value="Android"></option>
-                                                    <option value="Alien"></option>
-                                                    <option value="Ghoul"></option>
-                                                    <option value="Orc"></option>
-                                                    <option value="Fairy"></option>
                                                     <option value="High Elf"></option>
-                                                    <option value="Dark Elf"></option>
-                                                    <option value="Cyborg"></option>
-                                                    <option value="Demon"></option>
-                                                    <option value="Angel"></option>
-                                                    <option value="Vampire"></option>
-                                                    <option value="Werewolf"></option>
-                                                    <option value="Naga"></option>
-                                                    <option value="Dragonborn"></option>
+                                                    <option value="Human"></option>
+                                                    <option value="Lizardfolk"></option>
                                                     <option value="Merfolk"></option>
+                                                    <option value="Naga"></option>
+                                                    <option value="Orc"></option>
                                                     <option value="Slimefolk"></option>
                                                     <option value="Undead"></option>
-                                                    <option value="Ghost"></option>
-                                                    <option value="Beastkin"></option>
-                                                    <option value="Lizardfolk"></option>
-                                                    <option value="Djinn"></option>
+                                                    <option value="Vampire"></option>
+                                                    <option value="Werewolf"></option>
                                                 </datalist>
                                                 <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
                                                     🎲
@@ -4058,23 +4058,25 @@ Customize your settings and click generate to create a character!
                                                 <input type="text" list="setting-options" class="form-select bg-dark modal_text_extra" id="character-setting" style="background: inherit; color: inherit;">
                                                 <datalist id="setting-options">
                                                     <option value="Random"></option>
-                                                    <option value="Fantasy"></option>
-                                                    <option value="Urban Fantasy"></option>
-                                                    <option value="Sci-Fi"></option>
                                                     <option value="Cyberpunk"></option>
-                                                    <option value="Post-Apocalyptic"></option>
-                                                    <option value="Modern"></option>
-                                                    <option value="Steampunk"></option>
-                                                    <option value="Lovecraftian Horror"></option>
-                                                    <option value="Mythological"></option>
-                                                    <option value="Medieval"></option>
-                                                    <option value="Pirate World"></option>
-                                                    <option value="Superhero World"></option>
-                                                    <option value="Underwater Civilization"></option>
-                                                    <option value="Megacity"></option>
                                                     <option value="Digital/Cyberspace"></option>
                                                     <option value="Dreamworld"></option>
                                                     <option value="Dystopian"></option>
+                                                    <option value="Fantasy"></option>
+                                                    <option value="Feudal Japan"></option>
+                                                    <option value="Lovecraftian Horror"></option>
+                                                    <option value="Medieval"></option>
+                                                    <option value="Megacity"></option>
+                                                    <option value="Modern"></option>
+                                                    <option value="Mythological"></option>
+                                                    <option value="Pirate World"></option>
+                                                    <option value="Post-Apocalyptic"></option>
+                                                    <option value="Sci-Fi"></option>
+                                                    <option value="Space Opera"></option>
+                                                    <option value="Steampunk"></option>
+                                                    <option value="Superhero World"></option>
+                                                    <option value="Underwater Civilization"></option>
+                                                    <option value="Urban Fantasy"></option>
                                                     <option value="Western"></option>
                                                     <option value="Feudal Japan"></option>
                                                     <option value="Space Opera"></option>
@@ -4111,29 +4113,30 @@ Customize your settings and click generate to create a character!
                                                 <input type="text" list="class-options" class="form-select bg-dark modal_text_extra" id="character-class" style="background: inherit; color: inherit;">
                                                 <datalist id="class-options">
                                                     <option value="Random"></option>
-                                                    <option value="Warrior"></option>
-                                                    <option value="Paladin"></option>
+                                                    <option value="Archer"></option>
+                                                    <option value="Assassin"></option>
                                                     <option value="Barbarian"></option>
+                                                    <option value="Bard"></option>
+                                                    <option value="Beastmaster"></option>
+                                                    <option value="Brewmaster"></option>
+                                                    <option value="Cleric"></option>
+                                                    <option value="Diplomat"></option>
+                                                    <option value="Druid"></option>
+                                                    <option value="Healer"></option>
+                                                    <option value="Hunter"></option>
                                                     <option value="Knight"></option>
                                                     <option value="Mage"></option>
-                                                    <option value="Wizard"></option>
-                                                    <option value="Sorcerer"></option>
-                                                    <option value="Warlock"></option>
-                                                    <option value="Rogue"></option>
-                                                    <option value="Thief"></option>
-                                                    <option value="Assassin"></option>
-                                                    <option value="Spy"></option>
-                                                    <option value="Healer"></option>
-                                                    <option value="Cleric"></option>
-                                                    <option value="Druid"></option>
-                                                    <option value="Shaman"></option>
-                                                    <option value="Ranger"></option>
-                                                    <option value="Hunter"></option>
-                                                    <option value="Beastmaster"></option>
-                                                    <option value="Archer"></option>
-                                                    <option value="Bard"></option>
+                                                    <option value="Paladin"></option>
                                                     <option value="Performer"></option>
-                                                    <option value="Diplomat"></option>
+                                                    <option value="Ranger"></option>
+                                                    <option value="Rogue"></option>
+                                                    <option value="Shaman"></option>
+                                                    <option value="Sorcerer"></option>
+                                                    <option value="Spy"></option>
+                                                    <option value="Thief"></option>
+                                                    <option value="Warlock"></option>
+                                                    <option value="Warrior"></option>
+                                                    <option value="Wizard"></option>
                                                 </datalist>
                                                 <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
                                                     🎲
@@ -4259,11 +4262,42 @@ Customize your settings and click generate to create a character!
             // Create the prompt for the LLM
             const prompt = `Generate a fully detailed character based on the provided user inputs.
 RULES:
-Ensure the output strictly follows this exact structure, using bold section titles and uniform formatting. Create unique characters each time including the name.
-Always use unique overviews for each character giving each character their own name, stats, traits, abilities, backstory, and physical description. Create these based on the user inputs.
-When generating Beastkin, always create a unique sub-type inspired by an animal. Ensure traits (appearance, abilities, and backstory) reflect the selected animal inspiration. Each Beastkin should feel distinct and creative, with detailed descriptions of their physical traits, abilities, and how their animal side influences their life and role. Avoid reusing common ideas repeatedly to maintain variety.
-If the user selects beastkin, create a human-like anthropomorphic animal character and try to incorporate the user's choices into the character. Use details to create the human-like animal character in the AI image prompt of the beastkin character. If the character is a cat, describe a human-like cat. If it is a bear describe a human-like bear. The characters should be anthropomorphic.
-In the Ai image prompt make sure to describe the characters physical features.
+Output Format and Structure:
+
+Strictly follow the provided structure using bold section titles and clear formatting.
+Each character must feel entirely unique, with no reused details or repeated ideas.
+Character Creation Rules:
+
+Overview: Each character must have a unique name, alignment, traits, and backstory tailored to the user's inputs. For randomly selected attributes, generate fresh and imaginative combinations each time.
+Diversity: Do not restrict characters to stereotypes based on class, role, or species. For example:
+A Warrior can be tall and wiry instead of large and muscular.
+A Performer could be shy but charismatic when performing.
+Beastkin must feel like true human-animal hybrids, with physical traits and personalities reflecting their animal side.
+Beastkin-Specific Rules:
+
+When the Species is Beastkin, always create a unique anthropomorphic character inspired by an animal.
+Generate a specific sub-type (e.g., Wolf Beastkin, Owl Beastkin, Turtle Beastkin) dynamically, not limited to a predefined list.
+Physical Traits: Ensure physical features reflect the animal inspiration, such as:
+Fur, scales, or feathers with distinct patterns or colors.
+Ears, tails, claws, or wings adapted to their hybrid form.
+A mix of human-like and animal-like traits (e.g., an anthropomorphic tiger with a humanoid face and expressive golden eyes, or a sleek, feline build).
+Abilities: Highlight abilities tied to their animal side, such as enhanced senses, agility, strength, or unique magical traits.
+Physical Diversity:
+
+Do not restrict characters to standard appearances. Explore varied body types, heights, and features. For instance:
+Short and Stocky: A muscular Beastkin Performer with a bear-inspired physique.
+Lean and Graceful: A slender Wolf Beastkin Ranger with lithe movements.
+Unconventional Features: A Golem Mage with cracked stone skin glowing with magical runes.
+Backstory Depth:
+
+Ensure every character has a rich backstory integrating their species, role, and setting.
+Highlight conflicts, motivations, and relationships that make the character engaging.
+For Beastkin, include cultural or societal elements tied to their animal traits (e.g., tribal customs, connection to nature, or their role within their hybrid community).
+AI Image Prompt Rules:
+
+Always include a highly descriptive AI Image Prompt based on the character's physical traits, clothing, setting, and pose.
+For Beastkin, ensure the description emphasizes the anthropomorphic design (e.g., "a humanoid fox with sleek red fur, wearing leather armor with intricate tribal patterns").
+Use vivid details to reflect their backstory and role (e.g., "a Tiger Beastkin mage with glowing orange stripes, casting a spell in a jungle setting under moonlight").
 
 When generating random selections, only choose from these valid options:
 
@@ -4291,8 +4325,8 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
 - Name: [User Input or AI-generated]  
 - Sex: [Choose from Sex Options if random]  
 - Species: [Choose from Species Options if random]  
-- Alignment: [Choose from Alignment Options if random]  
 - Setting: [Choose from Setting Options if random]  
+- Alignment: [Choose from Alignment Options if random]  
 - Class/Role: [Choose from Class/Role Options if random]  
 
 **Personality & Traits:**  
@@ -4318,7 +4352,7 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
 [The backstory should feel natural and immersive]  
 
 **AI Image Prompt:**  
-*"[A vivid, highly detailed description of the character's physical appearance, clothing, setting, pose, lighting, and artistic style for AI image generation. Ensure it is unique each time, incorporating elements from the AI-generated backstory.]"*`;
+*"[A vivid, highly detailed description of the character's physical appearance, clothing, setting, pose, lighting, and artistic style for AI image generation. Ensure it is unique each time, incorporating elements from the AI-generated backstory. Each one should be a character portrait.]"*`;
 
             // Make the request using GenerateCharacterAsync
             const response = await new Promise((resolve, reject) => {
