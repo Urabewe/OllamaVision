@@ -17,7 +17,9 @@
   - [Quick Tips](#-quick-tips)
 - [LLM Toys Guide](#-llm-toys-guide)
   - [Image Fusion](#-image-fusion)
+  - [Object + Subject Fusion](#-object--subject-fusion)
   - [Story Time](#-story-time)
+  - [Character Creator](#-character-creator)
 - [Example Outputs](#-example-outputs)
   - [Color Palette Analysis](#-color-palette-analysis)
   - [Facial Features Analysis](#-facial-features-analysis)
@@ -36,7 +38,9 @@
 - Multiple preset User Prompts (Artistic Style, Facial Features, Color Palette, etc.)
 - Creative LLM Toys:
   - **Image Fusion**: Combine separate analyses of style, subject, and setting into cohesive prompts
+  - **Object + Subject Fusion**: Transform objects with character designs and create unique combinations
   - **Story Time**: Transform images into detailed narratives with beginning, middle, and end
+  - **Character Creator**: Generate detailed character profiles for stories, games, or roleplay
 - System Prompt support for all backends to customize model behavior
 - Prompt Prepending for adding instructions in the front of all requests
 - Custom preset support with reordering capability
@@ -133,6 +137,31 @@
 5. Edit the prompt to your liking
 6. Click **"Send to Prompt"** to generate an image
 7. Perfect for creating rich, multi-layered image generation prompts
+
+#### 🔄 Object + Subject Fusion
+1. Click the "Fusion" button
+2. Select "Object + Subject" mode
+3. Load your object image (paste, upload, or drag & drop)
+4. Analyze and edit result as needed
+5. Load your subject image
+6. Analyze and edit result as needed
+7. Click "Combine" to generate fusion prompt
+8. Edit final prompt if desired
+9. Click "Send to Prompt" to generate
+
+Perfect for:
+- Creating custom designs on products (t-shirts, mugs, skateboards)
+- Transforming furniture into character-themed pieces
+- Designing custom figurines, sculptures, or plush toys
+
+#### 🎭 Character Creator
+Create detailed characters with customizable attributes:
+- Name, Sex, Species, Setting, Alignment, Class/Role
+- Smart controls with field locking and randomization
+- Detailed output including personality, physical description, abilities, and backstory
+- Export characters to text files
+- Generate consistent characters across your preferred settings
+- Creates an AI image prompt to create a profile picture for your character
 
 #### 📚 Story Time
 1. Load your image using paste, upload, or drag & drop
