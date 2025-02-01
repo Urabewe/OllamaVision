@@ -26,20 +26,21 @@ namespace Urabewe.OllamaVision.WebAPI
         
         private static readonly Dictionary<string, string> PRESET_PROMPTS = new Dictionary<string, string>
         {
-            ["Default"] = "Give a brief, detailed description of this image. Make it all one paragraph and format it for image generation prompts.",
-            ["Detailed Analysis"] = "Provide a detailed analysis of this image, including colors, composition, subjects, lighting, and mood. Format it as a comprehensive description for image generation.",
-            ["Simple Description"] = "Give a short two sentence response about the details of this image.",
-            ["Artistic Style"] = "Describe this image in artistic terms, focusing on style, technique, composition, and visual elements that would be important for recreating it.",
-            ["Technical Details"] = "Analyze this image focusing on technical aspects like camera angles, lighting setup, composition rules, and photographic techniques used.",
-            ["Color Palette"] = "Give a detailed description of the color palette used in this image and nothing else. Give details about all colors used in the photo. Indicate if there is a pattern being used.",
-            ["Facial Features"] = "Give a very descriptive, detailed response about the facial features of the subject in the image. Include hair color, facial hair, skin tone, eye color, eye shape, nose shape, chin, blemishes, beauty marks, freckles, moles. Only respond with facial features.",
+            ["Default"] = "Describe this image in a single, detailed paragraph optimized for image generation prompts. Focus on key visual elements, including subjects, setting, colors, and mood, with precise and descriptive wording suitable for AI-generated art.",
+            ["Detailed Analysis"] = "Provide an in-depth analysis of this image, covering composition, lighting, colors, subjects, perspective, and overall mood. Structure the description as a comprehensive breakdown suitable for detailed image recreation in AI models.",
+            ["Simple Description"] = "Summarize this image in two concise sentences, focusing on its most notable visual details and main subjects.",
+            ["Artistic Style"] = "Describe this image using artistic terminology, focusing on visual style, medium, techniques, brushwork (if applicable), composition, and artistic influences. Provide details relevant to recreating the image in a specific artistic manner.",
+            ["Technical Details"] = "Analyze this image from a technical perspective, including camera angle, focal length, depth of field, lighting setup, composition rules (e.g., rule of thirds, leading lines), and any photographic or cinematic techniques used.",
+            ["Color Palette"] = "Describe the color palette of this image in detail, listing all dominant and secondary colors, their shades and tones, and any notable patterns or color harmonies present. Avoid mentioning anything unrelated to colors.",
+            ["Facial Features"] = "Provide an extremely detailed description of the subject’s facial features, including skin tone, hair color, eye color, eye shape, nose shape, facial structure, beauty marks, freckles, moles, blemishes, and any other defining traits. Do not include any details beyond facial features.",
         };
 
         private static readonly Dictionary<string, string> FUSION_PROMPTS = new Dictionary<string, string>
         {
             ["Style Analysis"] = "Only respond about the style of the image do not respond about who what when or where: focus solely on technical and artistic characteristics such as the color palette (e.g., vibrant, muted, monochromatic, pastel, etc.), lighting (e.g., soft, dramatic, high contrast, natural, etc.), camera angle or perspective (e.g., wide shot, close-up, bird's-eye view, etc.), artistic or photographic techniques used (e.g., brushstroke style, texture, sharpness, depth of field, etc.), if the artist is using a specific style, if the artist is a known artist mention it, and the overall mood or aesthetic conveyed; do not include any details about the subject, setting, or other contextual information. Focus only on the visual and stylistic elements.",
             ["Subject Analysis"] = "Analyze the image and provide a detailed description of its subject, only respond about who or what is in the image: focus exclusively on who or what is depicted, including their physical characteristics, colors, textures, shapes, poses, expressions, or any notable features; ensuring the focus remains solely on the subject; do not include any information about the artistic style, setting, background, or other contextual elements.",
-            ["Setting Analysis"] = "Analyze the image and provide a thorough description of its setting, do not respond about who or what is in the image or the overall style of the image: focus entirely on the environment and location, including natural elements like landscapes, terrain, vegetation, bodies of water, and skies, as well as man-made structures such as buildings, roads, and objects within the scene; describe the weather, time of day, lighting conditions, colors, and textures that define the surroundings; include spatial details like depth, scale, and perspective; do not include any information about the subject (who or what is depicted) or the artistic style, techniques, or visual effects used in the image."
+            ["Setting Analysis"] = "Analyze the image and provide a thorough description of its setting, do not respond about who or what is in the image or the overall style of the image: focus entirely on the environment and location, including natural elements like landscapes, terrain, vegetation, bodies of water, and skies, as well as man-made structures such as buildings, roads, and objects within the scene; describe the weather, time of day, lighting conditions, colors, and textures that define the surroundings; include spatial details like depth, scale, and perspective; do not include any information about the subject (who or what is depicted) or the artistic style, techniques, or visual effects used in the image.",
+            ["Object Analysis"] = @"Analyze the image and provide a detailed description of the object: focus exclusively on the physical object itself, what the object is, what it is made of, the material, textures, and any distinctive features or characteristics; do not mention any setting, or any background elements; do not include any information about artistic style, techniques, or the environment around the object. Describe the object as if you wanted to tell someone what the object is but not it's shape or if it is a character. Include specific details about:\n\n 1. Materials and surface qualities\n 2. Textures and tactile qualities\n 3. Physical condition and wear (if visible)\n\n Keep the description focused solely on the object Do not interpret its purpose, meaning, or context. Do not mention anything in the background or surrounding environment."
         };
 
         private static readonly List<string> PRESET_ORDER = new List<string>
@@ -53,7 +54,7 @@ namespace Urabewe.OllamaVision.WebAPI
             "Facial Features"
         };
 
-        private static readonly string STORY_PROMPT = @"Generate a fully developed story inspired solely by the provided image. Craft a vivid and engaging narrative that brings the scene, characters, and mood to life. Ensure the story has a clear structure: an intriguing beginning, a compelling middle, and a satisfying resolution. Use the main subject(s) and setting from the image as the central focus of the story. For known figures or characters, incorporate them into the narrative accordingly. When choosing things like names, genres, writing style, do it randomly. Vary the genre and style with each response to ensure originality and diversity, alternating between genres like comedy, horror, sci-fi, fantasy, drama, adventure, and mystery. Tailor the narrative style to fit the chosen genre or add an unexpected twist for variety.\n\n### Guidelines:\n- Introduction: Set the scene with vivid descriptions, introduce the main character(s), and hint at the central conflict, mystery, or goal.\n- Main Story: Develop the plot through engaging events, challenges, or conflicts. Use dialogue and character interactions for depth.\n- Conclusion: Resolve the conflict or provide closure in a satisfying way.\n\n### Additional Notes:\n- Use vivid, descriptive language to create atmosphere and bring the setting, characters, and events to life.\n- Balance action, dialogue, and description for a dynamic narrative.\n- Aim for randomness and variety in genres and storytelling approaches, using techniques like shifting perspectives, unreliable narrators, or non-linear structures.\n- Avoid formulaic repetition; focus on originality and emotional resonance.\n\n### Output Specifications:\n- Word count: 2,000 to 3,000 words.\n- Ensure the story feels complete and polished with a clear beginning, middle, and end.\n- Base the narrative entirely on the visual elements of the image. Don't talk about the image, only return the story.\n Make the story as long as possible.";
+        private static readonly string STORY_PROMPT = @"Craft a fully developed story inspired entirely by the provided image. Use the scene, characters, and mood depicted in the image as the central focus of the narrative. The story must have a clear structure, including an intriguing beginning, a compelling middle, and a satisfying resolution. Set the scene vividly, introduce the main characters and the central conflict or goal, and develop the plot with engaging challenges, interactions, and events that drive the narrative forward. Resolve the story with closure that ties together the themes and character arcs. Use rich, descriptive language to bring the scene, characters, and events to life, balancing dialogue, action, and description to create a dynamic and immersive narrative. Incorporate variety and creativity in storytelling approaches, such as comedy, fantasy, adventure, or mystery, while keeping all content appropriate and family-friendly. Avoid any offensive, controversial, or sensitive material. Do not include commentary about the image itself; focus solely on crafting a story based on the image’s elements. The story should have a word count of 2,000–3,000 words and feel polished, complete, and original, with emotional resonance and creativity.";
 
         public static void Register()
         {
@@ -617,98 +618,194 @@ namespace Urabewe.OllamaVision.WebAPI
             }
         }
 
-        [API.APIDescription("Streams analysis of an image using vision models", "Returns the AI's analysis of the image as a stream")]
+        [API.APIDescription("Analyzes an image using the specified model", "Returns the analysis result")]
         public static async Task<JObject> StreamAnalyzeImageAsync(JObject data)
         {
             try
             {
-                // Extract parameters
+                var backendType = data["backendType"]?.ToString()?.ToLower() ?? "ollama";
                 var model = data["model"]?.ToString();
-                var backendType = data["backendType"]?.ToString() ?? "ollama";
-                var imageData = data["imageData"]?.ToString();
                 var prompt = data["prompt"]?.ToString();
-                var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                var imageData = data["imageData"]?.ToString();
+                var systemPrompt = data["systemPrompt"]?.ToString();
 
-                // Validate required parameters
-                if (string.IsNullOrEmpty(model) || string.IsNullOrEmpty(imageData) || string.IsNullOrEmpty(prompt))
+                // Common parameters with defaults
+                var temperature = data["temperature"]?.ToObject<float>() ?? 0.8f;
+                var maxTokens = data["maxTokens"]?.ToObject<int>() ?? 500;
+                var topP = data["topP"]?.ToObject<float>() ?? 0.7f;
+
+                // Build request based on backend type
+                JObject requestBody = new JObject();
+                string endpoint;
+
+                switch (backendType)
                 {
-                    return new JObject
-                    {
-                        ["success"] = false,
-                        ["error"] = "Missing required parameters"
-                    };
+                    case "openai":
+                        endpoint = "https://api.openai.com/v1/chat/completions";
+                        requestBody = new JObject
+                        {
+                            ["model"] = model,
+                            ["messages"] = new JArray
+                            {
+                                new JObject
+                                {
+                                    ["role"] = "user",
+                                    ["content"] = new JArray
+                                    {
+                                        new JObject { ["type"] = "text", ["text"] = prompt },
+                                        new JObject { ["type"] = "image_url", ["image_url"] = new JObject { ["url"] = imageData } }
+                                    }
+                                }
+                            },
+                            ["temperature"] = temperature,
+                            ["max_tokens"] = maxTokens,
+                            ["top_p"] = topP
+                        };
+
+                        // OpenAI-specific parameters
+                        if (data["frequencyPenalty"] != null)
+                            requestBody["frequency_penalty"] = data["frequencyPenalty"].ToObject<float>();
+                        if (data["presencePenalty"] != null)
+                            requestBody["presence_penalty"] = data["presencePenalty"].ToObject<float>();
+
+                        // Add system prompt if provided
+                        if (!string.IsNullOrEmpty(systemPrompt))
+                        {
+                            ((JArray)requestBody["messages"]).Insert(0, new JObject
+                            {
+                                ["role"] = "system",
+                                ["content"] = systemPrompt
+                            });
+                        }
+                        break;
+
+                    case "openrouter":
+                        endpoint = "https://openrouter.ai/api/v1/chat/completions";
+                        requestBody = new JObject
+                        {
+                            ["model"] = model,
+                            ["messages"] = new JArray
+                            {
+                                new JObject
+                                {
+                                    ["role"] = "user",
+                                    ["content"] = new JArray
+                                    {
+                                        new JObject { ["type"] = "text", ["text"] = prompt },
+                                        new JObject { ["type"] = "image_url", ["image_url"] = imageData }
+                                    }
+                                }
+                            },
+                            ["temperature"] = temperature,
+                            ["max_tokens"] = maxTokens,
+                            ["top_p"] = topP
+                        };
+
+                        // OpenRouter-specific parameters
+                        if (data["frequencyPenalty"] != null)
+                            requestBody["frequency_penalty"] = data["frequencyPenalty"].ToObject<float>();
+                        if (data["presencePenalty"] != null)
+                            requestBody["presence_penalty"] = data["presencePenalty"].ToObject<float>();
+                        if (data["topK"] != null)
+                            requestBody["top_k"] = data["topK"].ToObject<int>();
+                        if (data["repeatPenalty"] != null)
+                            requestBody["repeat_penalty"] = data["repeatPenalty"].ToObject<float>();
+
+                        // Add system prompt if provided
+                        if (!string.IsNullOrEmpty(systemPrompt))
+                        {
+                            ((JArray)requestBody["messages"]).Insert(0, new JObject
+                            {
+                                ["role"] = "system",
+                                ["content"] = systemPrompt
+                            });
+                        }
+                        break;
+
+                    default: // ollama
+                        var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                        endpoint = $"{ollamaUrl}/api/generate";
+                        requestBody = new JObject
+                        {
+                            ["model"] = model,
+                            ["prompt"] = prompt,
+                            ["stream"] = false,
+                            ["images"] = new JArray { imageData },
+                            ["options"] = new JObject
+                            {
+                                ["temperature"] = temperature,
+                                ["top_p"] = topP,
+                                ["num_predict"] = maxTokens
+                            }
+                        };
+
+                        // Ollama-specific parameters
+                        var options = (JObject)requestBody["options"];
+                        if (data["topK"] != null)
+                            options["top_k"] = data["topK"].ToObject<int>();
+                        if (data["repeatPenalty"] != null)
+                            options["repeat_penalty"] = data["repeatPenalty"].ToObject<float>();
+                        if (data["seed"] != null)
+                            options["seed"] = data["seed"].ToObject<int>();
+
+                        // Add system prompt if provided
+                        if (!string.IsNullOrEmpty(systemPrompt))
+                        {
+                            requestBody["system"] = systemPrompt;
+                        }
+                        break;
                 }
 
-                // Process image data
-                string base64Data;
-                if (imageData.StartsWith("data:image"))
+                // Add the HTTP request handling
+                using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
                 {
-                    var parts = imageData.Split(',');
-                    if (parts.Length != 2)
+                    if (backendType == "openai")
+                    {
+                        request.Headers.Add("Authorization", $"Bearer {data["apiKey"]}");
+                    }
+                    else if (backendType == "openrouter")
+                    {
+                        request.Headers.Add("Authorization", $"Bearer {data["apiKey"]}");
+                        request.Headers.Add("HTTP-Referer", "https://swarmui.local");
+                        request.Headers.Add("X-Title", data["siteName"]?.ToString() ?? "SwarmUI");
+                    }
+
+                    request.Content = new StringContent(
+                        requestBody.ToString(),
+                        System.Text.Encoding.UTF8,
+                        "application/json"
+                    );
+
+                    var response = await client.SendAsync(request);
+                    var content = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
                     {
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = "Invalid image data format"
+                            ["error"] = $"Request failed: {content}"
                         };
                     }
-                    base64Data = parts[1];
-                }
-                else
-                {
-                    base64Data = imageData;
-                }
 
-                // Extract model parameters
-                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
-                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500));
-                var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
+                    var result = JObject.Parse(content);
+                    string finalResponse;
 
-                string response = "";
+                    if (backendType == "ollama")
+                    {
+                        finalResponse = result["response"]?.ToString();
+                    }
+                    else // openai or openrouter
+                    {
+                        finalResponse = result["choices"]?[0]?["message"]?["content"]?.ToString();
+                    }
 
-                if (backendType == "openai")
-                {
-                    response = await GetOpenAIResponse(
-                        model, prompt, base64Data, data["apiKey"]?.ToString(),
-                        temperature, maxTokens, topP,
-                        data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
-                        data["presencePenalty"]?.ToObject<float?>() ?? 0.0f,
-                        data["systemPrompt"]?.ToString()
-                    );
+                    return new JObject
+                    {
+                        ["success"] = true,
+                        ["response"] = finalResponse
+                    };
                 }
-                else if (backendType == "openrouter")
-                {
-                    response = await GetOpenRouterResponse(
-                        model, prompt, base64Data, data["apiKey"]?.ToString(),
-                        temperature, maxTokens, topP,
-                        data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
-                        data["presencePenalty"]?.ToObject<float?>() ?? 0.0f,
-                        data["topK"]?.ToObject<int?>() ?? 40,
-                        data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
-                        data["minP"]?.ToObject<float?>() ?? 0.0f,
-                        data["topA"]?.ToObject<float?>() ?? 0.0f,
-                        data["seed"]?.ToObject<int?>() ?? -1,
-                        data["siteName"]?.ToString() ?? "SwarmUI",
-                        data["systemPrompt"]?.ToString()
-                    );
-                }
-                else // Ollama
-                {
-                    response = await GetOllamaResponse(
-                        model, prompt, base64Data, ollamaUrl,
-                        temperature, maxTokens, topP,
-                        data["topK"]?.ToObject<int?>() ?? 40,
-                        data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
-                        data["seed"]?.ToObject<int?>() ?? -1,
-                        data["systemPrompt"]?.ToString()
-                    );
-                }
-
-                return new JObject
-                {
-                    ["success"] = true,
-                    ["response"] = response
-                };
             }
             catch (Exception ex)
             {
@@ -721,219 +818,85 @@ namespace Urabewe.OllamaVision.WebAPI
             }
         }
 
-        private static async Task<string> GetOpenAIResponse(string model, string prompt, string base64Data, string apiKey, 
-            float temperature, int maxTokens, float topP, float frequencyPenalty, float presencePenalty, string systemPrompt)
-        {
-            var messages = new JArray();
-            if (!string.IsNullOrEmpty(systemPrompt))
-            {
-                messages.Add(new JObject
-                {
-                    ["role"] = "system",
-                    ["content"] = systemPrompt
-                });
-            }
-
-            messages.Add(new JObject
-            {
-                ["role"] = "user",
-                ["content"] = new JArray {
-                    new JObject { ["type"] = "text", ["text"] = prompt },
-                    new JObject {
-                        ["type"] = "image_url",
-                        ["image_url"] = new JObject {
-                            ["url"] = $"data:image/jpeg;base64,{base64Data}"
-                        }
-                    }
-                }
-            });
-
-            var requestData = new JObject
-            {
-                ["model"] = model,
-                ["messages"] = messages,
-                ["max_tokens"] = maxTokens,
-                ["temperature"] = temperature,
-                ["top_p"] = topP,
-                ["frequency_penalty"] = frequencyPenalty,
-                ["presence_penalty"] = presencePenalty
-            };
-
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-
-            var response = await client.PostAsync(
-                "https://api.openai.com/v1/chat/completions",
-                new StringContent(requestData.ToString(), System.Text.Encoding.UTF8, "application/json")
-            );
-
-            var content = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"OpenAI API request failed: {content}");
-            }
-
-            var result = JObject.Parse(content);
-            return result["choices"]?[0]?["message"]?["content"]?.ToString() ?? 
-                throw new Exception("No response content from OpenAI");
-        }
-
-        private static async Task<string> GetOpenRouterResponse(string model, string prompt, string base64Data, string apiKey,
-            float temperature, int maxTokens, float topP, float frequencyPenalty, float presencePenalty,
-            int topK, float repeatPenalty, float minP, float topA, int seed, string siteName, string systemPrompt)
-        {
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                throw new Exception("OpenRouter API key is required");
-            }
-
-            var messages = new JArray();
-            if (!string.IsNullOrEmpty(systemPrompt))
-            {
-                messages.Add(new JObject
-                {
-                    ["role"] = "system",
-                    ["content"] = systemPrompt
-                });
-            }
-
-            messages.Add(new JObject
-            {
-                ["role"] = "user",
-                ["content"] = new JArray {
-                    new JObject { ["type"] = "text", ["text"] = prompt },
-                    new JObject {
-                        ["type"] = "image_url",
-                        ["image_url"] = new JObject {
-                            ["url"] = $"data:image/jpeg;base64,{base64Data}"
-                        }
-                    }
-                }
-            });
-
-            var requestData = new JObject
-            {
-                ["model"] = model,
-                ["messages"] = messages,
-                ["max_tokens"] = maxTokens,
-                ["temperature"] = temperature,
-                ["top_p"] = topP,
-                ["frequency_penalty"] = frequencyPenalty,
-                ["presence_penalty"] = presencePenalty,
-                ["top_k"] = topK,
-                ["repetition_penalty"] = repeatPenalty,
-                ["min_p"] = minP,
-                ["top_a"] = topA
-            };
-
-            if (seed != -1)
-            {
-                requestData["seed"] = seed;
-            }
-
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("HTTP-Referer", "https://swarmui.local");
-            client.DefaultRequestHeaders.Add("X-Title", siteName);
-
-            var response = await client.PostAsync(
-                "https://openrouter.ai/api/v1/chat/completions",
-                new StringContent(requestData.ToString(), System.Text.Encoding.UTF8, "application/json")
-            );
-
-            var content = await response.Content.ReadAsStringAsync();
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                // Check if it's a model-specific error and try a fallback
-                var errorObj = JObject.Parse(content);
-                var errorMessage = errorObj["error"]?["message"]?.ToString();
-                if (errorMessage?.Contains("SambaNova") == true)
-                {
-                    // Return empty string to allow fallback behavior
-                    return string.Empty;
-                }
-                throw new Exception($"OpenRouter API request failed: {errorMessage ?? "Unknown error"}");
-            }
-
-            try
-            {
-                var result = JObject.Parse(content);
-                return result["choices"]?[0]?["message"]?["content"]?.ToString() ?? string.Empty;
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
-        private static async Task<string> GetOllamaResponse(string model, string prompt, string base64Data, string ollamaUrl,
-            float temperature, int maxTokens, float topP, int topK, float repeatPenalty, int seed, string systemPrompt)
-        {
-            var requestData = new JObject
-            {
-                ["model"] = model,
-                ["prompt"] = prompt,
-                ["images"] = new JArray { base64Data },
-                ["stream"] = false,
-                ["options"] = new JObject
-                {
-                    ["temperature"] = temperature,
-                    ["top_p"] = topP,
-                    ["top_k"] = topK,
-                    ["num_predict"] = maxTokens,
-                    ["repeat_penalty"] = repeatPenalty,
-                    ["seed"] = seed
-                }
-            };
-
-            if (!string.IsNullOrEmpty(systemPrompt))
-            {
-                requestData["system"] = systemPrompt;
-            }
-
-            var response = await client.PostAsync(
-                $"{ollamaUrl}/api/generate",
-                new StringContent(requestData.ToString(), System.Text.Encoding.UTF8, "application/json")
-            );
-
-            var content = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Ollama API request failed: {content}");
-            }
-
-            var result = JObject.Parse(content);
-            return result["response"]?.ToString() ?? 
-                throw new Exception("No response content from Ollama");
-        }
-
         [API.APIDescription("Combines multiple analyses into a single cohesive prompt", "Returns the combined analysis prompt")]
         public static async Task<JObject> CombineAnalysesAsync(JObject data)
         {
             try
             {
-                var styleAnalysis = data["styleAnalysis"]?.ToString();
-                var subjectAnalysis = data["subjectAnalysis"]?.ToString();
-                var settingAnalysis = data["settingAnalysis"]?.ToString();
+                var fusionType = data["fusionType"]?.ToString() ?? "style-subject-setting";
+                var prompt = "";
                 var model = data["model"]?.ToString();
                 var backendType = data["backendType"]?.ToString() ?? "ollama";
 
-                if (string.IsNullOrEmpty(styleAnalysis) || 
-                    string.IsNullOrEmpty(subjectAnalysis) || 
-                    string.IsNullOrEmpty(settingAnalysis))
+                if (fusionType == "object-subject")
                 {
-                    return new JObject
-                    {
-                        ["success"] = false,
-                        ["error"] = "All three analyses are required"
-                    };
-                }
+                    var objectAnalysis = data["objectAnalysis"]?.ToString();
+                    var subjectAnalysis = data["subjectAnalysis"]?.ToString();
 
-                // Create a consistent prompt for all backends
-                var prompt = @"You will be sent three image descriptions: Style Analysis, Subject Analysis, and Setting Analysis.
+                    if (string.IsNullOrEmpty(objectAnalysis) || string.IsNullOrEmpty(subjectAnalysis))
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "Both object and subject analyses are required"
+                        };
+                    }
+
+                    prompt = @"Image Prompt Generation Guidelines
+
+You will be provided with two image descriptions:
+
+Object Analysis – Describes what the object is. Avoid details about its shape, context, background, mood, or feelings. Only focus on what the object is.
+Subject Analysis – Describes the subject’s appearance, colors, clothing, and other defining traits. Avoid setting details, background elements, mood, or emotions.
+Task:
+Combine the two descriptions into a single, cohesive image generation prompt that:
+
+Transforms the object into the subject’s form or
+Incorporates the subject’s image onto the object
+Guidelines:
+
+If the object is wearable (e.g., a t-shirt), place the subject’s image on it.
+If the object is a figurine, plush toy, or sculpture, transform it into the subject.
+If the object is something like a car, furniture, or large structure, vary between applying the subject’s design onto the object like an image or decal or reshaping the object into the subject’s form.
+Keep the prompt in a general-purpose AI image generation style, around 150 tokens or 200 words.
+Do not say things like transform the or change the combine the prompt like the user has never seen the original two images.
+Example:
+Object: A skateboard
+Subject: A red-scaled dragon with golden eyes, large wings, and black tribal markings on its body.
+
+Prompt Output:
+A sleek skateboard featuring an intricate design of a red-scaled dragon with golden eyes, large wings, and bold black tribal markings. The dragon’s powerful form stretches across the deck, with its wings wrapping around the edges, giving the board a dynamic, fierce aesthetic. High-quality airbrushed artwork with crisp details, glowing highlights on the scales, and a slightly metallic sheen on the golden eyes.
+
+OR
+
+A skateboard reshaped into the form of a red-scaled dragon. The deck takes on a sleek, curved body with detailed black tribal markings across its surface. The wheels seamlessly blend into clawed feet, and the head extends forward with piercing golden eyes. Wings curve along the sides, giving the skateboard an aerodynamic, mythical design.
+
+Object Analysis: " + objectAnalysis + "\n\n" +
+"Subject Analysis: " + subjectAnalysis;
+                }
+                else
+                {
+                    var styleAnalysis = data["styleAnalysis"]?.ToString();
+                    var subjectAnalysis = data["subjectAnalysis"]?.ToString();
+                    var settingAnalysis = data["settingAnalysis"]?.ToString();
+
+                    if (string.IsNullOrEmpty(styleAnalysis) || 
+                        string.IsNullOrEmpty(subjectAnalysis) || 
+                        string.IsNullOrEmpty(settingAnalysis))
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "All three analyses are required"
+                        };
+                    }
+
+                    // Create a consistent prompt for all backends
+                    prompt = @"You will be sent three image descriptions: Style Analysis, Subject Analysis, and Setting Analysis.
 
 Your task is to combine these into a single cohesive prompt for image generation. Follow these rules:
+
+Keep your response to 150 token or around 200 words.
 
 Style Analysis:
 Focus on technical details such as the color palette, lighting, camera angle, and art style.
@@ -958,6 +921,7 @@ Combine the three descriptions into a single paragraph in the style-subject-sett
 Style Analysis: " + styleAnalysis + "\n\n" +
 "Subject Analysis: " + subjectAnalysis + "\n\n" +
 "Setting Analysis: " + settingAnalysis;
+                }
 
                 // Handle different backends
                 if (backendType == "openai")
@@ -1154,8 +1118,6 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         ["response"] = combinedResponse
                     };
                 }
-
-                // ... rest of the method
             }
             catch (Exception ex)
             {
@@ -1227,6 +1189,93 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                 {
                     ["success"] = false,
                     ["error"] = ex.Message
+                };
+            }
+        }
+
+        private static JObject ValidateAndStandardizeParams(JObject data)
+        {
+            try
+            {
+                // Extract and validate base parameters
+                var model = data["model"]?.ToString();
+                var backendType = data["backendType"]?.ToString()?.ToLower() ?? "ollama";
+                var imageData = data["imageData"]?.ToString();
+                var prompt = data["prompt"]?.ToString();
+                var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+
+                // Validate required parameters
+                if (string.IsNullOrEmpty(model))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing required parameter: model"
+                    };
+                }
+
+                if (string.IsNullOrEmpty(imageData))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing required parameter: imageData"
+                    };
+                }
+
+                // Clean base64 data for Ollama
+                if (backendType == "ollama" && imageData.StartsWith("data:"))
+                {
+                    var base64Start = imageData.IndexOf(",") + 1;
+                    imageData = imageData.Substring(base64Start);
+                }
+
+                // Standardize common parameters with defaults
+                var standardParams = new JObject
+                {
+                    ["model"] = model,
+                    ["backendType"] = backendType,
+                    ["imageData"] = imageData,
+                    ["prompt"] = prompt,
+                    ["systemPrompt"] = systemPrompt,
+                    ["temperature"] = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f)),
+                    ["maxTokens"] = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? 500)),
+                    ["topP"] = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f))
+                };
+
+                // Add backend-specific parameters
+                switch (backendType)
+                {
+                    case "openai":
+                    case "openrouter":
+                        standardParams["frequencyPenalty"] = Math.Max(-2.0f, Math.Min(2.0f, data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f));
+                        standardParams["presencePenalty"] = Math.Max(-2.0f, Math.Min(2.0f, data["presencePenalty"]?.ToObject<float?>() ?? 0.0f));
+                        if (backendType == "openrouter")
+                        {
+                            standardParams["repeatPenalty"] = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
+                            standardParams["topK"] = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
+                            standardParams["minP"] = Math.Max(0.0f, Math.Min(1.0f, data["minP"]?.ToObject<float?>() ?? 0.0f));
+                            standardParams["topA"] = Math.Max(0.0f, Math.Min(1.0f, data["topA"]?.ToObject<float?>() ?? 0.0f));
+                            standardParams["seed"] = data["seed"]?.ToObject<int?>() ?? -1;
+                        }
+                        break;
+                    case "ollama":
+                        standardParams["seed"] = data["seed"]?.ToObject<int?>() ?? -1;
+                        standardParams["topK"] = Math.Max(0, Math.Min(100, data["topK"]?.ToObject<int?>() ?? 40));
+                        standardParams["repeatPenalty"] = Math.Max(0.0f, Math.Min(2.0f, data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f));
+                        standardParams["ollamaUrl"] = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                        break;
+                }
+
+                standardParams["success"] = true;
+                return standardParams;
+            }
+            catch (Exception ex)
+            {
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = $"Parameter validation failed: {ex.Message}"
                 };
             }
         }

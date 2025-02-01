@@ -1291,34 +1291,31 @@ window.ollamaVision = {
 
             // Make API request
             const response = await new Promise((resolve, reject) => {
-                genericRequest('StreamAnalyzeImageAsync', 
-                    {
-                        model: model,
-                        backendType: backendType,
-                        imageData: processedImageData,
-                        prompt: prompt,
-                        temperature: localStorage.getItem('ollamaVision_temperature') || '0.8',
-                        maxTokens: localStorage.getItem('ollamaVision_maxTokens') || '500',
-                        topP: localStorage.getItem('ollamaVision_topP') || '0.7',
-                        systemPrompt: localStorage.getItem('ollamaVision_systemPrompt') || '',
-                        frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0',
-                        presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || '0.0',
-                        repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || '1.1',
-                        topK: localStorage.getItem('ollamaVision_topK') || '40',
-                        seed: localStorage.getItem('ollamaVision_seed') || '-1',
-                        minP: localStorage.getItem('ollamaVision_minP') || '0.0',
-                        topA: localStorage.getItem('ollamaVision_topA') || '0.0',
-                        apiKey: backendType === 'openai' ? 
-                            localStorage.getItem('ollamaVision_openaiKey') : 
-                            backendType === 'openrouter' ? 
-                                localStorage.getItem('ollamaVision_openrouterKey') : '',
-                        siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
-                        ollamaUrl: backendType === 'ollama' ? 
-                            `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}` : ''
-                    },
-                    (data) => resolve(data),
-                    (error) => reject(error)
-                );
+                const filteredParams = filterBackendParams({
+                    model: model,
+                    backendType: backendType,
+                    imageData: processedImageData,
+                    prompt: prompt,
+                    temperature: localStorage.getItem('ollamaVision_temperature') || '0.8',
+                    maxTokens: localStorage.getItem('ollamaVision_maxTokens') || '500',
+                    topP: localStorage.getItem('ollamaVision_topP') || '0.7',
+                    systemPrompt: localStorage.getItem('ollamaVision_systemPrompt') || '',
+                    frequencyPenalty: localStorage.getItem('ollamaVision_frequencyPenalty') || '0.0',
+                    presencePenalty: localStorage.getItem('ollamaVision_presencePenalty') || '0.0',
+                    repeatPenalty: localStorage.getItem('ollamaVision_repeatPenalty') || '1.1',
+                    topK: localStorage.getItem('ollamaVision_topK') || '40',
+                    seed: localStorage.getItem('ollamaVision_seed') || '-1',
+                    minP: localStorage.getItem('ollamaVision_minP') || '0.0',
+                    topA: localStorage.getItem('ollamaVision_topA') || '0.0',
+                    apiKey: backendType === 'openai' ? 
+                        localStorage.getItem('ollamaVision_openaiKey') : 
+                        backendType === 'openrouter' ? 
+                            localStorage.getItem('ollamaVision_openrouterKey') : '',
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                    ollamaUrl: backendType === 'ollama' ? 
+                        `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}` : ''
+                }, backendType);
+                genericRequest('StreamAnalyzeImageAsync', filteredParams, (data) => resolve(data), (error) => reject(error));
             });
 
             if (response.success) {
@@ -2910,7 +2907,6 @@ window.ollamaVision = {
 
     // Add this method to the ollamaVision object
     showFusionModal: function() {
-        // Create modal HTML if it doesn't exist
         if (!document.getElementById('fusionModal')) {
             const fusionModalHtml = `
                 <div class="modal fade" id="fusionModal" tabindex="-1">
@@ -2921,108 +2917,33 @@ window.ollamaVision = {
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="row">
-                                    <!-- Style Analysis -->
-                                    <div class="col-md-4">
-                                        <div class="card" style="min-width: 400px;">
-                                            <div class="card-header">
-                                                <h6 class="mb-0">Style Analysis</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
-                                                    <img id="style-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                                                </div>
-                                                <div class="d-flex justify-content-center gap-2 mt-2">
-                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('style')">
-                                                        <i class="fas fa-upload"></i> Upload
-                                                    </button>
-                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('style')">
-                                                        <i class="fas fa-paste"></i> Paste
-                                                    </button>
-                                                </div>
-                                                <div class="mt-2">
-                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('style')" id="analyze-style-btn" disabled>
-                                                        Analyze Style
-                                                    </button>
-                                                </div>
-                                                <textarea class="auto-text-block modal_text_extra mt-2" id="style-analysis" rows="4"></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Subject Analysis -->
-                                    <div class="col-md-4">
-                                        <div class="card" style="min-width: 400px;">
-                                            <div class="card-header">
-                                                <h6 class="mb-0">Subject Analysis</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
-                                                    <img id="subject-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                                                </div>
-                                                <div class="d-flex justify-content-center gap-2 mt-2">
-                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('subject')">
-                                                        <i class="fas fa-upload"></i> Upload
-                                                    </button>
-                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('subject')">
-                                                        <i class="fas fa-paste"></i> Paste
-                                                    </button>
-                                                </div>
-                                                <div class="mt-2">
-                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('subject')" id="analyze-subject-btn" disabled>
-                                                        Analyze Subject
-                                                    </button>
-                                                </div>
-                                                <textarea class="auto-text-block modal_text_extra mt-2" id="subject-analysis" rows="4"></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Setting Analysis -->
-                                    <div class="col-md-4">
-                                        <div class="card" style="min-width: 400px;">
-                                            <div class="card-header">
-                                                <h6 class="mb-0">Setting Analysis</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
-                                                    <img id="setting-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                                                </div>
-                                                <div class="d-flex justify-content-center gap-2 mt-2">
-                                                    <button class="basic-button" onclick="ollamaVision.uploadFusionImage('setting')">
-                                                        <i class="fas fa-upload"></i> Upload
-                                                    </button>
-                                                    <button class="basic-button" onclick="ollamaVision.pasteFusionImage('setting')">
-                                                        <i class="fas fa-paste"></i> Paste
-                                                    </button>
-                                                </div>
-                                                <div class="mt-2">
-                                                    <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('setting')" id="analyze-setting-btn" disabled>
-                                                        Analyze Setting
-                                                    </button>
-                                                </div>
-                                                <textarea class="auto-text-block modal_text_extra mt-2" id="setting-analysis" rows="4"></textarea>
-                                            </div>
-                                        </div>
+                                <!-- Updated Fusion Type Selector -->
+                                <div class="row mb-3">
+                                    <div class="col-12 text-center">
+                                        <label for="fusion-type" class="form-label d-block mb-2" style="font-size: 1.2rem;">Fusion Type</label>
+                                        <select id="fusion-type" class="auto-dropdown modal_text_extra mx-auto" 
+                                                style="width: auto; min-width: 300px; background-color: inherit; color: inherit; font-size: 1.2rem; border: 2px solid var(--border-color); padding: 8px 12px;" 
+                                                onchange="ollamaVision.changeFusionType()"
+                                                oninput="this.style.width = 'auto'; this.style.width = this.scrollWidth + 'px';">
+                                            <option value="style-subject-setting" style="min-width: 300px;">Style + Subject + Setting</option>
+                                            <option value="object-subject" style="min-width: 300px;">Object + Subject</option>
+                                        </select>
                                     </div>
                                 </div>
-                                
-                                <div class="row mt-3">
-                                    <div class="col-12">
-                                        <button class="basic-button w-100" onclick="ollamaVision.combineFusionAnalyses()" id="combine-analyses-btn" disabled>
-                                            Combine Analyses
-                                        </button>
-                                        <textarea class="auto-text-block modal_text_extra mt-2" id="combined-analysis" rows="6"></textarea>
-                                    </div>
+
+                                <!-- Dynamic Content Area -->
+                                <div id="fusion-content">
+                                    <!-- Content will be loaded dynamically based on selection -->
                                 </div>
-                            </div>
-                            <!-- Add status bar -->
-                            <div id="fusion-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
-                                <div class="d-flex align-items-center justify-content-center">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="fusion-spinner" style="display: none;">
-                                        <span class="visually-hidden">Loading...</span>
+
+                                <!-- Status Bar -->
+                                <div id="fusion-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="fusion-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="fusion-status-text" style="font-size: 1.2rem;"></span>
                                     </div>
-                                    <span id="fusion-status-text" style="font-size: 1.2rem;"></span>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -3036,9 +2957,202 @@ window.ollamaVision = {
                 </div>`;
 
             document.body.insertAdjacentHTML('beforeend', fusionModalHtml);
+            
+            // Only initialize the first time
+            const fusionType = document.getElementById('fusion-type').value;
+            const contentArea = document.getElementById('fusion-content');
+            if (fusionType === 'object-subject') {
+                contentArea.innerHTML = this.getObjectSubjectHTML();
+            } else {
+                contentArea.innerHTML = this.getStyleSubjectSettingHTML();
+            }
         }
 
         new bootstrap.Modal(document.getElementById('fusionModal')).show();
+    },
+
+    // Add these new functions for fusion type handling
+    changeFusionType: function() {
+        const fusionType = document.getElementById('fusion-type').value;
+        const contentArea = document.getElementById('fusion-content');
+        
+        if (fusionType === 'object-subject') {
+            contentArea.innerHTML = this.getObjectSubjectHTML();
+        } else {
+            contentArea.innerHTML = this.getStyleSubjectSettingHTML();
+        }
+
+        // Reset the combine button
+        document.getElementById('combine-analyses-btn').disabled = true;
+        document.getElementById('send-fusion-btn').disabled = true;
+    },
+
+    getObjectSubjectHTML: function() {
+        return `
+            <div class="row">
+                <!-- Object Analysis -->
+                <div class="col-md-6">
+                    <div class="card" style="min-width: 400px;">
+                        <div class="card-header">
+                            <h6 class="mb-0">Object Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                <img id="object-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="basic-button" onclick="ollamaVision.uploadFusionImage('object')">
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                                <button class="basic-button" onclick="ollamaVision.pasteFusionImage('object')">
+                                    <i class="fas fa-paste"></i> Paste
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('object')" id="analyze-object-btn" disabled>
+                                    Analyze Object
+                                </button>
+                            </div>
+                            <textarea class="auto-text-block modal_text_extra mt-2" id="object-analysis" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Analysis -->
+                <div class="col-md-6">
+                    <div class="card" style="min-width: 400px;">
+                        <div class="card-header">
+                            <h6 class="mb-0">Subject Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                <img id="subject-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="basic-button" onclick="ollamaVision.uploadFusionImage('subject')">
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                                <button class="basic-button" onclick="ollamaVision.pasteFusionImage('subject')">
+                                    <i class="fas fa-paste"></i> Paste
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('subject')" id="analyze-subject-btn" disabled>
+                                    Analyze Subject
+                                </button>
+                            </div>
+                            <textarea class="auto-text-block modal_text_extra mt-2" id="subject-analysis" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="basic-button w-100" onclick="ollamaVision.combineFusionAnalyses()" id="combine-analyses-btn" disabled>
+                        Combine Analyses
+                    </button>
+                    <textarea class="auto-text-block modal_text_extra mt-2" id="combined-analysis" rows="6"></textarea>
+                </div>
+            </div>`;
+    },
+
+    getStyleSubjectSettingHTML: function() {
+        return `
+            <div class="row">
+                <!-- Style Analysis -->
+                <div class="col-md-4">
+                    <div class="card" style="min-width: 400px;">
+                        <div class="card-header">
+                            <h6 class="mb-0">Style Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                <img id="style-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="basic-button" onclick="ollamaVision.uploadFusionImage('style')">
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                                <button class="basic-button" onclick="ollamaVision.pasteFusionImage('style')">
+                                    <i class="fas fa-paste"></i> Paste
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('style')" id="analyze-style-btn" disabled>
+                                    Analyze Style
+                                </button>
+                            </div>
+                            <textarea class="auto-text-block modal_text_extra mt-2" id="style-analysis" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Analysis -->
+                <div class="col-md-4">
+                    <div class="card" style="min-width: 400px;">
+                        <div class="card-header">
+                            <h6 class="mb-0">Subject Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                <img id="subject-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="basic-button" onclick="ollamaVision.uploadFusionImage('subject')">
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                                <button class="basic-button" onclick="ollamaVision.pasteFusionImage('subject')">
+                                    <i class="fas fa-paste"></i> Paste
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('subject')" id="analyze-subject-btn" disabled>
+                                    Analyze Subject
+                                </button>
+                            </div>
+                            <textarea class="auto-text-block modal_text_extra mt-2" id="subject-analysis" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setting Analysis -->
+                <div class="col-md-4">
+                    <div class="card" style="min-width: 400px;">
+                        <div class="card-header">
+                            <h6 class="mb-0">Setting Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-container" style="width: 100%; height: 250px; position: relative;">
+                                <img id="setting-preview" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="basic-button" onclick="ollamaVision.uploadFusionImage('setting')">
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                                <button class="basic-button" onclick="ollamaVision.pasteFusionImage('setting')">
+                                    <i class="fas fa-paste"></i> Paste
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <button class="basic-button w-100" onclick="ollamaVision.analyzeFusionImage('setting')" id="analyze-setting-btn" disabled>
+                                    Analyze Setting
+                                </button>
+                            </div>
+                            <textarea class="auto-text-block modal_text_extra mt-2" id="setting-analysis" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="basic-button w-100" onclick="ollamaVision.combineFusionAnalyses()" id="combine-analyses-btn" disabled>
+                        Combine Analyses
+                    </button>
+                    <textarea class="auto-text-block modal_text_extra mt-2" id="combined-analysis" rows="6"></textarea>
+                </div>
+            </div>`;
     },
 
     uploadFusionImage: function(type) {
@@ -3127,6 +3241,7 @@ window.ollamaVision = {
 
             const presetName = type === 'style' ? 'Style Analysis' : 
                               type === 'subject' ? 'Subject Analysis' : 
+                              type === 'object' ? 'Object Analysis' :
                               'Setting Analysis';
             
             const response = await new Promise((resolve, reject) => {
@@ -3182,21 +3297,28 @@ window.ollamaVision = {
     },
 
     updateCombineButton: function() {
-        const styleAnalysis = document.getElementById('style-analysis').value;
-        const subjectAnalysis = document.getElementById('subject-analysis').value;
-        const settingAnalysis = document.getElementById('setting-analysis').value;
-        
+        const fusionType = document.getElementById('fusion-type').value;
+        if (fusionType === 'object-subject') {
+            const objectAnalysis = document.getElementById('object-analysis')?.value;
+            const subjectAnalysis = document.getElementById('subject-analysis')?.value;
+            document.getElementById('combine-analyses-btn').disabled = 
+                !(objectAnalysis && subjectAnalysis);
+        } else {
+            const styleAnalysis = document.getElementById('style-analysis')?.value;
+            const subjectAnalysis = document.getElementById('subject-analysis')?.value;
+            const settingAnalysis = document.getElementById('setting-analysis')?.value;
         document.getElementById('combine-analyses-btn').disabled = 
             !(styleAnalysis && subjectAnalysis && settingAnalysis);
+        }
     },
 
     combineFusionAnalyses: async function() {
         try {
-            // Check backend connection first
+            const fusionType = document.getElementById('fusion-type').value;
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
             const model = document.getElementById('ollamavision-model').value;
             
-            // Check if we're connected to a backend (fix the logic)
+            // Check if we're connected to a backend
             const disconnectBtn = document.getElementById('disconnect-btn');
             if (disconnectBtn.style.display === 'none') {
                 this.updateStatus('error', 'Backend not connected!');
@@ -3211,18 +3333,10 @@ window.ollamaVision = {
 
             this.updateStatus('info', 'Combining analyses...', true);
             
-            const styleAnalysis = document.getElementById('style-analysis').value;
-            const subjectAnalysis = document.getElementById('subject-analysis').value;
-            const settingAnalysis = document.getElementById('setting-analysis').value;
-            
-            // Get all model settings from localStorage
             const requestData = {
                 model: model,
                 backendType: backendType,
-                styleAnalysis: styleAnalysis,
-                subjectAnalysis: subjectAnalysis,
-                settingAnalysis: settingAnalysis,
-                // Convert string values to proper types
+                fusionType: fusionType,
                 temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
                 maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || 500,
                 topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
@@ -3233,21 +3347,23 @@ window.ollamaVision = {
                 seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
                 minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
                 topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
-                systemPrompt: localStorage.getItem('ollamaVision_systemPrompt') || '',
                 apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
                 siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI'
             };
+
+            if (fusionType === 'object-subject') {
+                requestData.objectAnalysis = document.getElementById('object-analysis').value;
+                requestData.subjectAnalysis = document.getElementById('subject-analysis').value;
+            } else {
+                requestData.styleAnalysis = document.getElementById('style-analysis').value;
+                requestData.subjectAnalysis = document.getElementById('subject-analysis').value;
+                requestData.settingAnalysis = document.getElementById('setting-analysis').value;
+            }
 
             // Add ollamaUrl for Ollama backend
             if (backendType === 'ollama') {
                 requestData.ollamaUrl = `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`;
             }
-
-            // Log parameters for debugging (remove in production)
-            console.log('Sending parameters:', {
-                ...requestData,
-                apiKey: requestData.apiKey ? '[HIDDEN]' : undefined
-            });
 
             const response = await new Promise((resolve, reject) => {
                 genericRequest('CombineAnalysesAsync', requestData,
@@ -3873,4 +3989,64 @@ function createNewPreset(presetName) {
     
     // Update the dropdown to reflect the new preset
     updatePresetsDropdown();
+}
+
+// Add this helper function
+function filterBackendParams(params, backendType) {
+    const commonParams = {
+        model: params.model,
+        backendType: params.backendType,
+        imageData: backendType === 'ollama' ? 
+            cleanBase64Data(params.imageData) : // Clean base64 for Ollama
+            params.imageData,                   // Keep original for other backends
+        prompt: params.prompt,
+        temperature: params.temperature,
+        maxTokens: params.maxTokens,
+        topP: params.topP,
+        systemPrompt: params.systemPrompt
+    };
+
+    switch(backendType) {
+        case 'openai':
+            return {
+                ...commonParams,
+                apiKey: params.apiKey,
+                frequencyPenalty: params.frequencyPenalty,
+                presencePenalty: params.presencePenalty
+            };
+        case 'openrouter':
+            return {
+                ...commonParams,
+                apiKey: params.apiKey,
+                siteName: params.siteName,
+                topK: params.topK,
+                repeatPenalty: params.repeatPenalty,
+                frequencyPenalty: params.frequencyPenalty,
+                presencePenalty: params.presencePenalty,
+                minP: params.minP,
+                topA: params.topA,
+                seed: params.seed
+            };
+        default: // ollama
+            return {
+                ...commonParams,
+                ollamaUrl: params.ollamaUrl,
+                topK: params.topK,
+                repeatPenalty: params.repeatPenalty,
+                seed: params.seed,
+                autoUnload: params.autoUnload
+            };
+    }
+}
+
+// Add this helper function to clean base64 data
+function cleanBase64Data(imageData) {
+    // If it's a data URL, extract just the base64 part
+    if (imageData.startsWith('data:')) {
+        const base64Start = imageData.indexOf(',');
+        if (base64Start !== -1) {
+            return imageData.slice(base64Start + 1);
+        }
+    }
+    return imageData;
 }
