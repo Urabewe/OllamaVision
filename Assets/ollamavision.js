@@ -4525,11 +4525,18 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             return;
         }
 
-        // Look for the AI Image Prompt section
-        const promptMatch = characterText.match(/AI Image Prompt:[\s\n]*["\*]*([^"]*)["\*]*/i);
+        // Look for everything after "AI Image Prompt:" until a double newline or end of text
+        const promptMatch = characterText.match(/AI Image Prompt:[\s\n]*([^]*?)(?:\n\n|$)/i);
         if (promptMatch && promptMatch[1]) {
-            // Clean up the extracted prompt
-            let imagePrompt = promptMatch[1].trim();
+            // Clean up the extracted prompt - remove asterisks, quotes, and extra whitespace
+            let imagePrompt = promptMatch[1].trim()
+                .replace(/^[\s\*"]+|[\s\*"]+$/g, ''); // Remove wrapping asterisks/quotes
+            
+            // Additional validation
+            if (imagePrompt === '*' || imagePrompt.length < 2) {
+                this.updateStatus('error', 'Invalid image prompt found');
+                return;
+            }
             
             // Close the character modal
             bootstrap.Modal.getInstance(document.getElementById('characterCreatorModal')).hide();
