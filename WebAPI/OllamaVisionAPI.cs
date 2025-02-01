@@ -32,7 +32,7 @@ namespace Urabewe.OllamaVision.WebAPI
             ["Artistic Style"] = "Describe this image using artistic terminology, focusing on visual style, medium, techniques, brushwork (if applicable), composition, and artistic influences. Provide details relevant to recreating the image in a specific artistic manner.",
             ["Technical Details"] = "Analyze this image from a technical perspective, including camera angle, focal length, depth of field, lighting setup, composition rules (e.g., rule of thirds, leading lines), and any photographic or cinematic techniques used.",
             ["Color Palette"] = "Describe the color palette of this image in detail, listing all dominant and secondary colors, their shades and tones, and any notable patterns or color harmonies present. Avoid mentioning anything unrelated to colors.",
-            ["Facial Features"] = "Provide an extremely detailed description of the subject’s facial features, including skin tone, hair color, eye color, eye shape, nose shape, facial structure, beauty marks, freckles, moles, blemishes, and any other defining traits. Do not include any details beyond facial features.",
+            ["Facial Features"] = "Provide an extremely detailed description of the subject's facial features, including skin tone, hair color, eye color, eye shape, nose shape, facial structure, beauty marks, freckles, moles, blemishes, and any other defining traits. Do not include any details beyond facial features.",
         };
 
         private static readonly Dictionary<string, string> FUSION_PROMPTS = new Dictionary<string, string>
@@ -54,7 +54,7 @@ namespace Urabewe.OllamaVision.WebAPI
             "Facial Features"
         };
 
-        private static readonly string STORY_PROMPT = @"Craft a fully developed story inspired entirely by the provided image. Use the scene, characters, and mood depicted in the image as the central focus of the narrative. The story must have a clear structure, including an intriguing beginning, a compelling middle, and a satisfying resolution. Set the scene vividly, introduce the main characters and the central conflict or goal, and develop the plot with engaging challenges, interactions, and events that drive the narrative forward. Resolve the story with closure that ties together the themes and character arcs. Use rich, descriptive language to bring the scene, characters, and events to life, balancing dialogue, action, and description to create a dynamic and immersive narrative. Incorporate variety and creativity in storytelling approaches, such as comedy, fantasy, adventure, or mystery, while keeping all content appropriate and family-friendly. Avoid any offensive, controversial, or sensitive material. Do not include commentary about the image itself; focus solely on crafting a story based on the image’s elements. The story should have a word count of 2,000–3,000 words and feel polished, complete, and original, with emotional resonance and creativity.";
+        private static readonly string STORY_PROMPT = @"Craft a fully developed story inspired entirely by the provided image. Use the scene, characters, and mood depicted in the image as the central focus of the narrative. The story must have a clear structure, including an intriguing beginning, a compelling middle, and a satisfying resolution. Set the scene vividly, introduce the main characters and the central conflict or goal, and develop the plot with engaging challenges, interactions, and events that drive the narrative forward. Resolve the story with closure that ties together the themes and character arcs. Use rich, descriptive language to bring the scene, characters, and events to life, balancing dialogue, action, and description to create a dynamic and immersive narrative. Incorporate variety and creativity in storytelling approaches, such as comedy, fantasy, adventure, or mystery, while keeping all content appropriate and family-friendly. Avoid any offensive, controversial, or sensitive material. Do not include commentary about the image itself; focus solely on crafting a story based on the image's elements. The story should have a word count of 2,000–3,000 words and feel polished, complete, and original, with emotional resonance and creativity.";
 
         public static void Register()
         {
@@ -69,6 +69,7 @@ namespace Urabewe.OllamaVision.WebAPI
             API.RegisterAPICall(StreamAnalyzeImageAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(CombineAnalysesAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetStoryPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(GenerateCharacterAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
@@ -847,17 +848,17 @@ namespace Urabewe.OllamaVision.WebAPI
 You will be provided with two image descriptions:
 
 Object Analysis – Describes what the object is. Avoid details about its shape, context, background, mood, or feelings. Only focus on what the object is.
-Subject Analysis – Describes the subject’s appearance, colors, clothing, and other defining traits. Avoid setting details, background elements, mood, or emotions.
+Subject Analysis – Describes the subject's appearance, colors, clothing, and other defining traits. Avoid setting details, background elements, mood, or emotions.
 Task:
 Combine the two descriptions into a single, cohesive image generation prompt that:
 
-Transforms the object into the subject’s form or
-Incorporates the subject’s image onto the object
+Transforms the object into the subject's form or
+Incorporates the subject's image onto the object
 Guidelines:
 
-If the object is wearable (e.g., a t-shirt), place the subject’s image on it.
+If the object is wearable (e.g., a t-shirt), place the subject's image on it.
 If the object is a figurine, plush toy, or sculpture, transform it into the subject.
-If the object is something like a car, furniture, or large structure, vary between applying the subject’s design onto the object like an image or decal or reshaping the object into the subject’s form.
+If the object is something like a car, furniture, or large structure, vary between applying the subject's design onto the object like an image or decal or reshaping the object into the subject's form.
 Keep the prompt in a general-purpose AI image generation style, around 150 tokens or 200 words.
 Do not say things like transform the or change the combine the prompt like the user has never seen the original two images.
 Example:
@@ -865,7 +866,7 @@ Object: A skateboard
 Subject: A red-scaled dragon with golden eyes, large wings, and black tribal markings on its body.
 
 Prompt Output:
-A sleek skateboard featuring an intricate design of a red-scaled dragon with golden eyes, large wings, and bold black tribal markings. The dragon’s powerful form stretches across the deck, with its wings wrapping around the edges, giving the board a dynamic, fierce aesthetic. High-quality airbrushed artwork with crisp details, glowing highlights on the scales, and a slightly metallic sheen on the golden eyes.
+A sleek skateboard featuring an intricate design of a red-scaled dragon with golden eyes, large wings, and bold black tribal markings. The dragon's powerful form stretches across the deck, with its wings wrapping around the edges, giving the board a dynamic, fierce aesthetic. High-quality airbrushed artwork with crisp details, glowing highlights on the scales, and a slightly metallic sheen on the golden eyes.
 
 OR
 
@@ -1185,6 +1186,164 @@ Style Analysis: " + styleAnalysis + "\n\n" +
             catch (Exception ex)
             {
                 Logs.Error($"Error in GetStoryPrompt: {ex.Message}");
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = ex.Message
+                };
+            }
+        }
+
+        [API.APIDescription("Generates a character using LLM", "Returns the generated character details")]
+        public static async Task<JObject> GenerateCharacterAsync(JObject data)
+        {
+            try
+            {
+                var model = data["model"]?.ToString();
+                var backendType = data["backendType"]?.ToString() ?? "ollama";
+                var prompt = data["prompt"]?.ToString();
+
+                if (string.IsNullOrEmpty(model) || string.IsNullOrEmpty(prompt))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing required parameters (model or prompt)"
+                    };
+                }
+
+                // Handle different backends
+                if (backendType == "openai")
+                {
+                    var apiKey = data["apiKey"]?.ToString();
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
+                    }
+
+                    var messages = new JArray();
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
+                    }
+
+                    messages.Add(new JObject
+                    {
+                        ["role"] = "user",
+                        ["content"] = prompt
+                    });
+
+                    var requestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? -1,
+                        ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
+                        ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
+                        ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float>() ?? 0.0f,
+                        ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
+                    };
+
+                    return await SendApiRequest(requestBody, "openai", apiKey);
+                }
+                else if (backendType == "openrouter")
+                {
+                    var apiKey = data["apiKey"]?.ToString();
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject { ["success"] = false, ["error"] = "OpenRouter API key is required" };
+                    }
+
+                    var messages = new JArray();
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
+                    }
+
+                    messages.Add(new JObject
+                    {
+                        ["role"] = "user",
+                        ["content"] = prompt
+                    });
+
+                    var requestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? -1,
+                        ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
+                        ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
+                        ["top_k"] = data["topK"]?.ToObject<int>() ?? 40,
+                        ["repetition_penalty"] = data["repeatPenalty"]?.ToObject<float>() ?? 1.1f,
+                        ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float>() ?? 0.0f,
+                        ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
+                    };
+
+                    return await SendApiRequest(requestBody, "openrouter", apiKey);
+                }
+                else // Ollama
+                {
+                    var requestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["prompt"] = prompt,
+                        ["stream"] = false,
+                        ["options"] = new JObject
+                        {
+                            ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
+                            ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
+                            ["top_k"] = data["topK"]?.ToObject<int>() ?? 40,
+                            ["num_predict"] = data["maxTokens"]?.ToObject<int>() ?? -1,
+                            ["repeat_penalty"] = data["repeatPenalty"]?.ToObject<float>() ?? 1.1f,
+                            ["seed"] = data["seed"]?.ToObject<int>() ?? -1
+                        }
+                    };
+
+                    // Add system prompt if provided
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        requestBody["system"] = systemPrompt;
+                    }
+
+                    var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                    var response = await client.PostAsync(
+                        $"{ollamaUrl}/api/generate",
+                        new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
+                    );
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = $"Failed to generate character: {content}"
+                        };
+                    }
+
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JObject.Parse(responseContent);
+                    return new JObject
+                    {
+                        ["success"] = true,
+                        ["response"] = result["response"]?.ToString()
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.Error($"Error in GenerateCharacterAsync: {ex.Message}");
                 return new JObject
                 {
                     ["success"] = false,

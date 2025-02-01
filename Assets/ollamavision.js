@@ -3481,6 +3481,11 @@ window.ollamaVision = {
                                             style="font-size: 1.2rem;">
                                         Story Time
                                     </button>
+                                    <button class="basic-button" 
+                                            onclick="ollamaVision.showCharacterCreatorModal(); $('#llmToysModal').modal('hide');" 
+                                            style="font-size: 1.2rem;">
+                                        Character Creator
+                                    </button>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -3941,6 +3946,536 @@ window.ollamaVision = {
 
             document.body.insertAdjacentHTML('beforeend', storyTimeModalHtml);
         }
+    },
+
+    // Add the Character Creator modal and functions
+    showCharacterCreatorModal: function() {
+        if (!document.getElementById('characterCreatorModal')) {
+            const characterCreatorModalHtml = `
+                <div class="modal fade" id="characterCreatorModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl" style="max-width: min(95vw, 1600px); min-width: 1400px;">
+                        <div class="modal-content modal_text_extra">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Character Creator</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <!-- Left side: Character Output -->
+                                    <div class="col-md-9">
+                                        <div class="d-flex justify-content-end mb-2">
+                                            <button class="basic-button" onclick="ollamaVision.saveCharacter()" 
+                                                    style="font-size: 1.2rem;">
+                                                💾 Save Character
+                                            </button>
+                                        </div>
+                                        <div class="card modal_text_extra">
+                                            <div class="card-body">
+                                                <pre id="character-output" contenteditable="true" style="white-space: pre-wrap; font-size: 1.2rem; min-height: 600px;">
+Customize your settings and click generate to create a character!
+                                                </pre>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right side: User Inputs -->
+                                    <div class="col-md-3">
+                                        <div class="d-flex flex-column gap-3">
+                                            <!-- Clear button -->
+                                            <div class="d-flex justify-content-end">
+                                                <button class="basic-button" onclick="ollamaVision.clearAllInputs()" 
+                                                        style="font-size: 1.2rem;">
+                                                    🗑️ Clear All
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Name Input -->
+                                            <div class="form-floating">
+                                                <label for="character-name" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Name</label>
+                                                <input type="text" class="form-control bg-dark modal_text_extra" 
+                                                       id="character-name" placeholder="Name (optional)" 
+                                                       style="background: inherit; color: inherit;">
+                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                    🎲
+                                                </button>
+                                            </div>
+
+                                            <!-- Sex Dropdown -->
+                                            <div class="form-floating">
+                                                <label for="character-sex" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Sex</label>
+                                                <input type="text" list="sex-options" class="form-select bg-dark modal_text_extra" id="character-sex" style="background: inherit; color: inherit;">
+                                                <datalist id="sex-options">
+                                                    <option value="Random"></option>
+                                                    <option value="Male"></option>
+                                                    <option value="Female"></option>
+                                                </datalist>
+                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                    🎲
+                                                </button>
+                                            </div>
+
+                                            <!-- Species Dropdown -->
+                                            <div class="form-floating">
+                                                <label for="character-species" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Species</label>
+                                                <input type="text" list="species-options" class="form-select bg-dark modal_text_extra" id="character-species" style="background: inherit; color: inherit;">
+                                                <datalist id="species-options">
+                                                    <option value="Random"></option>
+                                                    <option value="Human"></option>
+                                                    <option value="Elf"></option>
+                                                    <option value="Dwarf"></option>
+                                                    <option value="Goblin"></option>
+                                                    <option value="Golem"></option>
+                                                    <option value="Android"></option>
+                                                    <option value="Alien"></option>
+                                                    <option value="Ghoul"></option>
+                                                    <option value="Orc"></option>
+                                                    <option value="Fairy"></option>
+                                                    <option value="High Elf"></option>
+                                                    <option value="Dark Elf"></option>
+                                                    <option value="Cyborg"></option>
+                                                    <option value="Demon"></option>
+                                                    <option value="Angel"></option>
+                                                    <option value="Vampire"></option>
+                                                    <option value="Werewolf"></option>
+                                                    <option value="Naga"></option>
+                                                    <option value="Dragonborn"></option>
+                                                    <option value="Merfolk"></option>
+                                                    <option value="Slimefolk"></option>
+                                                    <option value="Undead"></option>
+                                                    <option value="Ghost"></option>
+                                                    <option value="Beastkin"></option>
+                                                    <option value="Lizardfolk"></option>
+                                                    <option value="Djinn"></option>
+                                                </datalist>
+                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                    🎲
+                                                </button>
+                                            </div>
+
+                                            <!-- Setting Dropdown -->
+                                            <div class="form-floating">
+                                                <label for="character-setting" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Setting</label>
+                                                <input type="text" list="setting-options" class="form-select bg-dark modal_text_extra" id="character-setting" style="background: inherit; color: inherit;">
+                                                <datalist id="setting-options">
+                                                    <option value="Random"></option>
+                                                    <option value="Fantasy"></option>
+                                                    <option value="Urban Fantasy"></option>
+                                                    <option value="Sci-Fi"></option>
+                                                    <option value="Cyberpunk"></option>
+                                                    <option value="Post-Apocalyptic"></option>
+                                                    <option value="Modern"></option>
+                                                    <option value="Steampunk"></option>
+                                                    <option value="Lovecraftian Horror"></option>
+                                                    <option value="Mythological"></option>
+                                                    <option value="Medieval"></option>
+                                                    <option value="Pirate World"></option>
+                                                    <option value="Superhero World"></option>
+                                                    <option value="Underwater Civilization"></option>
+                                                    <option value="Megacity"></option>
+                                                    <option value="Digital/Cyberspace"></option>
+                                                    <option value="Dreamworld"></option>
+                                                    <option value="Dystopian"></option>
+                                                    <option value="Western"></option>
+                                                    <option value="Feudal Japan"></option>
+                                                    <option value="Space Opera"></option>
+                                                </datalist>
+                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                    🎲
+                                                </button>
+                                            </div>
+
+                                            <!-- Alignment Dropdown -->
+                                            <div class="form-floating">
+                                                <label for="character-alignment" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Alignment</label>
+                                                <input type="text" list="alignment-options" class="form-select bg-dark modal_text_extra" id="character-alignment" style="background: inherit; color: inherit;">
+                                                <datalist id="alignment-options">
+                                                    <option value="Random"></option>
+                                                    <option value="Lawful Good"></option>
+                                                    <option value="Neutral Good"></option>
+                                                    <option value="Chaotic Good"></option>
+                                                    <option value="Lawful Neutral"></option>
+                                                    <option value="True Neutral"></option>
+                                                    <option value="Chaotic Neutral"></option>
+                                                    <option value="Lawful Evil"></option>
+                                                    <option value="Neutral Evil"></option>
+                                                    <option value="Chaotic Evil"></option>
+                                                </datalist>
+                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                    🎲
+                                                </button>
+                                            </div>
+
+                                            <!-- Class/Role Dropdown -->
+                                            <div class="form-floating">
+                                                <label for="character-class" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Class/Role</label>
+                                                <input type="text" list="class-options" class="form-select bg-dark modal_text_extra" id="character-class" style="background: inherit; color: inherit;">
+                                                <datalist id="class-options">
+                                                    <option value="Random"></option>
+                                                    <option value="Warrior"></option>
+                                                    <option value="Paladin"></option>
+                                                    <option value="Barbarian"></option>
+                                                    <option value="Knight"></option>
+                                                    <option value="Mage"></option>
+                                                    <option value="Wizard"></option>
+                                                    <option value="Sorcerer"></option>
+                                                    <option value="Warlock"></option>
+                                                    <option value="Rogue"></option>
+                                                    <option value="Thief"></option>
+                                                    <option value="Assassin"></option>
+                                                    <option value="Spy"></option>
+                                                    <option value="Healer"></option>
+                                                    <option value="Cleric"></option>
+                                                    <option value="Druid"></option>
+                                                    <option value="Shaman"></option>
+                                                    <option value="Ranger"></option>
+                                                    <option value="Hunter"></option>
+                                                    <option value="Beastmaster"></option>
+                                                    <option value="Archer"></option>
+                                                    <option value="Bard"></option>
+                                                    <option value="Performer"></option>
+                                                    <option value="Diplomat"></option>
+                                                </datalist>
+                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                    🎲
+                                                </button>
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <button class="basic-button" onclick="ollamaVision.randomizeAll()" 
+                                                    style="font-size: 1.2rem;">
+                                                🎲 Random All
+                                            </button>
+                                            <button class="basic-button" onclick="ollamaVision.generateCharacter()" 
+                                                    style="font-size: 1.2rem;">
+                                                ✨ Generate Character
+                                            </button>
+                                            
+                                            <!-- Add status bar -->
+                                            <div id="character-status" class="alert alert-info" style="display: none;">
+                                                <div class="d-flex align-items-center justify-content-center">
+                                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <span id="character-status-text">Generating character...</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', characterCreatorModalHtml);
+
+            // Add lock button functionality
+            document.querySelectorAll('.lock-btn').forEach(btn => {
+                btn.style.width = '50px';
+                btn.style.height = '38px';
+                btn.style.fontSize = '1.2rem';
+                
+                // Initialize the lock state to false (unlocked)
+                btn.dataset.locked = 'false';
+                btn.innerHTML = '🎲';
+                
+                btn.addEventListener('click', function() {
+                    let input = this.parentElement.querySelector('input');
+                    let isLocked = this.dataset.locked === 'true';
+                    
+                    // Toggle lock state
+                    this.dataset.locked = isLocked ? 'false' : 'true';
+                    // Store or clear the locked value
+                    input.dataset.lockedValue = isLocked ? '' : input.value;
+                    // Update button icon
+                    this.innerHTML = isLocked ? '🎲' : '🔒';
+                });
+            });
+        }
+
+        new bootstrap.Modal(document.getElementById('characterCreatorModal')).show();
+    },
+
+    // Add these helper functions for the Character Creator
+    randomizeAll: function() {
+        const inputs = ['name', 'sex', 'species', 'setting', 'alignment', 'class'];
+        inputs.forEach(input => {
+            const element = document.getElementById(`character-${input}`);
+            const lockBtn = element.parentElement.querySelector('.lock-btn');
+            
+            if (!lockBtn || lockBtn.dataset.locked !== 'true') {
+                if (input === 'name') {
+                    element.value = ''; // Clear name for random generation
+                } else {
+                    // Get all options from the corresponding datalist
+                    const datalist = document.getElementById(`${input}-options`);
+                    const options = Array.from(datalist.options);
+                    // Select a random option (excluding the first "Random" option)
+                    const randomOption = options[Math.floor(Math.random() * (options.length - 1)) + 1];
+                    element.value = randomOption.value;
+                }
+            } else if (element.dataset.lockedValue) {
+                // Restore the locked value
+                element.value = element.dataset.lockedValue;
+            }
+        });
+    },
+
+    generateCharacter: async function() {
+        try {
+            // Show status bar when starting generation
+            const statusBar = document.getElementById('character-status');
+            statusBar.style.display = 'block';
+
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
+            this.updateCharacterStatus('info', 'Generating character...', true);
+
+            // Get user inputs
+            const name = document.getElementById('character-name').value;
+            const sex = document.getElementById('character-sex').value;
+            const species = document.getElementById('character-species').value;
+            const setting = document.getElementById('character-setting').value;
+            const alignment = document.getElementById('character-alignment').value;
+            const characterClass = document.getElementById('character-class').value; // Added this line
+
+            // Create the prompt for the LLM
+            const prompt = `Generate a fully detailed character based on the provided user inputs.
+RULES:
+Ensure the output strictly follows this exact structure, using bold section titles and uniform formatting. Create unique characters each time including the name.
+Always use unique overviews for each character giving each character their own name, stats, traits, abilities, backstory, and physical description. Create these based on the user inputs.
+When generating Beastkin, always create a unique sub-type inspired by an animal. Ensure traits (appearance, abilities, and backstory) reflect the selected animal inspiration. Each Beastkin should feel distinct and creative, with detailed descriptions of their physical traits, abilities, and how their animal side influences their life and role. Avoid reusing common ideas repeatedly to maintain variety.
+If the user selects beastkin, create a human-like anthropomorphic animal character and try to incorporate the user's choices into the character. Use details to create the human-like animal character in the AI image prompt of the beastkin character. If the character is a cat, describe a human-like cat. If it is a bear describe a human-like bear. The characters should be anthropomorphic.
+In the Ai image prompt make sure to describe the characters physical features.
+
+When generating random selections, only choose from these valid options:
+
+Sex Options: Male, Female
+
+Species Options: Human, Elf, Dwarf, Goblin, Golem, Android, Alien
+
+Setting Options: Fantasy, Urban Fantasy, Sci-Fi, Cyberpunk, Post-Apocalyptic, Modern
+
+Alignment Options: Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, True Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil
+
+Class/Role Options: Warrior, Paladin, Barbarian, Knight, Mage, Wizard, Sorcerer, Warlock, Rogue, Thief, Assassin, Spy, Healer, Cleric, Druid, Shaman, Ranger, Hunter, Beastmaster, Archer, Bard, Performer, Diplomat
+
+User Inputs:
+Name: ${name || '[AI-generated]'}
+Sex: ${sex === 'random' ? '[AI-generated]' : sex}
+Species: ${species === 'random' ? '[AI-generated]' : species}
+Setting: ${setting === 'random' ? '[AI-generated]' : setting}
+Alignment: ${alignment === 'random' ? '[AI-generated]' : alignment}
+Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
+
+---
+
+**Character Overview:**  
+- Name: [User Input or AI-generated]  
+- Sex: [Choose from Sex Options if random]  
+- Species: [Choose from Species Options if random]  
+- Alignment: [Choose from Alignment Options if random]  
+- Setting: [Choose from Setting Options if random]  
+- Class/Role: [Choose from Class/Role Options if random]  
+
+**Personality & Traits:**  
+- [List 3-4 defining personality traits]  
+- [Describe key strengths and weaknesses]  
+
+**Physical Description:**  
+- Height & Build: [Tall, short, muscular, thin, etc.]  
+- Skin, Hair, and Eyes: [Describe colors, texture, or unique features]  
+- Clothing & Accessories: [What the character wears and notable items]  
+- Weapons or Tools: [If applicable, describe what they carry]  
+
+**Abilities & Skills:**  
+- [List 3-4 abilities that match their class/role]
+- [Include both combat and non-combat abilities]
+- [Ensure abilities fit the setting and species]
+- [Add unique or signature abilities]
+
+**Backstory:**  
+[Write a rich, engaging history that integrates the character's setting, role, and alignment]  
+[Include motivations, conflicts, relationships, and major life events]  
+[Explain how they came to their class/role]  
+[The backstory should feel natural and immersive]  
+
+**AI Image Prompt:**  
+*"[A vivid, highly detailed description of the character's physical appearance, clothing, setting, pose, lighting, and artistic style for AI image generation. Ensure it is unique each time, incorporating elements from the AI-generated backstory.]"*`;
+
+            // Make the request using GenerateCharacterAsync
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('GenerateCharacterAsync', {
+                    model: model,
+                    backendType: backendType,
+                    prompt: prompt,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
+                document.getElementById('character-output').textContent = response.response;
+                this.updateCharacterStatus('success', 'Character generated successfully');
+                await this.unloadModelIfEnabled(model);
+            } else {
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            this.updateCharacterStatus('error', error.message);
+        } finally {
+            // Hide status bar when generation is complete
+            document.getElementById('character-status').style.display = 'none';
+        }
+    },
+
+    showCharacterCreator: function() {
+        if (!document.getElementById('characterCreatorModal')) {
+            const modalHtml = `
+                <div class="modal fade" id="characterCreatorModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            // ... existing modal header and body content ...
+                            
+                            <div class="text-center mb-3">
+                                <button type="button" class="basic-button" onclick="ollamaVision.generateCharacter()">Generate Character</button>
+                                <!-- Update status bar to match other modals -->
+                                <div id="character-status" class="alert alert-info mt-2 mx-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="character-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="character-status-text" style="font-size: 1.2rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" onclick="ollamaVision.saveCharacter()">Save Character</button>
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // ... rest of existing showCharacterCreator code ...
+        }
+    },
+
+    // Add new function to save character to file
+    saveCharacter: function() {
+        const characterText = document.getElementById('character-output').textContent;
+        if (!characterText) {
+            this.updateStatus('error', 'No character to save');
+            return;
+        }
+
+        // Extract character name from the response
+        let characterName = 'character'; // default fallback
+        const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
+        if (nameMatch && nameMatch[1]) {
+            // Clean the name to be filesystem-friendly
+            characterName = nameMatch[1].trim()
+                .replace(/[^a-zA-Z0-9]/g, '_') // Replace non-alphanumeric chars with underscore
+                .replace(/_+/g, '_')           // Replace multiple underscores with single
+                .replace(/^_|_$/g, '');        // Remove leading/trailing underscores
+        }
+        
+        // Create a blob with the character text
+        const blob = new Blob([characterText], { type: 'text/plain' });
+        
+        // Create a temporary link element
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        
+        // Generate filename with character name and timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `${characterName}_${timestamp}.txt`;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        
+        this.updateStatus('success', 'Character saved successfully');
+    },
+
+    updateCharacterStatus: function(type, message, showSpinner = false) {
+        const statusBar = document.getElementById('character-status');
+        const statusText = document.getElementById('character-status-text');
+        const spinner = document.getElementById('character-spinner');
+        
+        if (statusBar && statusText) {
+            statusBar.style.display = 'block';
+            statusBar.className = `alert alert-${type} mt-2 mx-3`;
+            statusText.textContent = message;
+            
+            // Only show spinner for info messages
+            if (spinner) {
+                spinner.style.display = (type === 'info' && showSpinner) ? 'inline-block' : 'none';
+            }
+        }
+    },
+
+    clearAllInputs: function() {
+        const inputs = ['name', 'sex', 'species', 'setting', 'alignment', 'class'];
+        inputs.forEach(input => {
+            const element = document.getElementById(`character-${input}`);
+            const lockBtn = element.parentElement.querySelector('.lock-btn');
+            
+            // Only clear if not locked
+            if (element && (!lockBtn || lockBtn.dataset.locked !== 'true')) {
+                element.value = '';
+            }
+        });
+        
+        // Show success message without spinner
+        this.updateCharacterStatus('success', 'Fields cleared successfully', false);
+        
+        // Hide status after 2 seconds
+        setTimeout(() => {
+            const statusBar = document.getElementById('character-status');
+            if (statusBar) {
+                statusBar.style.display = 'none';
+            }
+        }, 2000);
     }
 };
 
