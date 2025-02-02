@@ -228,7 +228,7 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 </details>
 
 ## 🔮 Planned Features
-- Batch image processing
+- Lora captioner that saves captions in a .txt file with name of image for datasets
 
 ## 🙏 Acknowledgments
 - [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision official and for giving us SwarmUI
