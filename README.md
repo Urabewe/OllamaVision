@@ -162,7 +162,6 @@ Create detailed characters with customizable attributes:
 - Smart controls with field locking and randomization
 - Detailed output including personality, physical description, abilities, and backstory
 - Export characters to text files
-- Generate consistent characters across your preferred settings
 - Creates an AI image prompt to create a profile picture for your character
 
 #### 📚 Story Time
