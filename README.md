@@ -163,6 +163,7 @@ Create detailed characters with customizable attributes:
 - Detailed output including personality, physical description, abilities, and backstory
 - Export characters to text files
 - Creates an AI image prompt to create a profile picture for your character
+- An "Export Prompt" button that will extract the image prompt from the results and send it to the generation page for instant generation of your new character
 
 NOTE: If your creations are getting cut off make sure MAXTOKENS is set to -1 (set by default)
 
