@@ -4023,29 +4023,48 @@ Customize your settings and click generate to create a character!
                                                     <option value="Alien"></option>
                                                     <option value="Android"></option>
                                                     <option value="Angel"></option>
+                                                    <option value="Arachne"></option>
+                                                    <option value="Automaton"></option>
                                                     <option value="Beastkin"></option>
+                                                    <option value="Celestial"></option>
+                                                    <option value="Chimera"></option>
                                                     <option value="Cyborg"></option>
                                                     <option value="Dark Elf"></option>
                                                     <option value="Demon"></option>
                                                     <option value="Djinn"></option>
                                                     <option value="Dragonborn"></option>
+                                                    <option value="Dryad"></option>
                                                     <option value="Dwarf"></option>
                                                     <option value="Elf"></option>
                                                     <option value="Fairy"></option>
+                                                    <option value="Feralfolk"></option>
+                                                    <option value="Fungoid"></option>
+                                                    <option value="Gargoyle"></option>
+                                                    <option value="Genasi"></option>
                                                     <option value="Ghost"></option>
                                                     <option value="Ghoul"></option>
                                                     <option value="Goblin"></option>
                                                     <option value="Golem"></option>
+                                                    <option value="Harpy"></option>
                                                     <option value="High Elf"></option>
                                                     <option value="Human"></option>
+                                                    <option value="Krakenborn"></option>
                                                     <option value="Lizardfolk"></option>
                                                     <option value="Merfolk"></option>
+                                                    <option value="Minotaur"></option>
                                                     <option value="Naga"></option>
+                                                    <option value="Nephilim"></option>
+                                                    <option value="Oni"></option>
                                                     <option value="Orc"></option>
+                                                    <option value="Phoenixborn"></option>
+                                                    <option value="Shadowkin"></option>
                                                     <option value="Slimefolk"></option>
+                                                    <option value="Tiefling"></option>
+                                                    <option value="Troll"></option>
                                                     <option value="Undead"></option>
                                                     <option value="Vampire"></option>
                                                     <option value="Werewolf"></option>
+                                                    <option value="Yokai"></option>
                                                 </datalist>
                                                 <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
                                                     🎲
@@ -4058,28 +4077,42 @@ Customize your settings and click generate to create a character!
                                                 <input type="text" list="setting-options" class="form-select bg-dark modal_text_extra" id="character-setting" style="background: inherit; color: inherit;">
                                                 <datalist id="setting-options">
                                                     <option value="Random"></option>
+                                                    <option value="Ancient Egypt"></option>
+                                                    <option value="Biopunk"></option>
+                                                    <option value="Clockwork Empire"></option>
                                                     <option value="Cyberpunk"></option>
+                                                    <option value="Desert Wasteland"></option>
                                                     <option value="Digital/Cyberspace"></option>
+                                                    <option value="Dimensional Rift"></option>
                                                     <option value="Dreamworld"></option>
                                                     <option value="Dystopian"></option>
                                                     <option value="Fantasy"></option>
                                                     <option value="Feudal Japan"></option>
+                                                    <option value="Floating Islands"></option>
+                                                    <option value="Haunted Realm"></option>
+                                                    <option value="High Seas Adventure"></option>
                                                     <option value="Lovecraftian Horror"></option>
+                                                    <option value="Magitech Society"></option>
                                                     <option value="Medieval"></option>
                                                     <option value="Megacity"></option>
                                                     <option value="Modern"></option>
                                                     <option value="Mythological"></option>
+                                                    <option value="Necropolis"></option>
+                                                    <option value="Noir Detective World"></option>
                                                     <option value="Pirate World"></option>
                                                     <option value="Post-Apocalyptic"></option>
+                                                    <option value="Prehistoric Fantasy"></option>
+                                                    <option value="Renaissance Kingdom"></option>
+                                                    <option value="Samurai Era"></option>
                                                     <option value="Sci-Fi"></option>
                                                     <option value="Space Opera"></option>
                                                     <option value="Steampunk"></option>
                                                     <option value="Superhero World"></option>
+                                                    <option value="Surreal Dreamscape"></option>
                                                     <option value="Underwater Civilization"></option>
                                                     <option value="Urban Fantasy"></option>
+                                                    <option value="Volcanic Hellscape"></option>
                                                     <option value="Western"></option>
-                                                    <option value="Feudal Japan"></option>
-                                                    <option value="Space Opera"></option>
                                                 </datalist>
                                                 <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
                                                     🎲
@@ -4113,29 +4146,49 @@ Customize your settings and click generate to create a character!
                                                 <input type="text" list="class-options" class="form-select bg-dark modal_text_extra" id="character-class" style="background: inherit; color: inherit;">
                                                 <datalist id="class-options">
                                                     <option value="Random"></option>
+                                                    <option value="Alchemist"></option>
                                                     <option value="Archer"></option>
                                                     <option value="Assassin"></option>
                                                     <option value="Barbarian"></option>
                                                     <option value="Bard"></option>
+                                                    <option value="Beast Rider"></option>
                                                     <option value="Beastmaster"></option>
+                                                    <option value="Blood Mage"></option>
                                                     <option value="Brewmaster"></option>
+                                                    <option value="Chronomancer"></option>
                                                     <option value="Cleric"></option>
+                                                    <option value="Corsair"></option>
+                                                    <option value="Cultist"></option>
+                                                    <option value="Demon Hunter"></option>
                                                     <option value="Diplomat"></option>
                                                     <option value="Druid"></option>
+                                                    <option value="Elementalist"></option>
+                                                    <option value="Engineer"></option>
+                                                    <option value="Exorcist"></option>
+                                                    <option value="Gladiator"></option>
                                                     <option value="Healer"></option>
                                                     <option value="Hunter"></option>
+                                                    <option value="Illusionist"></option>
+                                                    <option value="Inquisitor"></option>
                                                     <option value="Knight"></option>
                                                     <option value="Mage"></option>
+                                                    <option value="Martial Artist"></option>
+                                                    <option value="Necromancer"></option>
                                                     <option value="Paladin"></option>
                                                     <option value="Performer"></option>
+                                                    <option value="Psionicist"></option>
                                                     <option value="Ranger"></option>
                                                     <option value="Rogue"></option>
+                                                    <option value="Runesmith"></option>
+                                                    <option value="Seer"></option>
                                                     <option value="Shaman"></option>
                                                     <option value="Sorcerer"></option>
                                                     <option value="Spy"></option>
+                                                    <option value="Tactician"></option>
                                                     <option value="Thief"></option>
                                                     <option value="Warlock"></option>
                                                     <option value="Warrior"></option>
+                                                    <option value="Witch"></option>
                                                     <option value="Wizard"></option>
                                                 </datalist>
                                                 <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
@@ -4484,12 +4537,23 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
         
         if (statusBar && statusText) {
             statusBar.style.display = 'block';
-            statusBar.className = `alert alert-${type} mt-2 mx-3`;
+            // Map type to Bootstrap alert classes
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                             type === 'success' ? 'alert-success' : 
+                             'alert-info';
+            statusBar.className = `alert ${alertClass} mt-2 mx-3`;
             statusText.textContent = message;
             
-            // Only show spinner for info messages
+            // Only show spinner for info messages and when explicitly requested
             if (spinner) {
                 spinner.style.display = (type === 'info' && showSpinner) ? 'inline-block' : 'none';
+            }
+
+            // Auto-hide success messages after 2 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusBar.style.display = 'none';
+                }, 2000);
             }
         }
     },
@@ -4521,20 +4585,20 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
     extractImagePrompt: function() {
         const characterText = document.getElementById('character-output').textContent;
         if (!characterText) {
-            this.updateStatus('error', 'No character description found');
+            this.updateCharacterStatus('error', 'No character description found');
             return;
         }
 
         // Look for everything after "AI Image Prompt:" until a double newline or end of text
-        const promptMatch = characterText.match(/AI Image Prompt:[\s\n]*([^]*?)(?:\n\n|$)/i);
+        const promptMatch = characterText.match(/(?:AI Image Prompt:?|(?:##\s)?AI Image Prompt)[\s\n]*([^]*?)(?:\n\n|$)/i);
         if (promptMatch && promptMatch[1]) {
             // Clean up the extracted prompt - remove asterisks, quotes, and extra whitespace
             let imagePrompt = promptMatch[1].trim()
-                .replace(/^[\s\*"]+|[\s\*"]+$/g, ''); // Remove wrapping asterisks/quotes
+                .replace(/^[\s\*"\[\]]+|[\s\*"\[\]]+$/g, ''); // Remove wrapping asterisks/quotes/brackets
             
             // Additional validation
             if (imagePrompt === '*' || imagePrompt.length < 2) {
-                this.updateStatus('error', 'Invalid image prompt found');
+                this.updateCharacterStatus('error', 'Invalid image prompt found');
                 return;
             }
             
@@ -4552,7 +4616,7 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                 }
             }, 100);
         } else {
-            this.updateStatus('error', 'No image prompt found in character description');
+            this.updateCharacterStatus('error', 'No image prompt found in character description');
         }
     }
 };
