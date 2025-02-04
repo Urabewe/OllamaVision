@@ -4362,13 +4362,13 @@ When generating random selections, only choose from these valid options:
 
 Sex Options: Male, Female
 
-Species Options: Human, Elf, Dwarf, Goblin, Golem, Android, Alien
+Species Options: Alien, Android, Angel, Arachne, Automaton, Beastkin, Celestial, Chimera, Cyborg, Dark Elf, Demon, Djinn, Dragonborn, Dryad, Dwarf, Elf, Fairy, Feralfolk, Fungoid, Gargoyle, Genasi, Ghost, Ghoul, Goblin, Golem, Harpy, High Elf, Human, Krakenborn, Lizardfolk, Merfolk, Minotaur, Naga, Nephilim, Oni, Orc, Phoenixborn, Shadowkin, Slimefolk, Tiefling, Troll, Undead, Vampire, Werewolf, Yokai
 
-Setting Options: Fantasy, Urban Fantasy, Sci-Fi, Cyberpunk, Post-Apocalyptic, Modern
+Setting Options: Ancient Egypt, Biopunk, Clockwork Empire, Cyberpunk, Desert Wasteland, Digital/Cyberspace, Dimensional Rift, Dreamworld, Dystopian, Fantasy, Feudal Japan, Floating Islands, Haunted Realm, High Seas Adventure, Lovecraftian Horror, Magitech Society, Medieval, Megacity, Modern, Mythological, Necropolis, Noir Detective World, Pirate World, Post-Apocalyptic, Prehistoric Fantasy, Renaissance Kingdom, Samurai Era, Sci-Fi, Space Opera, Steampunk, Superhero World, Surreal Dreamscape, Underwater Civilization, Urban Fantasy, Volcanic Hellscape, Western
 
 Alignment Options: Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, True Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil
 
-Class/Role Options: Warrior, Paladin, Barbarian, Knight, Mage, Wizard, Sorcerer, Warlock, Rogue, Thief, Assassin, Spy, Healer, Cleric, Druid, Shaman, Ranger, Hunter, Beastmaster, Archer, Bard, Performer, Diplomat
+Class/Role Options: Alchemist, Archer, Assassin, Barbarian, Bard, Beast Rider, Beastmaster, Blood Mage, Brewmaster, Chronomancer, Cleric, Corsair, Cultist, Demon Hunter, Diplomat, Druid, Elementalist, Engineer, Exorcist, Gladiator, Healer, Hunter, Illusionist, Inquisitor, Knight, Mage, Martial Artist, Necromancer, Paladin, Performer, Psionicist, Ranger, Rogue, Runesmith, Seer, Shaman, Sorcerer, Spy, Tactician, Thief, Warlock, Warrior, Witch, Wizard
 
 User Inputs:
 Name: ${name || '[AI-generated]'}
