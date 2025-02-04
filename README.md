@@ -125,7 +125,7 @@
 - Larger images may take longer to process use compression if running into memory errors
 - Custom presets are saved between sessions
 - You can edit descriptions before generating images directly in the Analysis Results text area
-- For Story Time, set max tokens to -1 in model settings for best results
+- For best results in LLM toys keep MAXTOKENS at -1 (set by default)
 
 ## 🎮 LLM Toys Guide
 
@@ -162,16 +162,17 @@ Create detailed characters with customizable attributes:
 - Smart controls with field locking and randomization
 - Detailed output including personality, physical description, abilities, and backstory
 - Export characters to text files
-- Generate consistent characters across your preferred settings
 - Creates an AI image prompt to create a profile picture for your character
+- An "Export Prompt" button that will extract the image prompt from the results and send it to the generation page for instant generation of your new character
+
+NOTE: If your creations are getting cut off make sure MAXTOKENS is set to -1 (set by default)
 
 #### 📚 Story Time
 1. Load your image using paste, upload, or drag & drop
 2. Click **"Tell me a story"**
 3. Stories are displayed in a wide-format reading area for comfort
-4. Pro tip: Set max tokens to -1 in model settings for optimal story generation
+4. For best results ensure MAXTOKENS is set to -1 (set by default)
 
-That's it! Connect → Choose Model → Select Response Type → Load Image → Analyze. Simple yet powerful.
 
 ## 🎯 Example Outputs
 
@@ -228,7 +229,7 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 </details>
 
 ## 🔮 Planned Features
-- Batch image processing
+- Lora captioner that saves captions in a .txt file with name of image for datasets
 
 ## 🙏 Acknowledgments
 - [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision official and for giving us SwarmUI
