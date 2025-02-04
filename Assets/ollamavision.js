@@ -4264,6 +4264,22 @@ Customize your settings and click generate to create a character!
     // Add these helper functions for the Character Creator
     randomizeAll: function() {
         const inputs = ['name', 'sex', 'species', 'setting', 'alignment', 'class'];
+        
+        // Create a shuffling function using Fisher-Yates algorithm
+        const shuffle = array => {
+            for (let i = array.length - 1; i > 0; i--) {
+                // Generate a more random index using multiple sources of randomness
+                const now = Date.now();
+                const r1 = Math.random();
+                const r2 = Math.random();
+                const r3 = performance.now() % 1;
+                const combinedRandom = (r1 + r2 + r3 + (now % 100) / 100) / 4;
+                const j = Math.floor(combinedRandom * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        };
+
         inputs.forEach(input => {
             const element = document.getElementById(`character-${input}`);
             const lockBtn = element.parentElement.querySelector('.lock-btn');
@@ -4274,10 +4290,19 @@ Customize your settings and click generate to create a character!
                 } else {
                     // Get all options from the corresponding datalist
                     const datalist = document.getElementById(`${input}-options`);
-                    const options = Array.from(datalist.options);
-                    // Select a random option (excluding the first "Random" option)
-                    const randomOption = options[Math.floor(Math.random() * (options.length - 1)) + 1];
-                    element.value = randomOption.value;
+                    const options = Array.from(datalist.options).slice(1); // Exclude "Random" option
+                    
+                    // Shuffle the options array
+                    const shuffledOptions = shuffle([...options]);
+                    
+                    // Use a combination of time-based and Math.random() for index selection
+                    const now = Date.now();
+                    const r1 = Math.random();
+                    const r2 = performance.now() % 1;
+                    const combinedRandom = (r1 + r2 + (now % 100) / 100) / 3;
+                    const randomIndex = Math.floor(combinedRandom * shuffledOptions.length);
+                    
+                    element.value = shuffledOptions[randomIndex].value;
                 }
             } else if (element.dataset.lockedValue) {
                 // Restore the locked value
@@ -4324,10 +4349,10 @@ RULES:
 Output Format and Structure:
 
 Strictly follow the provided structure using bold section titles and clear formatting.
-Each character must feel entirely unique, with no reused details or repeated ideas.
+Each character must feel entirely unique, with no reused details or repeated ideas. Always use randomization for each character.
 Character Creation Rules:
 
-Overview: Each character must have a unique name, alignment, traits, and backstory tailored to the user's inputs. For randomly selected attributes, generate fresh and imaginative combinations each time.
+Overview: Use randomization for each character. Each character must have a unique name, alignment, traits, and backstory tailored to the user's inputs. For randomly selected attributes, generate fresh and imaginative combinations each time.
 Diversity: Do not restrict characters to stereotypes based on class, role, or species. For example:
 A Warrior can be tall and wiry instead of large and muscular.
 A Performer could be shy but charismatic when performing.
