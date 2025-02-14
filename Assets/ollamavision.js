@@ -4081,6 +4081,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Biopunk"></option>
                                                     <option value="Clockwork Empire"></option>
                                                     <option value="Cyberpunk"></option>
+                                                    <option value="Cyberpunk Fantasy (Shadowrun)"></option>
                                                     <option value="Desert Wasteland"></option>
                                                     <option value="Digital/Cyberspace"></option>
                                                     <option value="Dimensional Rift"></option>
