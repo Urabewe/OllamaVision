@@ -4084,6 +4084,10 @@ Customize your settings and click generate to create a character!
                                                     <option value="Cyberpunk"></option>
                                                     <option value="Cyberpunk Fantasy (Shadowrun)"></option>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                                                    <option value="Dark Cosmic Fantasy"></option>
+>>>>>>> Stashed changes
 =======
                                                     <option value="Dark Cosmic Fantasy"></option>
 >>>>>>> Stashed changes
@@ -4160,6 +4164,10 @@ Customize your settings and click generate to create a character!
                                                     <option value="Alchemist"></option>
                                                     <option value="Air Mage"></option>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                                                    <option value="Arcane Gunslinger"></option>
+>>>>>>> Stashed changes
 =======
                                                     <option value="Arcane Gunslinger"></option>
 >>>>>>> Stashed changes
@@ -4188,6 +4196,10 @@ Customize your settings and click generate to create a character!
                                                     <option value="Fire Mage"></option>
                                                     <option value="Gladiator"></option>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                                                    <option value="Gunslinger"></option>
+>>>>>>> Stashed changes
 =======
                                                     <option value="Gunslinger"></option>
 >>>>>>> Stashed changes
