@@ -3386,7 +3386,6 @@ window.ollamaVision = {
                     }
                 } catch (e) {
                     // If parsing fails, use the original response text
-                    Logs.Debug("Response parsing failed, using original text");
                 }
 
                 document.getElementById('combined-analysis').value = combinedText;
@@ -4045,6 +4044,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Ghoul"></option>
                                                     <option value="Goblin"></option>
                                                     <option value="Golem"></option>
+                                                    <option value="Gorgon"></option>
                                                     <option value="Harpy"></option>
                                                     <option value="High Elf"></option>
                                                     <option value="Human"></option>
@@ -4057,6 +4057,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Oni"></option>
                                                     <option value="Orc"></option>
                                                     <option value="Phoenixborn"></option>
+                                                    <option value="Plantfolk"></option>
                                                     <option value="Shadowkin"></option>
                                                     <option value="Slimefolk"></option>
                                                     <option value="Tiefling"></option>
@@ -4082,11 +4083,17 @@ Customize your settings and click generate to create a character!
                                                     <option value="Clockwork Empire"></option>
                                                     <option value="Cyberpunk"></option>
                                                     <option value="Cyberpunk Fantasy (Shadowrun)"></option>
+<<<<<<< Updated upstream
+=======
+                                                    <option value="Dark Cosmic Fantasy"></option>
+>>>>>>> Stashed changes
                                                     <option value="Desert Wasteland"></option>
                                                     <option value="Digital/Cyberspace"></option>
                                                     <option value="Dimensional Rift"></option>
                                                     <option value="Dreamworld"></option>
+                                                    <option value="Dying Earth"></option>
                                                     <option value="Dystopian"></option>
+                                                    <option value="Eldritch Noir"></option>
                                                     <option value="Fantasy"></option>
                                                     <option value="Feudal Japan"></option>
                                                     <option value="Floating Islands"></option>
@@ -4112,6 +4119,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Superhero World"></option>
                                                     <option value="Surreal Dreamscape"></option>
                                                     <option value="Underwater Civilization"></option>
+                                                    <option value="Underworld"></option>
                                                     <option value="Urban Fantasy"></option>
                                                     <option value="VR World"></option>
                                                     <option value="Volcanic Hellscape"></option>
@@ -4151,6 +4159,10 @@ Customize your settings and click generate to create a character!
                                                     <option value="Random"></option>
                                                     <option value="Alchemist"></option>
                                                     <option value="Air Mage"></option>
+<<<<<<< Updated upstream
+=======
+                                                    <option value="Arcane Gunslinger"></option>
+>>>>>>> Stashed changes
                                                     <option value="Archer"></option>
                                                     <option value="Assassin"></option>
                                                     <option value="Barbarian"></option>
@@ -4175,6 +4187,10 @@ Customize your settings and click generate to create a character!
                                                     <option value="Fence"></option>
                                                     <option value="Fire Mage"></option>
                                                     <option value="Gladiator"></option>
+<<<<<<< Updated upstream
+=======
+                                                    <option value="Gunslinger"></option>
+>>>>>>> Stashed changes
                                                     <option value="Hacker"></option>
                                                     <option value="Healer"></option>
                                                     <option value="Hunter"></option>
@@ -4191,17 +4207,24 @@ Customize your settings and click generate to create a character!
                                                     <option value="Priest"></option>
                                                     <option value="Psionicist"></option>
                                                     <option value="Ranger"></option>
+                                                    <option value="Rigger"></option>
                                                     <option value="Rogue"></option>
                                                     <option value="Runesmith"></option>
                                                     <option value="Seer"></option>
                                                     <option value="Shaman"></option>
+                                                    <option value="Shapeshifter"></option>
                                                     <option value="Sorcerer"></option>
                                                     <option value="Spy"></option>
+                                                    <option value="Street Samurai"></option>
+                                                    <option value="Summoner"></option>
                                                     <option value="Tactician"></option>
+                                                    <option value="Technomancer"></option>
                                                     <option value="Thief"></option>
+                                                    <option value="Wastelander"></option>
                                                     <option value="Warlock"></option>
                                                     <option value="Warrior"></option>
                                                     <option value="Witch"></option>
+                                                    <option value="Witch Hunter"></option>
                                                     <option value="Wizard"></option>
                                                 </datalist>
                                                 <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
