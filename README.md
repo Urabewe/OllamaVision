@@ -1,7 +1,7 @@
 <a href="https://www.buymeacoffee.com/urabewe"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=urabewe&button_colour=5F7FFF&font_colour=ffffff&font_family=Bree&outline_colour=000000&coffee_colour=FFDD00" /></a>
 
 # OllamaVision
-> An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts. Options to use local LLM with Ollama and OogaBooga WebUI. Also supports OpenAI API, OpenRouter API.
+> An AI-powered image analysis extension for SwarmUI that generates detailed image descriptions for your prompts. Options to use local LLM with Ollama and OobaBooga WebUI. Also supports OpenAI API, OpenRouter API.
 
 ![logo](https://github.com/user-attachments/assets/a39b87b2-e396-4cca-bae8-29041826d7e3)
 
@@ -31,12 +31,12 @@
   - Local LLM with Ollama (including remote Ollama installations)
   - OpenAI API integration
   - OpenRouter API support
-  - OogaBooga WebUI support with vision models
+  - OobaBooga WebUI support with vision models
 - Advanced model settings:
   - Ollama: temperature, top_p, top_k, max_tokens, repeat_penalty, seed
   - OpenAI: temperature, max_tokens, top_p, frequency_penalty, presence_penalty
   - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
-  - OogaBooga: Model settings are configured through OogaBooga's WebUI interface
+  - OobaBooga: Model settings are configured through OobaBooga's WebUI interface
 - Multiple preset User Prompts (Artistic Style, Facial Features, Color Palette, etc.)
 - Creative LLM Toys:
   - **Image Fusion**: Combine separate analyses of style, subject, and setting into cohesive prompts
@@ -50,7 +50,7 @@
 - Zero impact on VRAM when not in use (when using unload model setting)
 - Image paste/upload support
 - Image Drag and drop support
-- Remote server connection support (Ollama and OogaBooga)
+- Remote server connection support (Ollama and OobaBooga)
 - Image compression option to prevent memory issues
 - Analysis history with thumbnails and parameter reuse
 - Enhanced error handling with helpful troubleshooting suggestions
@@ -74,13 +74,13 @@
 - Valid OpenRouter API key. Sign up and create an API key here: [OpenRouter](https://openrouter.ai/)
 - Optional: Custom site name for API requests
 
-### For OogaBooga:
-- [OogaBooga Text Generation WebUI](https://github.com/oobabooga/text-generation-webui) must be installed and set up
-- The OpenAI extension must be enabled in OogaBooga's WebUI
-- Vision models must be installed and configured in OogaBooga
+### For OobaBooga:
+- [OobaBooga Text Generation WebUI](https://github.com/oobabooga/text-generation-webui) must be installed and set up
+- The OpenAI extension must be enabled in OobaBooga's WebUI
+- Vision models must be installed and configured in OobaBooga
 - Default port is 5000 (can be configured)
 - For remote connections:
-  - OogaBooga server must be accessible on your network
+  - OobaBooga server must be accessible on your network
   - Port 5000 (or your configured port) must be open
   - Server must be properly configured for remote access
 
@@ -103,14 +103,14 @@
    - Ollama (local or remote)
    - OpenAI
    - OpenRouter
-   - OogaBooga WebUI
+   - OobaBooga WebUI
 4. Click **"Connect"** to establish connection
 
 ### 🎯 Setup & Configuration
 1. Select your preferred vision model from the dropdown list
 2. Configure model settings (optional):
    - For Ollama, OpenAI, and OpenRouter: Adjust settings in OllamaVision interface
-   - For OogaBooga: Configure model settings in OogaBooga's WebUI interface
+   - For OobaBooga: Configure model settings in OobaBooga's WebUI interface
 3. Choose your User Prompt:
    - Use the default preset
    - Select from included presets
@@ -131,10 +131,10 @@
 3. Use the description as-is or customize it for your needs directly inside OllamaVision
 
 ### 🔑 Quick Tips
-- If you're using local LLM ensure Ollama or OogaBooga is running BEFORE trying connect
-- For OogaBooga:
-  - Make sure the OpenAI extension is enabled in OogaBooga's WebUI
-  - Model settings are managed through OogaBooga's interface
+- If you're using local LLM ensure Ollama or OobaBooga is running BEFORE trying connect
+- For OobaBooga:
+  - Make sure the OpenAI extension is enabled in OobaBooga's WebUI
+  - Model settings are managed through OobaBooga's interface
   - Default URL is http://localhost:5000
   - Models will be automatically listed when connecting
   - Selected models will load automatically when chosen from the dropdown
