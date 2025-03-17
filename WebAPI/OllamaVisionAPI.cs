@@ -10,6 +10,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.AspNetCore.Http;
+using System.Text;
 
 namespace Urabewe.OllamaVision.WebAPI
 {
@@ -66,10 +67,11 @@ namespace Urabewe.OllamaVision.WebAPI
             API.RegisterAPICall(GetPresetPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetFusionPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(UnloadModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
-            API.RegisterAPICall(StreamAnalyzeImageAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(CombineAnalysesAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetStoryPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GenerateCharacterAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(ConnectToTextGenAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(LoadTextGenModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
@@ -299,6 +301,80 @@ namespace Urabewe.OllamaVision.WebAPI
                         {
                             ["success"] = false,
                             ["error"] = "Missing required parameters (model)"
+                        };
+                    }
+
+                    // Add TextGen WebUI handling
+                    if (backendType == "textgen")
+                    {
+                        var textgenUrl = data["textgenUrl"]?.ToString() ?? "http://localhost:5000";
+                        
+                        // Ensure URL has http:// or https:// prefix
+                        if (!textgenUrl.StartsWith("http://") && !textgenUrl.StartsWith("https://"))
+                        {
+                            textgenUrl = "http://" + textgenUrl;
+                        }
+                        
+                        // Remove trailing slash if present
+                        textgenUrl = textgenUrl.TrimEnd('/');
+
+                        var messages = new JArray();
+                        
+                        // Add system prompt if provided
+                        var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                        if (!string.IsNullOrEmpty(systemPrompt))
+                        {
+                            messages.Add(new JObject
+                            {
+                                ["role"] = "system",
+                                ["content"] = systemPrompt
+                            });
+                        }
+
+                        // Add user message with image first, then prompt
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "user",
+                            ["content"] = new JArray {
+                                new JObject {
+                                    ["type"] = "image_url",
+                                    ["image_url"] = base64Data
+                                },
+                                new JObject {
+                                    ["type"] = "text",
+                                    ["text"] = prompt
+                                }
+                            }
+                        });
+
+                        var requestBody = new JObject
+                        {
+                            ["model"] = model,
+                            ["messages"] = messages,
+                            ["stream"] = false
+                        };
+
+                        var response = await client.PostAsync(
+                            $"{textgenUrl}/v1/chat/completions",
+                            new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
+                        );
+
+                        var content = await response.Content.ReadAsStringAsync();
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            return new JObject
+                            {
+                                ["success"] = false,
+                                ["error"] = $"Failed to analyze image with OogaBooga WebUI: {content}"
+                            };
+                        }
+
+                        var result = JObject.Parse(content);
+                        return new JObject
+                        {
+                            ["success"] = true,
+                            ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
                         };
                     }
 
@@ -619,206 +695,6 @@ namespace Urabewe.OllamaVision.WebAPI
             }
         }
 
-        [API.APIDescription("Analyzes an image using the specified model", "Returns the analysis result")]
-        public static async Task<JObject> StreamAnalyzeImageAsync(JObject data)
-        {
-            try
-            {
-                var backendType = data["backendType"]?.ToString()?.ToLower() ?? "ollama";
-                var model = data["model"]?.ToString();
-                var prompt = data["prompt"]?.ToString();
-                var imageData = data["imageData"]?.ToString();
-                var systemPrompt = data["systemPrompt"]?.ToString();
-
-                // Common parameters with defaults
-                var temperature = data["temperature"]?.ToObject<float>() ?? 0.8f;
-                var maxTokens = data["maxTokens"]?.ToObject<int>() ?? -1;
-                var topP = data["topP"]?.ToObject<float>() ?? 0.7f;
-
-                // Build request based on backend type
-                JObject requestBody = new JObject();
-                string endpoint;
-
-                switch (backendType)
-                {
-                    case "openai":
-                        endpoint = "https://api.openai.com/v1/chat/completions";
-                        requestBody = new JObject
-                        {
-                            ["model"] = model,
-                            ["messages"] = new JArray
-                            {
-                                new JObject
-                                {
-                                    ["role"] = "user",
-                                    ["content"] = new JArray
-                                    {
-                                        new JObject { ["type"] = "text", ["text"] = prompt },
-                                        new JObject { ["type"] = "image_url", ["image_url"] = new JObject { ["url"] = imageData } }
-                                    }
-                                }
-                            },
-                            ["temperature"] = temperature,
-                            ["max_tokens"] = maxTokens,
-                            ["top_p"] = topP
-                        };
-
-                        // OpenAI-specific parameters
-                        if (data["frequencyPenalty"] != null)
-                            requestBody["frequency_penalty"] = data["frequencyPenalty"].ToObject<float>();
-                        if (data["presencePenalty"] != null)
-                            requestBody["presence_penalty"] = data["presencePenalty"].ToObject<float>();
-
-                        // Add system prompt if provided
-                        if (!string.IsNullOrEmpty(systemPrompt))
-                        {
-                            ((JArray)requestBody["messages"]).Insert(0, new JObject
-                            {
-                                ["role"] = "system",
-                                ["content"] = systemPrompt
-                            });
-                        }
-                        break;
-
-                    case "openrouter":
-                        endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                        requestBody = new JObject
-                        {
-                            ["model"] = model,
-                            ["messages"] = new JArray
-                            {
-                                new JObject
-                                {
-                                    ["role"] = "user",
-                                    ["content"] = new JArray
-                                    {
-                                        new JObject { ["type"] = "text", ["text"] = prompt },
-                                        new JObject { ["type"] = "image_url", ["image_url"] = imageData }
-                                    }
-                                }
-                            },
-                            ["temperature"] = temperature,
-                            ["max_tokens"] = maxTokens,
-                            ["top_p"] = topP
-                        };
-
-                        // OpenRouter-specific parameters
-                        if (data["frequencyPenalty"] != null)
-                            requestBody["frequency_penalty"] = data["frequencyPenalty"].ToObject<float>();
-                        if (data["presencePenalty"] != null)
-                            requestBody["presence_penalty"] = data["presencePenalty"].ToObject<float>();
-                        if (data["topK"] != null)
-                            requestBody["top_k"] = data["topK"].ToObject<int>();
-                        if (data["repeatPenalty"] != null)
-                            requestBody["repeat_penalty"] = data["repeatPenalty"].ToObject<float>();
-
-                        // Add system prompt if provided
-                        if (!string.IsNullOrEmpty(systemPrompt))
-                        {
-                            ((JArray)requestBody["messages"]).Insert(0, new JObject
-                            {
-                                ["role"] = "system",
-                                ["content"] = systemPrompt
-                            });
-                        }
-                        break;
-
-                    default: // ollama
-                        var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
-                        endpoint = $"{ollamaUrl}/api/generate";
-                        requestBody = new JObject
-                        {
-                            ["model"] = model,
-                            ["prompt"] = prompt,
-                            ["stream"] = false,
-                            ["images"] = new JArray { imageData },
-                            ["options"] = new JObject
-                            {
-                                ["temperature"] = temperature,
-                                ["top_p"] = topP,
-                                ["num_predict"] = maxTokens
-                            }
-                        };
-
-                        // Ollama-specific parameters
-                        var options = (JObject)requestBody["options"];
-                        if (data["topK"] != null)
-                            options["top_k"] = data["topK"].ToObject<int>();
-                        if (data["repeatPenalty"] != null)
-                            options["repeat_penalty"] = data["repeatPenalty"].ToObject<float>();
-                        if (data["seed"] != null)
-                            options["seed"] = data["seed"].ToObject<int>();
-
-                        // Add system prompt if provided
-                        if (!string.IsNullOrEmpty(systemPrompt))
-                        {
-                            requestBody["system"] = systemPrompt;
-                        }
-                        break;
-                }
-
-                // Add the HTTP request handling
-                using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
-                {
-                    if (backendType == "openai")
-                    {
-                        request.Headers.Add("Authorization", $"Bearer {data["apiKey"]}");
-                    }
-                    else if (backendType == "openrouter")
-                    {
-                        request.Headers.Add("Authorization", $"Bearer {data["apiKey"]}");
-                        request.Headers.Add("HTTP-Referer", "https://swarmui.local");
-                        request.Headers.Add("X-Title", data["siteName"]?.ToString() ?? "SwarmUI");
-                    }
-
-                    request.Content = new StringContent(
-                        requestBody.ToString(),
-                        System.Text.Encoding.UTF8,
-                        "application/json"
-                    );
-
-                    var response = await client.SendAsync(request);
-                    var content = await response.Content.ReadAsStringAsync();
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return new JObject
-                        {
-                            ["success"] = false,
-                            ["error"] = $"Request failed: {content}"
-                        };
-                    }
-
-                    var result = JObject.Parse(content);
-                    string finalResponse;
-
-                    if (backendType == "ollama")
-                    {
-                        finalResponse = result["response"]?.ToString();
-                    }
-                    else // openai or openrouter
-                    {
-                        finalResponse = result["choices"]?[0]?["message"]?["content"]?.ToString();
-                    }
-
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = finalResponse
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs.Error($"Error in StreamAnalyzeImageAsync: {ex.Message}");
-                return new JObject
-                {
-                    ["success"] = false,
-                    ["error"] = ex.Message
-                };
-            }
-        }
-
         [API.APIDescription("Combines multiple analyses into a single cohesive prompt", "Returns the combined analysis prompt")]
         public static async Task<JObject> CombineAnalysesAsync(JObject data)
         {
@@ -925,7 +801,69 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                 }
 
                 // Handle different backends
-                if (backendType == "openai")
+                if (backendType == "textgen")
+                {
+                    var textgenUrl = data["textgenUrl"]?.ToString() ?? "http://localhost:5000";
+                    
+                    // Ensure URL has http:// or https:// prefix
+                    if (!textgenUrl.StartsWith("http://") && !textgenUrl.StartsWith("https://"))
+                    {
+                        textgenUrl = "http://" + textgenUrl;
+                    }
+                    
+                    // Remove trailing slash if present
+                    textgenUrl = textgenUrl.TrimEnd('/');
+
+                    var messages = new JArray();
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
+                    }
+
+                    messages.Add(new JObject
+                    {
+                        ["role"] = "user",
+                        ["content"] = prompt
+                    });
+
+                    var requestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? -1,
+                        ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
+                        ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
+                        ["stream"] = false
+                    };
+
+                    var response = await client.PostAsync(
+                        $"{textgenUrl}/v1/chat/completions",
+                        new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
+                    );
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = $"OogaBooga request failed: {content}"
+                        };
+                    }
+
+                    var result = JObject.Parse(content);
+                    return new JObject
+                    {
+                        ["success"] = true,
+                        ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
+                    };
+                }
+                else if (backendType == "openai")
                 {
                     var messages = new JArray();
                     var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
@@ -1213,7 +1151,69 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                 }
 
                 // Handle different backends
-                if (backendType == "openai")
+                if (backendType == "textgen")
+                {
+                    var textgenUrl = data["textgenUrl"]?.ToString() ?? "http://localhost:5000";
+                    
+                    // Ensure URL has http:// or https:// prefix
+                    if (!textgenUrl.StartsWith("http://") && !textgenUrl.StartsWith("https://"))
+                    {
+                        textgenUrl = "http://" + textgenUrl;
+                    }
+                    
+                    // Remove trailing slash if present
+                    textgenUrl = textgenUrl.TrimEnd('/');
+
+                    var messages = new JArray();
+                    var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(systemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = systemPrompt
+                        });
+                    }
+
+                    messages.Add(new JObject
+                    {
+                        ["role"] = "user",
+                        ["content"] = prompt
+                    });
+
+                    var requestBody = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["max_tokens"] = data["maxTokens"]?.ToObject<int>() ?? -1,
+                        ["temperature"] = data["temperature"]?.ToObject<float>() ?? 0.8f,
+                        ["top_p"] = data["topP"]?.ToObject<float>() ?? 0.7f,
+                        ["stream"] = false
+                    };
+
+                    var response = await client.PostAsync(
+                        $"{textgenUrl}/v1/chat/completions",
+                        new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
+                    );
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = $"OogaBooga request failed: {content}"
+                        };
+                    }
+
+                    var result = JObject.Parse(content);
+                    return new JObject
+                    {
+                        ["success"] = true,
+                        ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
+                    };
+                }
+                else if (backendType == "openai")
                 {
                     var apiKey = data["apiKey"]?.ToString();
                     if (string.IsNullOrEmpty(apiKey))
@@ -1349,6 +1349,105 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     ["success"] = false,
                     ["error"] = ex.Message
                 };
+            }
+        }
+
+        [API.APIDescription("Connects to TextGen WebUI and retrieves available models", "Returns list of available models")]
+        public static async Task<JObject> ConnectToTextGenAsync(JObject data)
+        {
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    string textgenUrl = data["textgenUrl"]?.ToString() ?? "http://localhost:5000";
+
+                    if (!textgenUrl.StartsWith("http://") && !textgenUrl.StartsWith("https://"))
+                    {
+                        textgenUrl = "http://" + textgenUrl;
+                    }
+
+                    textgenUrl = textgenUrl.TrimEnd('/');
+
+                    // Add proper headers as per OogaBooga documentation
+                    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync($"{textgenUrl}/v1/internal/model/list");
+                    response.EnsureSuccessStatusCode();
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JObject.Parse(content);
+                    var models = result["model_names"] as JArray;
+
+                    if (models == null)
+                    {
+                        throw new Exception("Invalid response format from OogaBooga WebUI: missing model_names array");
+                    }
+
+                    return new JObject
+                    {
+                        ["success"] = true,
+                        ["models"] = models
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = $"Failed to connect to OogaBooga WebUI: {ex.Message}"
+                    };
+                }
+            }
+        }
+
+        [API.APIDescription("Loads a model in TextGen WebUI", "Returns success status of loading the model")]
+        public static async Task<JObject> LoadTextGenModelAsync(JObject data)
+        {
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    string textgenUrl = data["textgenUrl"]?.ToString() ?? "http://localhost:5000";
+                    string model = data["model"]?.ToString();
+
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        throw new ArgumentException("Model name is required");
+                    }
+
+                    if (!textgenUrl.StartsWith("http://") && !textgenUrl.StartsWith("https://"))
+                    {
+                        textgenUrl = "http://" + textgenUrl;
+                    }
+
+                    textgenUrl = textgenUrl.TrimEnd('/');
+
+                    // Add proper headers as per OogaBooga documentation
+                    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var content = new StringContent(
+                        JsonConvert.SerializeObject(new { model_name = model }),
+                        Encoding.UTF8,
+                        "application/json"
+                    );
+
+                    var response = await client.PostAsync($"{textgenUrl}/v1/internal/model/load", content);
+                    response.EnsureSuccessStatusCode();
+
+                    return new JObject
+                    {
+                        ["success"] = true,
+                        ["message"] = $"Model {model} loaded successfully"
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = $"Failed to load model: {ex.Message}"
+                    };
+                }
             }
         }
 

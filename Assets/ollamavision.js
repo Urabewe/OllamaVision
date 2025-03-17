@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
                 const connectBtn = document.getElementById('connect-btn');
                 if (connectBtn) {
-                    connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
+                    connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OogaBooga WebUI' : 'Ollama'}`;
                 }
 
                 // Restore last selected preset in the dropdown
@@ -597,6 +597,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <option value="ollama">Ollama</option>
                                         <option value="openai">OpenAI</option>
                                         <option value="openrouter">OpenRouter</option>
+                                        <option value="textgen">OogaBooga WebUI</option>
                                     </select>
                                 </div>
 
@@ -694,6 +695,24 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <input type="text" class="auto-text modal_text_extra" id="openrouter-site" 
                                                placeholder="Enter your site name (e.g., My App)">
                                         <small class="form-text text-muted">This will be used in the X-Title header</small>
+                                    </div>
+                                </div>
+                                <!-- TextGen WebUI Settings -->
+                                <div id="textgen-settings" style="display: none;">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">OogaBooga WebUI URL</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
+                                               placeholder="Enter your OogaBooga WebUI URL">
+                                        <small class="form-text text-muted">This is the URL of your OogaBooga WebUI instance</small>
+                                    </div>
+                                </div>
+                                <!-- OogaBooga Settings -->
+                                <div id="oogabooga-settings" style="display: none;">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">OogaBooga WebUI URL</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="oogabooga-url" 
+                                               placeholder="http://localhost:5000">
+                                        <small class="form-text text-muted">The URL where your OogaBooga WebUI is running</small>
                                     </div>
                                 </div>
                             </div>
@@ -912,15 +931,93 @@ async function addOllamaVisionTab(utilitiesTab) {
 }
 
 window.ollamaVision = {
+    pasteHandler: null,
+    pasteEnabled: false,
+    modelChangeHandler: null,
+
+    getBackendDisplayName: function(backendType) {
+        switch(backendType) {
+            case 'openai':
+                return 'OpenAI';
+            case 'openrouter':
+                return 'OpenRouter';
+            case 'textgen':
+                return 'OogaBooga';
+            case 'ollama':
+            default:
+                return 'Ollama';
+        }
+    },
+
+    updateStatus: function(type, message, showSpinner = false) {
+        // Replace textgen with OogaBooga in the message
+        if (message.includes('textgen')) {
+            message = message.replace('textgen', 'OogaBooga');
+        }
+
+        // Determine which status bar to update based on active modal
+        let statusElement, spinnerElement, statusTextElement;
+        
+        if (document.getElementById('storyTimeModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('story-status');
+            spinnerElement = document.getElementById('story-spinner');
+            statusTextElement = document.getElementById('story-status-text');
+        } else if (document.getElementById('fusionModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('fusion-status');
+            spinnerElement = document.getElementById('fusion-spinner');
+            statusTextElement = document.getElementById('fusion-status-text');
+        } else {
+            // Default to main window status
+            statusElement = document.getElementById('analysis-status');
+            spinnerElement = document.getElementById('analysis-spinner');
+            statusTextElement = document.getElementById('status-text');
+        }
+
+        if (!statusElement) return;
+
+        statusElement.style.display = 'block';
+        
+        // Map type to Bootstrap alert classes
+        const alertClass = type === 'error' ? 'alert-danger' : 
+                          type === 'success' ? 'alert-success' : 
+                          'alert-info';
+        
+        statusElement.className = `alert ${alertClass} mt-3 text-center`;
+        
+        if (spinnerElement) {
+            spinnerElement.style.display = showSpinner ? 'block' : 'none';
+        }
+        
+        if (statusTextElement) {
+            statusTextElement.textContent = message;
+        }
+
+        // Only auto-hide success messages after 5 seconds
+        // Keep error messages visible until next action
+        // Keep info/loading messages visible until explicitly changed
+        if (type === 'success') {
+            setTimeout(() => {
+                if (statusElement.classList.contains('alert-success')) {
+                    statusElement.style.display = 'none';
+                }
+            }, 5000);
+        }
+    },
+
     connect: async function() {
         try {
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
             const connectBtn = document.getElementById('connect-btn');
             const disconnectBtn = document.getElementById('disconnect-btn');
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-            
-            connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
             connectBtn.disabled = true;
-            connectBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connecting to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}...`;
+            connectBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Connecting...';
+            
+            // Remove any existing model change handler
+            const modelSelect = document.getElementById('ollamavision-model');
+            if (this.modelChangeHandler) {
+                modelSelect.removeEventListener('change', this.modelChangeHandler);
+                this.modelChangeHandler = null;
+            }
             
             if (backendType === 'openai') {
                 const apiKey = localStorage.getItem('ollamaVision_openaiKey');
@@ -1013,6 +1110,119 @@ window.ollamaVision = {
                 document.getElementById('upload-btn').disabled = false;
                 
                 this.updateStatus('success', 'Connected to OpenRouter successfully');
+            } else if (backendType === 'textgen') {
+                const textgenUrl = localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000';
+                
+                try {
+                    // Make a request to the backend API instead of directly to OogaBooga
+                    const response = await new Promise((resolve, reject) => {
+                        genericRequest('ConnectToTextGenAsync', 
+                            { 
+                                textgenUrl: textgenUrl
+                            },
+                            (data) => resolve(data),
+                            (error) => reject(error)
+                        );
+                    });
+
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to connect to OogaBooga WebUI');
+                    }
+
+                    // Get UI elements
+                    const connectBtn = document.getElementById('connect-btn');
+                    const disconnectBtn = document.getElementById('disconnect-btn');
+                    const modelSelect = document.getElementById('ollamavision-model');
+                    const uploadBtn = document.getElementById('upload-btn');
+                    const pasteBtn = document.getElementById('paste-btn');
+
+                    // Update model dropdown with available models
+                    modelSelect.innerHTML = '<option value="">Select a model...</option>';
+                    
+                    if (response.models && Array.isArray(response.models)) {
+                        response.models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            modelSelect.appendChild(option);
+                        });
+                    }
+
+                    // Create and store the model change handler
+                    this.modelChangeHandler = async function(event) {
+                        const selectedModel = event.target.value;
+                        if (selectedModel) {
+                            try {
+                                ollamaVision.updateStatus('info', `Loading model ${selectedModel}...`, true);
+                                
+                                const response = await new Promise((resolve, reject) => {
+                                    genericRequest('LoadTextGenModelAsync', 
+                                        { 
+                                            textgenUrl: textgenUrl,
+                                            model: selectedModel
+                                        },
+                                        (data) => resolve(data),
+                                        (error) => reject(error)
+                                    );
+                                });
+
+                                if (!response.success) {
+                                    throw new Error(response.error || 'Failed to load model');
+                                }
+
+                                ollamaVision.updateStatus('success', `Model ${selectedModel} loaded successfully`);
+                            } catch (error) {
+                                ollamaVision.updateStatus('error', `Failed to load model: ${error.message}`);
+                                event.target.value = ''; // Reset selection on error
+                            }
+                        }
+                    };
+
+                    // Add the event listener for OogaBooga
+                    modelSelect.addEventListener('change', this.modelChangeHandler);
+
+                    // Enable UI elements
+                    modelSelect.disabled = false;
+                    uploadBtn.disabled = false;
+                    pasteBtn.disabled = false;
+                    
+                    // Update connection buttons
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'inline-block';
+                    
+                    // Update connection status
+                    this.updateStatus('success', 'Connected to OogaBooga WebUI successfully');
+                    
+                    // Save connection state
+                    localStorage.setItem('ollamaVision_connected', 'true');
+                    localStorage.setItem('ollamaVision_backendType', 'textgen');
+                    
+                } catch (error) {
+                    console.error('Connection error:', error);
+                    
+                    // Get UI elements
+                    const connectBtn = document.getElementById('connect-btn');
+                    const disconnectBtn = document.getElementById('disconnect-btn');
+                    const modelSelect = document.getElementById('ollamavision-model');
+                    const uploadBtn = document.getElementById('upload-btn');
+                    const pasteBtn = document.getElementById('paste-btn');
+                    
+                    // Disable UI elements
+                    if (modelSelect) modelSelect.disabled = true;
+                    if (uploadBtn) uploadBtn.disabled = true;
+                    if (pasteBtn) pasteBtn.disabled = true;
+                    
+                    // Update connection buttons
+                    if (connectBtn) connectBtn.style.display = 'inline-block';
+                    if (disconnectBtn) disconnectBtn.style.display = 'none';
+                    
+                    // Update connection status
+                    this.updateStatus('error', `Failed to connect to OogaBooga WebUI: ${error.message}`);
+                    
+                    // Clear connection state
+                    localStorage.removeItem('ollamaVision_connected');
+                    localStorage.removeItem('ollamaVision_backendType');
+                }
             } else {
                 
                 // Existing Ollama connection logic
@@ -1315,7 +1525,7 @@ window.ollamaVision = {
                     ollamaUrl: backendType === 'ollama' ? 
                         `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}` : ''
                 }, backendType);
-                genericRequest('StreamAnalyzeImageAsync', filteredParams, (data) => resolve(data), (error) => reject(error));
+                genericRequest('AnalyzeImageAsync', filteredParams, (data) => resolve(data), (error) => reject(error));
             });
 
             if (response.success) {
@@ -1344,56 +1554,6 @@ window.ollamaVision = {
         }
     },
 
-    updateStatus: function(type, message, showSpinner = false) {
-        // Determine which status bar to update based on active modal
-        let statusElement, spinnerElement, statusTextElement;
-        
-        if (document.getElementById('storyTimeModal')?.classList.contains('show')) {
-            statusElement = document.getElementById('story-status');
-            spinnerElement = document.getElementById('story-spinner');
-            statusTextElement = document.getElementById('story-status-text');
-        } else if (document.getElementById('fusionModal')?.classList.contains('show')) {
-            statusElement = document.getElementById('fusion-status');
-            spinnerElement = document.getElementById('fusion-spinner');
-            statusTextElement = document.getElementById('fusion-status-text');
-        } else {
-            // Default to main window status
-            statusElement = document.getElementById('analysis-status');
-            spinnerElement = document.getElementById('analysis-spinner');
-            statusTextElement = document.getElementById('status-text');
-        }
-
-        if (!statusElement) return;
-
-        statusElement.style.display = 'block';
-        
-        // Map type to Bootstrap alert classes
-        const alertClass = type === 'error' ? 'alert-danger' : 
-                          type === 'success' ? 'alert-success' : 
-                          'alert-info';
-        
-        statusElement.className = `alert ${alertClass} mt-3 text-center`;
-        
-        if (spinnerElement) {
-            spinnerElement.style.display = showSpinner ? 'block' : 'none';
-        }
-        
-        if (statusTextElement) {
-            statusTextElement.textContent = message;
-        }
-
-        // Only auto-hide success messages after 5 seconds
-        // Keep error messages visible until next action
-        // Keep info/loading messages visible until explicitly changed
-        if (type === 'success') {
-            setTimeout(() => {
-                if (statusElement.classList.contains('alert-success')) {
-                    statusElement.style.display = 'none';
-                }
-            }, 5000);
-        }
-    },
-
     showSettings: function() {
         const settingsHtml = `
             <div class="modal fade" id="ollamaSettingsModal" tabindex="-1">
@@ -1414,6 +1574,7 @@ window.ollamaVision = {
                                             <option value="ollama">Ollama</option>
                                             <option value="openai">OpenAI</option>
                                             <option value="openrouter">OpenRouter</option>
+                                            <option value="textgen">OogaBooga WebUI</option>
                                         </select>
                                     </div>
 
@@ -1513,6 +1674,24 @@ window.ollamaVision = {
                                             <small class="form-text text-muted">This will be used in the X-Title header</small>
                                         </div>
                                     </div>
+                                    <!-- TextGen WebUI Settings -->
+                                    <div id="textgen-settings" style="display: none;">
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">OogaBooga WebUI URL</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
+                                                   placeholder="Enter your OogaBooga WebUI URL">
+                                            <small class="form-text text-muted">This is the URL of your OogaBooga WebUI instance</small>
+                                        </div>
+                                    </div>
+                                    <!-- OogaBooga Settings -->
+                                    <div id="oogabooga-settings" style="display: none;">
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">OogaBooga WebUI URL</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="oogabooga-url" 
+                                                   placeholder="http://localhost:5000">
+                                            <small class="form-text text-muted">The URL where your OogaBooga WebUI is running</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1550,6 +1729,7 @@ window.ollamaVision = {
         document.getElementById('openrouter-key').value = localStorage.getItem('ollamaVision_openrouterKey') || '';
         document.getElementById('openrouter-site').value = localStorage.getItem('ollamaVision_openrouterSite') || '';
         document.getElementById('compressImages').checked = compressImages;
+        document.getElementById('textgen-url').value = localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000';
 
         // Show/hide appropriate settings
         this.toggleBackendSettings();
@@ -1562,24 +1742,33 @@ window.ollamaVision = {
         const ollamaConnectionSettings = document.getElementById('ollama-connection-settings');
         const openaiSettings = document.getElementById('openai-settings');
         const openrouterSettings = document.getElementById('openrouter-settings');
+        const oogaboogaSettings = document.getElementById('oogabooga-settings');
         const connectBtn = document.getElementById('connect-btn');
         
+        // Hide all settings first
+        ollamaConnectionSettings.style.display = 'none';
+        openaiSettings.style.display = 'none';
+        openrouterSettings.style.display = 'none';
+        oogaboogaSettings.style.display = 'none';
+        
+        // Show appropriate settings
         if (backendType === 'ollama') {
             ollamaConnectionSettings.style.display = 'block';
-            openaiSettings.style.display = 'none';
-            openrouterSettings.style.display = 'none';
         } else if (backendType === 'openai') {
-            ollamaConnectionSettings.style.display = 'none';
             openaiSettings.style.display = 'block';
-            openrouterSettings.style.display = 'none';
         } else if (backendType === 'openrouter') {
-            ollamaConnectionSettings.style.display = 'none';
-            openaiSettings.style.display = 'none';
             openrouterSettings.style.display = 'block';
+        } else if (backendType === 'textgen') {
+            oogaboogaSettings.style.display = 'block';
         }
         
         // Update connect button text
-        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
+        connectBtn.innerHTML = `Connect to ${
+            backendType === 'openai' ? 'OpenAI' : 
+            backendType === 'openrouter' ? 'OpenRouter' : 
+            backendType === 'textgen' ? 'OogaBooga WebUI' : 
+            'Ollama'
+        }`;
     },
 
     saveSettings: function() {
@@ -1594,6 +1783,9 @@ window.ollamaVision = {
         const openrouterSite = document.getElementById('openrouter-site').value.trim();
         const compressImages = document.getElementById('compressImages').checked;
         
+        // Get OogaBooga URL with default
+        const oogaboogaUrl = document.getElementById('oogabooga-url').value.trim() || 'http://localhost:5000';
+        
         // Validate required fields based on backend type
         if (backendType === 'openai' && !openaiKey) {
             this.updateStatus('error', 'OpenAI API key is required');
@@ -1606,6 +1798,7 @@ window.ollamaVision = {
             return;
         }
         
+        // Save all settings to localStorage
         localStorage.setItem('ollamaVision_autoUnload', autoUnload);
         localStorage.setItem('ollamaVision_showAllModels', showAllModels);
         localStorage.setItem('ollamaVision_showDefaultPresets', showDefaultPresets);
@@ -1616,6 +1809,7 @@ window.ollamaVision = {
         localStorage.setItem('ollamaVision_openrouterKey', openrouterKey);
         localStorage.setItem('ollamaVision_openrouterSite', openrouterSite);
         localStorage.setItem('ollamaVision_compressImages', compressImages);
+        localStorage.setItem('ollamaVision_textgenUrl', oogaboogaUrl);
         
         bootstrap.Modal.getInstance(document.getElementById('ollamaSettingsModal')).hide();
         this.updateStatus('success', 'Settings saved successfully');
@@ -2048,9 +2242,15 @@ window.ollamaVision = {
         const pasteBtn = document.getElementById('paste-btn');
         const uploadBtn = document.getElementById('upload-btn');
 
+        // Remove model change handler if it exists
+        if (this.modelChangeHandler) {
+            modelSelect.removeEventListener('change', this.modelChangeHandler);
+            this.modelChangeHandler = null;
+        }
+
         // Reset UI state
         connectBtn.disabled = false;
-        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`;
+        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OogaBooga WebUI' : 'Ollama'}`;
         connectBtn.classList.remove('connected');
         connectBtn.style.display = 'inline-block';
         disconnectBtn.style.display = 'none';
@@ -2062,7 +2262,12 @@ window.ollamaVision = {
         uploadBtn.disabled = true;
 
         this.cleanup();
-        this.updateStatus('info', `Disconnected from ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : 'Ollama'}`);
+        this.updateStatus('info', `Disconnected from ${
+            backendType === 'openai' ? 'OpenAI' : 
+            backendType === 'openrouter' ? 'OpenRouter' : 
+            backendType === 'textgen' ? 'OogaBooga WebUI' : 
+            'Ollama'
+        }`);
     },
 
     handlePaste: function(e) {
@@ -2120,12 +2325,18 @@ window.ollamaVision = {
     },
 
     showModelSettings: function() {
+        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+        
+        // If using OogaBooga, show message and return
+        if (backendType === 'textgen') {
+            this.updateStatus('info', 'Model Settings locked with OogaBooga. Please change model settings in Ooga\'s WebUI.');
+            return;
+        }
+
         if (!document.getElementById('modelSettingsModal')) {
             document.body.insertAdjacentHTML('beforeend', modelSettingsModal);
         }
 
-        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-        
         // Load saved settings
         const savedTemp = localStorage.getItem('ollamaVision_temperature') || '0.8';
         const savedSeed = localStorage.getItem('ollamaVision_seed') || '-1';
@@ -4083,14 +4294,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Clockwork Empire"></option>
                                                     <option value="Cyberpunk"></option>
                                                     <option value="Cyberpunk Fantasy (Shadowrun)"></option>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
                                                     <option value="Dark Cosmic Fantasy"></option>
->>>>>>> Stashed changes
-=======
-                                                    <option value="Dark Cosmic Fantasy"></option>
->>>>>>> Stashed changes
                                                     <option value="Desert Wasteland"></option>
                                                     <option value="Digital/Cyberspace"></option>
                                                     <option value="Dimensional Rift"></option>
@@ -4163,14 +4367,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Random"></option>
                                                     <option value="Alchemist"></option>
                                                     <option value="Air Mage"></option>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
                                                     <option value="Arcane Gunslinger"></option>
->>>>>>> Stashed changes
-=======
-                                                    <option value="Arcane Gunslinger"></option>
->>>>>>> Stashed changes
                                                     <option value="Archer"></option>
                                                     <option value="Assassin"></option>
                                                     <option value="Barbarian"></option>
@@ -4195,14 +4392,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Fence"></option>
                                                     <option value="Fire Mage"></option>
                                                     <option value="Gladiator"></option>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
                                                     <option value="Gunslinger"></option>
->>>>>>> Stashed changes
-=======
-                                                    <option value="Gunslinger"></option>
->>>>>>> Stashed changes
                                                     <option value="Hacker"></option>
                                                     <option value="Healer"></option>
                                                     <option value="Hunter"></option>
@@ -4691,6 +4881,18 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
         } else {
             this.updateCharacterStatus('error', 'No image prompt found in character description');
         }
+    },
+
+    analyzeImage: async function(imageData, modelName) {
+        try {
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const displayName = this.getBackendDisplayName(backendType);
+            this.updateStatus('info', `Analyzing image with ${displayName}...`, true);
+
+            // ... existing code ...
+        } catch (error) {
+            // ... existing code ...
+        }
     }
 };
 
@@ -4757,6 +4959,13 @@ function filterBackendParams(params, backendType) {
     };
 
     switch(backendType) {
+        case 'textgen':
+            return {
+                model: params.model,
+                backendType: params.backendType,
+                imageData: params.imageData,
+                prompt: params.prompt
+            };
         case 'openai':
             return {
                 ...commonParams,
@@ -4800,3 +5009,37 @@ function cleanBase64Data(imageData) {
     }
     return imageData;
 }
+
+// Add model change event listener after model dropdown is populated
+modelSelect.addEventListener('change', async function() {
+    const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+    if (backendType === 'textgen') {
+        const selectedModel = this.value;
+        if (selectedModel) {
+            try {
+                ollamaVision.updateStatus('info', `Loading model ${selectedModel}...`, true);
+                const textgenUrl = localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000';
+                
+                const response = await new Promise((resolve, reject) => {
+                    genericRequest('LoadTextGenModelAsync', 
+                        { 
+                            textgenUrl: textgenUrl,
+                            model: selectedModel
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error)
+                    );
+                });
+
+                if (!response.success) {
+                    throw new Error(response.error || 'Failed to load model');
+                }
+
+                ollamaVision.updateStatus('success', `Model ${selectedModel} loaded successfully`);
+            } catch (error) {
+                ollamaVision.updateStatus('error', `Failed to load model: ${error.message}`);
+                this.value = ''; // Reset selection on error
+            }
+        }
+    }
+});
