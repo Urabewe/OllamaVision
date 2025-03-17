@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
                 const connectBtn = document.getElementById('connect-btn');
                 if (connectBtn) {
-                    connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OogaBooga WebUI' : 'Ollama'}`;
+                    connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OobaBooga WebUI' : 'Ollama'}`;
                 }
 
                 // Restore last selected preset in the dropdown
@@ -597,7 +597,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <option value="ollama">Ollama</option>
                                         <option value="openai">OpenAI</option>
                                         <option value="openrouter">OpenRouter</option>
-                                        <option value="textgen">OogaBooga WebUI</option>
+                                        <option value="textgen">OobaBooga WebUI</option>
                                     </select>
                                 </div>
 
@@ -700,19 +700,19 @@ async function addOllamaVisionTab(utilitiesTab) {
                                 <!-- TextGen WebUI Settings -->
                                 <div id="textgen-settings" style="display: none;">
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label mb-1">OogaBooga WebUI URL</label>
+                                        <label class="form-label mb-1">OobaBooga WebUI URL</label>
                                         <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
-                                               placeholder="Enter your OogaBooga WebUI URL">
-                                        <small class="form-text text-muted">This is the URL of your OogaBooga WebUI instance</small>
+                                               placeholder="Enter your OobaBooga WebUI URL">
+                                        <small class="form-text text-muted">This is the URL of your OobaBooga WebUI instance</small>
                                     </div>
                                 </div>
-                                <!-- OogaBooga Settings -->
-                                <div id="oogabooga-settings" style="display: none;">
+                                <!-- OobaBooga Settings -->
+                                <div id="OobaBooga-settings" style="display: none;">
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label mb-1">OogaBooga WebUI URL</label>
-                                        <input type="text" class="auto-text modal_text_extra" id="oogabooga-url" 
+                                        <label class="form-label mb-1">OobaBooga WebUI URL</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="OobaBooga-url" 
                                                placeholder="http://localhost:5000">
-                                        <small class="form-text text-muted">The URL where your OogaBooga WebUI is running</small>
+                                        <small class="form-text text-muted">The URL where your OobaBooga WebUI is running</small>
                                     </div>
                                 </div>
                             </div>
@@ -942,7 +942,7 @@ window.ollamaVision = {
             case 'openrouter':
                 return 'OpenRouter';
             case 'textgen':
-                return 'OogaBooga';
+                return 'OobaBooga';
             case 'ollama':
             default:
                 return 'Ollama';
@@ -950,9 +950,9 @@ window.ollamaVision = {
     },
 
     updateStatus: function(type, message, showSpinner = false) {
-        // Replace textgen with OogaBooga in the message
+        // Replace textgen with OobaBooga in the message
         if (message.includes('textgen')) {
-            message = message.replace('textgen', 'OogaBooga');
+            message = message.replace('textgen', 'OobaBooga');
         }
 
         // Determine which status bar to update based on active modal
@@ -1114,7 +1114,7 @@ window.ollamaVision = {
                 const textgenUrl = localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000';
                 
                 try {
-                    // Make a request to the backend API instead of directly to OogaBooga
+                    // Make a request to the backend API instead of directly to OobaBooga
                     const response = await new Promise((resolve, reject) => {
                         genericRequest('ConnectToTextGenAsync', 
                             { 
@@ -1126,7 +1126,7 @@ window.ollamaVision = {
                     });
 
                     if (!response.success) {
-                        throw new Error(response.error || 'Failed to connect to OogaBooga WebUI');
+                        throw new Error(response.error || 'Failed to connect to OobaBooga WebUI');
                     }
 
                     // Get UI elements
@@ -1178,7 +1178,7 @@ window.ollamaVision = {
                         }
                     };
 
-                    // Add the event listener for OogaBooga
+                    // Add the event listener for OobaBooga
                     modelSelect.addEventListener('change', this.modelChangeHandler);
 
                     // Enable UI elements
@@ -1191,7 +1191,7 @@ window.ollamaVision = {
                     disconnectBtn.style.display = 'inline-block';
                     
                     // Update connection status
-                    this.updateStatus('success', 'Connected to OogaBooga WebUI successfully');
+                    this.updateStatus('success', 'Connected to OobaBooga WebUI successfully');
                     
                     // Save connection state
                     localStorage.setItem('ollamaVision_connected', 'true');
@@ -1217,7 +1217,7 @@ window.ollamaVision = {
                     if (disconnectBtn) disconnectBtn.style.display = 'none';
                     
                     // Update connection status
-                    this.updateStatus('error', `Failed to connect to OogaBooga WebUI: ${error.message}`);
+                    this.updateStatus('error', `Failed to connect to OobaBooga WebUI: ${error.message}`);
                     
                     // Clear connection state
                     localStorage.removeItem('ollamaVision_connected');
@@ -1574,7 +1574,7 @@ window.ollamaVision = {
                                             <option value="ollama">Ollama</option>
                                             <option value="openai">OpenAI</option>
                                             <option value="openrouter">OpenRouter</option>
-                                            <option value="textgen">OogaBooga WebUI</option>
+                                            <option value="textgen">OobaBooga WebUI</option>
                                         </select>
                                     </div>
 
@@ -1677,19 +1677,19 @@ window.ollamaVision = {
                                     <!-- TextGen WebUI Settings -->
                                     <div id="textgen-settings" style="display: none;">
                                         <div class="col-md-6 mb-2">
-                                            <label class="form-label mb-1">OogaBooga WebUI URL</label>
+                                            <label class="form-label mb-1">OobaBooga WebUI URL</label>
                                             <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
-                                                   placeholder="Enter your OogaBooga WebUI URL">
-                                            <small class="form-text text-muted">This is the URL of your OogaBooga WebUI instance</small>
+                                                   placeholder="Enter your OobaBooga WebUI URL">
+                                            <small class="form-text text-muted">This is the URL of your OobaBooga WebUI instance</small>
                                         </div>
                                     </div>
-                                    <!-- OogaBooga Settings -->
-                                    <div id="oogabooga-settings" style="display: none;">
+                                    <!-- OobaBooga Settings -->
+                                    <div id="OobaBooga-settings" style="display: none;">
                                         <div class="col-md-6 mb-2">
-                                            <label class="form-label mb-1">OogaBooga WebUI URL</label>
-                                            <input type="text" class="auto-text modal_text_extra" id="oogabooga-url" 
+                                            <label class="form-label mb-1">OobaBooga WebUI URL</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="OobaBooga-url" 
                                                    placeholder="http://localhost:5000">
-                                            <small class="form-text text-muted">The URL where your OogaBooga WebUI is running</small>
+                                            <small class="form-text text-muted">The URL where your OobaBooga WebUI is running</small>
                                         </div>
                                     </div>
                                 </div>
@@ -1742,14 +1742,14 @@ window.ollamaVision = {
         const ollamaConnectionSettings = document.getElementById('ollama-connection-settings');
         const openaiSettings = document.getElementById('openai-settings');
         const openrouterSettings = document.getElementById('openrouter-settings');
-        const oogaboogaSettings = document.getElementById('oogabooga-settings');
+        const OobaBoogaSettings = document.getElementById('OobaBooga-settings');
         const connectBtn = document.getElementById('connect-btn');
         
         // Hide all settings first
         ollamaConnectionSettings.style.display = 'none';
         openaiSettings.style.display = 'none';
         openrouterSettings.style.display = 'none';
-        oogaboogaSettings.style.display = 'none';
+        OobaBoogaSettings.style.display = 'none';
         
         // Show appropriate settings
         if (backendType === 'ollama') {
@@ -1759,14 +1759,14 @@ window.ollamaVision = {
         } else if (backendType === 'openrouter') {
             openrouterSettings.style.display = 'block';
         } else if (backendType === 'textgen') {
-            oogaboogaSettings.style.display = 'block';
+            OobaBoogaSettings.style.display = 'block';
         }
         
         // Update connect button text
         connectBtn.innerHTML = `Connect to ${
             backendType === 'openai' ? 'OpenAI' : 
             backendType === 'openrouter' ? 'OpenRouter' : 
-            backendType === 'textgen' ? 'OogaBooga WebUI' : 
+            backendType === 'textgen' ? 'OobaBooga WebUI' : 
             'Ollama'
         }`;
     },
@@ -1783,8 +1783,8 @@ window.ollamaVision = {
         const openrouterSite = document.getElementById('openrouter-site').value.trim();
         const compressImages = document.getElementById('compressImages').checked;
         
-        // Get OogaBooga URL with default
-        const oogaboogaUrl = document.getElementById('oogabooga-url').value.trim() || 'http://localhost:5000';
+        // Get OobaBooga URL with default
+        const OobaBoogaUrl = document.getElementById('OobaBooga-url').value.trim() || 'http://localhost:5000';
         
         // Validate required fields based on backend type
         if (backendType === 'openai' && !openaiKey) {
@@ -1809,7 +1809,7 @@ window.ollamaVision = {
         localStorage.setItem('ollamaVision_openrouterKey', openrouterKey);
         localStorage.setItem('ollamaVision_openrouterSite', openrouterSite);
         localStorage.setItem('ollamaVision_compressImages', compressImages);
-        localStorage.setItem('ollamaVision_textgenUrl', oogaboogaUrl);
+        localStorage.setItem('ollamaVision_textgenUrl', OobaBoogaUrl);
         
         bootstrap.Modal.getInstance(document.getElementById('ollamaSettingsModal')).hide();
         this.updateStatus('success', 'Settings saved successfully');
@@ -2250,7 +2250,7 @@ window.ollamaVision = {
 
         // Reset UI state
         connectBtn.disabled = false;
-        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OogaBooga WebUI' : 'Ollama'}`;
+        connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OobaBooga WebUI' : 'Ollama'}`;
         connectBtn.classList.remove('connected');
         connectBtn.style.display = 'inline-block';
         disconnectBtn.style.display = 'none';
@@ -2265,7 +2265,7 @@ window.ollamaVision = {
         this.updateStatus('info', `Disconnected from ${
             backendType === 'openai' ? 'OpenAI' : 
             backendType === 'openrouter' ? 'OpenRouter' : 
-            backendType === 'textgen' ? 'OogaBooga WebUI' : 
+            backendType === 'textgen' ? 'OobaBooga WebUI' : 
             'Ollama'
         }`);
     },
@@ -2327,9 +2327,9 @@ window.ollamaVision = {
     showModelSettings: function() {
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         
-        // If using OogaBooga, show message and return
+        // If using OobaBooga, show message and return
         if (backendType === 'textgen') {
-            this.updateStatus('info', 'Model Settings locked with OogaBooga. Please change model settings in Ooga\'s WebUI.');
+            this.updateStatus('info', 'Model Settings locked with OobaBooga. Please change model settings in Ooga\'s WebUI.');
             return;
         }
 

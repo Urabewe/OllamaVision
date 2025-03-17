@@ -366,7 +366,7 @@ namespace Urabewe.OllamaVision.WebAPI
                             return new JObject
                             {
                                 ["success"] = false,
-                                ["error"] = $"Failed to analyze image with OogaBooga WebUI: {content}"
+                                ["error"] = $"Failed to analyze image with OobaBooga WebUI: {content}"
                             };
                         }
 
@@ -852,7 +852,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"OogaBooga request failed: {content}"
+                            ["error"] = $"OobaBooga request failed: {content}"
                         };
                     }
 
@@ -1202,7 +1202,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"OogaBooga request failed: {content}"
+                            ["error"] = $"OobaBooga request failed: {content}"
                         };
                     }
 
@@ -1368,7 +1368,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
 
                     textgenUrl = textgenUrl.TrimEnd('/');
 
-                    // Add proper headers as per OogaBooga documentation
+                    // Add proper headers as per OobaBooga documentation
                     client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
                     var response = await client.GetAsync($"{textgenUrl}/v1/internal/model/list");
@@ -1380,7 +1380,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
 
                     if (models == null)
                     {
-                        throw new Exception("Invalid response format from OogaBooga WebUI: missing model_names array");
+                        throw new Exception("Invalid response format from OobaBooga WebUI: missing model_names array");
                     }
 
                     return new JObject
@@ -1394,7 +1394,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     return new JObject
                     {
                         ["success"] = false,
-                        ["error"] = $"Failed to connect to OogaBooga WebUI: {ex.Message}"
+                        ["error"] = $"Failed to connect to OobaBooga WebUI: {ex.Message}"
                     };
                 }
             }
@@ -1422,7 +1422,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
 
                     textgenUrl = textgenUrl.TrimEnd('/');
 
-                    // Add proper headers as per OogaBooga documentation
+                    // Add proper headers as per OobaBooga documentation
                     client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
                     var content = new StringContent(
