@@ -4178,6 +4178,10 @@ window.ollamaVision = {
                                                     style="font-size: 1.2rem;">
                                                 💾 Save Character
                                             </button>
+                                            <button class="basic-button" onclick="ollamaVision.exportToSillyTavern()" 
+                                                    style="font-size: 1.2rem;">
+                                                💾 Export to SillyTavern
+                                            </button>
                                         </div>
                                         <div class="card modal_text_extra">
                                             <div class="card-body">
@@ -4880,6 +4884,284 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             }, 100);
         } else {
             this.updateCharacterStatus('error', 'No image prompt found in character description');
+        }
+    },
+
+    // Add the SillyTavern export function
+    exportToSillyTavern: async function() {
+        const characterText = document.getElementById('character-output').textContent;
+        if (!characterText) {
+            this.updateCharacterStatus('error', 'No character to export', false);
+            return;
+        }
+
+        try {
+            this.updateCharacterStatus('info', 'Generating additional character details...', true);
+
+            // First extract all the basic info as before
+            const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
+            const sexMatch = characterText.match(/Sex:\s*([^\n\r]*)/);
+            const speciesMatch = characterText.match(/Species:\s*([^\n\r]*)/);
+            const alignmentMatch = characterText.match(/Alignment:\s*([^\n\r]*)/);
+            const classMatch = characterText.match(/Class\/Role:\s*([^\n\r]*)/);
+            const personalityMatch = characterText.match(/Personality & Traits:([^]*?)(?=Physical Description:|$)/s);
+            const physicalMatch = characterText.match(/Physical Description:([^]*?)(?=Abilities & Skills:|$)/s);
+            const abilitiesMatch = characterText.match(/Abilities & Skills:([^]*?)(?=Backstory:|$)/s);
+            const backstoryMatch = characterText.match(/Backstory:([^]*?)(?=AI Image Prompt:|$)/s);
+
+            // Create prompt for additional character elements
+            const additionalDetailsPrompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
+
+Character Information:
+${characterText}
+
+Please generate the following elements in a structured format:
+
+1. First Message (first_mes):
+- A natural, in-character greeting that introduces the character
+- Should reflect their personality and background
+- Use asterisks for actions, e.g. *adjusts armor* or *bows gracefully*
+
+2. Example Messages (mes_example):
+- 3 example messages showing how the character typically speaks and acts
+- Should demonstrate their speech patterns, mannerisms, and personality
+- Include both dialogue and actions
+- Each message should be on a new line, prefixed with "{{char}}:"
+
+3. System Prompt:
+- A concise instruction set for AI to maintain character consistency
+- Include key personality traits, speech patterns, and behavioral guidelines
+- Mention important background elements that influence their interactions
+
+4. Post-History Instructions:
+- Specific guidelines for the AI after reading chat history
+- How to maintain character development and memory
+- Key relationships or events to remember
+- How to handle continuity and character growth
+- Behavioral adjustments based on past interactions
+
+5. Alternate Greetings:
+- 3 alternative first messages
+- Each should be distinct but maintain character consistency
+- Use different situations or moods while staying true to their personality
+
+Format the output exactly as shown below:
+---START---
+<first_mes>
+[First message here]
+</first_mes>
+
+<mes_example>
+[Example messages here, one per line]
+</mes_example>
+
+<system_prompt>
+[System prompt here]
+</system_prompt>
+
+<post_history_instructions>
+[Post-history instructions here]
+</post_history_instructions>
+
+<alternate_greetings>
+[Alternative greetings here, one per line]
+</alternate_greetings>
+---END---`;
+
+            // Get the current model and backend type
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+
+            // Generate the additional elements
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('GenerateCharacterAsync', {
+                    model: model,
+                    backendType: backendType,
+                    prompt: additionalDetailsPrompt,
+                    temperature: 0.8,
+                    maxTokens: -1,
+                    topP: 0.7,
+                    frequencyPenalty: 0.3,
+                    presencePenalty: 0.3,
+                    repeatPenalty: 1.1,
+                    topK: 40,
+                    seed: -1,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                },
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to generate additional character details');
+            }
+
+            // Extract the generated elements using regex
+            const generatedText = response.response;
+            const firstMesMatch = generatedText.match(/<first_mes>\n([\s\S]*?)\n<\/first_mes>/);
+            const mesExampleMatch = generatedText.match(/<mes_example>\n([\s\S]*?)\n<\/mes_example>/);
+            const systemPromptMatch = generatedText.match(/<system_prompt>\n([\s\S]*?)\n<\/system_prompt>/);
+            const postHistoryMatch = generatedText.match(/<post_history_instructions>\n([\s\S]*?)\n<\/post_history_instructions>/);
+            const altGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
+
+            // Create the SillyTavern character object
+            const sillyTavernChar = {
+                name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : 'Unknown Character',
+                description: '',
+                personality: '',
+                scenario: '',
+                first_mes: firstMesMatch ? firstMesMatch[1].trim() : 'Hello! *I greet you with a friendly wave*',
+                mes_example: mesExampleMatch ? mesExampleMatch[1].trim() : '',
+                creator_notes: 'Created using OllamaVision Character Creator',
+                system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
+                post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
+                tags: [],
+                creator: 'OllamaVision',
+                character_version: '1.0',
+                alternate_greetings: altGreetingsMatch ? 
+                    altGreetingsMatch[1].trim().split('\n').map(g => g.trim()).filter(g => g) : []
+            };
+
+            // Build the description combining all character aspects
+            let description = '';
+            
+            // Add basic info
+            if (speciesMatch && speciesMatch[1]) {
+                description += `Species: ${speciesMatch[1].trim()}\n`;
+            }
+            if (sexMatch && sexMatch[1]) {
+                description += `Sex: ${sexMatch[1].trim()}\n`;
+            }
+            if (alignmentMatch && alignmentMatch[1]) {
+                description += `Alignment: ${alignmentMatch[1].trim()}\n`;
+            }
+            if (classMatch && classMatch[1]) {
+                description += `Class/Role: ${classMatch[1].trim()}\n\n`;
+            }
+            
+            // Add physical description
+            if (physicalMatch && physicalMatch[1]) {
+                description += 'Physical Description:\n' + physicalMatch[1].trim() + '\n\n';
+            }
+            
+            // Add abilities
+            if (abilitiesMatch && abilitiesMatch[1]) {
+                description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim();
+            }
+            
+            sillyTavernChar.description = description.trim();
+
+            // Add personality
+            if (personalityMatch && personalityMatch[1]) {
+                sillyTavernChar.personality = personalityMatch[1].trim();
+            }
+
+            // Add backstory to scenario
+            if (backstoryMatch && backstoryMatch[1]) {
+                sillyTavernChar.scenario = backstoryMatch[1].trim();
+            }
+
+            // Add some relevant tags based on the character
+            const tags = new Set(); // Use Set to avoid duplicates
+
+            // Basic attributes
+            if (speciesMatch && speciesMatch[1]) {
+                const species = speciesMatch[1].trim();
+                tags.add(species);
+                // Add Beastkin subtypes if applicable
+                if (species.toLowerCase() === 'beastkin') {
+                    const beastkinMatch = characterText.match(/(?:Wolf|Fox|Bear|Tiger|Lion|Owl|Eagle|Dragon|Cat|Dog|Rabbit|Snake|Bird|Fish|Deer|Horse|Turtle|Raccoon|Panda)\s+Beastkin/i);
+                    if (beastkinMatch) {
+                        tags.add(beastkinMatch[0].trim());
+                    }
+                }
+            }
+            if (sexMatch && sexMatch[1]) tags.add(sexMatch[1].trim());
+            if (classMatch && classMatch[1]) {
+                const classRole = classMatch[1].trim();
+                tags.add(classRole);
+                // Add role-based categories
+                if (/mage|wizard|sorcerer|warlock|spellcaster/i.test(classRole)) tags.add('Magic User');
+                if (/warrior|fighter|barbarian|paladin|knight/i.test(classRole)) tags.add('Warrior');
+                if (/rogue|thief|assassin|spy/i.test(classRole)) tags.add('Rogue');
+                if (/healer|cleric|priest|medic/i.test(classRole)) tags.add('Healer');
+            }
+            if (alignmentMatch && alignmentMatch[1]) tags.add(alignmentMatch[1].trim());
+
+            // Setting-based tags
+            const settingMatch = characterText.match(/Setting:\s*([^\n\r]*)/);
+            if (settingMatch && settingMatch[1]) {
+                const setting = settingMatch[1].trim();
+                tags.add(setting);
+                // Genre tags
+                if (/cyberpunk|sci-fi|future|space/i.test(setting)) tags.add('Science Fiction');
+                if (/fantasy|magic|medieval|kingdom/i.test(setting)) tags.add('Fantasy');
+                if (/horror|dark|gothic|lovecraft/i.test(setting)) tags.add('Horror');
+                if (/modern|contemporary|urban/i.test(setting)) tags.add('Modern');
+                if (/post-apocalyptic|wasteland|dystopia/i.test(setting)) tags.add('Post-Apocalyptic');
+                if (/steampunk|victorian|clockwork/i.test(setting)) tags.add('Steampunk');
+            }
+
+            // Personality-based tags
+            if (personalityMatch && personalityMatch[1]) {
+                const personality = personalityMatch[1].toLowerCase();
+                if (/kind|caring|compassionate|gentle/i.test(personality)) tags.add('Kind');
+                if (/brave|courageous|fearless/i.test(personality)) tags.add('Brave');
+                if (/intelligent|smart|wise|scholarly/i.test(personality)) tags.add('Intellectual');
+                if (/mysterious|secretive|enigmatic/i.test(personality)) tags.add('Mysterious');
+                if (/leader|commanding|authoritative/i.test(personality)) tags.add('Leader');
+            }
+
+            // Role/occupation tags from backstory
+            if (backstoryMatch && backstoryMatch[1]) {
+                const backstory = backstoryMatch[1].toLowerCase();
+                if (/mentor|teacher|instructor/i.test(backstory)) tags.add('Mentor');
+                if (/noble|royalty|aristocrat/i.test(backstory)) tags.add('Noble');
+                if (/outcast|exile|wanderer/i.test(backstory)) tags.add('Outcast');
+                if (/guardian|protector|defender/i.test(backstory)) tags.add('Protector');
+                if (/scholar|researcher|academic/i.test(backstory)) tags.add('Scholar');
+            }
+
+            sillyTavernChar.tags = Array.from(tags); // Convert Set to Array
+
+            // Create the file
+            const blob = new Blob([JSON.stringify(sillyTavernChar, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            
+            // Generate filename
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const safeName = sillyTavernChar.name.replace(/[^a-zA-Z0-9]/g, '_');
+            a.download = `${safeName}_st_${timestamp}.json`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            
+            this.updateCharacterStatus('success', 'SillyTavern character exported successfully!', false);
+            // Hide the status bar after 2 seconds
+            setTimeout(() => {
+                const statusBar = document.getElementById('character-status');
+                if (statusBar) {
+                    statusBar.style.display = 'none';
+                }
+            }, 2000);
+        } catch (error) {
+            console.error('Error exporting to SillyTavern format:', error);
+            this.updateCharacterStatus('error', 'Failed to export character to SillyTavern format', false);
+            // Hide error message after 3 seconds
+            setTimeout(() => {
+                const statusBar = document.getElementById('character-status');
+                if (statusBar) {
+                    statusBar.style.display = 'none';
+                }
+            }, 3000);
         }
     },
 
