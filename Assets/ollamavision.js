@@ -4621,17 +4621,17 @@ Always include a highly descriptive AI Image Prompt based on the character's phy
 For Beastkin, ensure the description emphasizes the anthropomorphic design (e.g., "a humanoid fox with sleek red fur, wearing leather armor with intricate tribal patterns").
 Use vivid details to reflect their backstory and role (e.g., "a Tiger Beastkin mage with glowing orange stripes, casting a spell in a jungle setting under moonlight").
 
-When generating random selections, only choose from these valid options:
+If the user has selected "Random" as their option choose from the following options for each field that they have chosen "Random" in:
 
 Sex Options: Male, Female
 
-Species Options: Alien, Android, Angel, Arachne, Automaton, Beastkin, Celestial, Chimera, Cyborg, Dark Elf, Demon, Djinn, Dragonborn, Dryad, Dwarf, Elf, Fairy, Feralfolk, Fungoid, Gargoyle, Genasi, Ghost, Ghoul, Goblin, Golem, Harpy, High Elf, Human, Krakenborn, Lizardfolk, Merfolk, Minotaur, Naga, Nephilim, Oni, Orc, Phoenixborn, Shadowkin, Slimefolk, Tiefling, Troll, Undead, Vampire, Werewolf, Yokai
+Species Options: Alien, Android, Angel, Arachne, Automaton, Beastkin, Celestial, Chimera, Cyborg, Dark Elf, Demon, Djinn, Dragonborn, Dryad, Dwarf, Elf, Fairy, Feralfolk, Fungoid, Gargoyle, Genasi, Ghost, Ghoul, Goblin, Golem, Gorgon, Harpy, High Elf, Human, Krakenborn, Lizardfolk, Merfolk, Minotaur, Naga, Nephilim, Oni, Orc, Phoenixborn, Plantfolk, Shadowkin, Slimefolk, Tiefling, Troll, Undead, Vampire, Werewolf, Yokai
 
-Setting Options: Ancient Egypt, Biopunk, Clockwork Empire, Cyberpunk, Desert Wasteland, Digital/Cyberspace, Dimensional Rift, Dreamworld, Dystopian, Fantasy, Feudal Japan, Floating Islands, Haunted Realm, High Seas Adventure, Lovecraftian Horror, Magitech Society, Medieval, Megacity, Modern, Mythological, Necropolis, Noir Detective World, Pirate World, Post-Apocalyptic, Prehistoric Fantasy, Renaissance Kingdom, Samurai Era, Sci-Fi, Space Opera, Steampunk, Superhero World, Surreal Dreamscape, Underwater Civilization, Urban Fantasy, Volcanic Hellscape, Western
+Setting Options: Ancient Egypt, Biopunk, Clockwork Empire, Cyberpunk, Cyberpunk Fantasy (Shadowrun), Dark Cosmic Fantasy, Desert Wasteland, Digital/Cyberspace, Dimensional Rift, Dreamworld, Dying Earth, Dystopian, Eldritch Noir, Fantasy, Feudal Japan, Floating Islands, Haunted Realm, High Seas Adventure, Lovecraftian Horror, Magitech Society, Medieval, Megacity, Modern, Mythological, Necropolis, Noir Detective World, Pirate World, Post-Apocalyptic, Prehistoric Fantasy, Renaissance Kingdom, Samurai Era, Sci-Fi, Simulation, Space Opera, Steampunk, Superhero World, Surreal Dreamscape, Underwater Civilization, Underworld, Urban Fantasy, VR World, Volcanic Hellscape, Western
 
 Alignment Options: Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, True Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil
 
-Class/Role Options: Alchemist, Archer, Assassin, Barbarian, Bard, Beast Rider, Beastmaster, Blood Mage, Brewmaster, Chronomancer, Cleric, Corsair, Cultist, Demon Hunter, Diplomat, Druid, Elementalist, Engineer, Exorcist, Gladiator, Healer, Hunter, Illusionist, Inquisitor, Knight, Mage, Martial Artist, Necromancer, Paladin, Performer, Psionicist, Ranger, Rogue, Runesmith, Seer, Shaman, Sorcerer, Spy, Tactician, Thief, Warlock, Warrior, Witch, Wizard
+Class/Role Options: Alchemist, Air Mage, Arcane Gunslinger, Archer, Assassin, Barbarian, Bard, Beast Rider, Beastmaster, Bishop, Blood Mage, Brewmaster, Chronomancer, Cleric, Corsair, Cultist, Decker, Demon Hunter, Diplomat, Druid, Earth Mage, Elementalist, Engineer, Exorcist, Fence, Fire Mage, Gladiator, Gunslinger, Hacker, Healer, Hunter, Illusionist, Inquisitor, Knight, Lightning Mage, Mage, Magician, Martial Artist, Necromancer, Paladin, Performer, Priest, Psionicist, Ranger, Rigger, Rogue, Runesmith, Seer, Shaman, Shapeshifter, Sorcerer, Spy, Street Samurai, Summoner, Tactician, Technomancer, Thief, Wastelander, Warlock, Warrior, Witch, Witch Hunter, Wizard
 
 User Inputs:
 Name: ${name || '[AI-generated]'}
