@@ -75,7 +75,7 @@
 - Optional: Custom site name for API requests
 
 ### For OobaBooga:
-- [OobaBooga Text Generation WebUI](https://github.com/oobabooga/text-generation-webui) must be installed and set up
+- [OobaBooga Text Generation WebUI](https://github.com/OobaBooga/text-generation-webui) must be installed and set up
 - The OpenAI extension must be enabled in OobaBooga's WebUI
 - Vision models must be installed and configured in OobaBooga
 - Default port is 5000 (can be configured)
@@ -177,9 +177,25 @@ Create detailed characters with customizable attributes:
 - Editable response field to edit character before saving
 - Smart controls with field locking and randomization
 - Detailed output including personality, physical description, abilities, and backstory
-- Export characters to text files
+- Multiple saving options:
+  - Save Character (Text): Simple text file of character description
+  - Save Character Image: PNG with embedded SillyTavern card data
+  - Export to SillyTavern: Direct export in JSON format
 - Creates an AI image prompt to create a profile picture for your character
 - An "Export Prompt" button that will extract the image prompt from the results and send it to the generation page for instant generation of your new character
+
+**Creating SillyTavern-Ready Character Cards:**
+1. Open Character Creator
+2. Choose your desired options (Species, Alignment, Role, etc.)
+3. Generate your character description
+4. Send the prompt to the Generate tab
+5. Generate your character's image
+6. Return to Character Creator
+7. Click "Save Character Image"
+8. Load your generated image in the popup
+9. Click Save
+10. Your image will download with all character data embedded
+11. Ready to import directly into SillyTavern!
 
 NOTE: If your creations are getting cut off make sure MAXTOKENS is set to -1 (set by default)
 
