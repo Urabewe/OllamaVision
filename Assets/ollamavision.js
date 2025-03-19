@@ -4182,6 +4182,10 @@ window.ollamaVision = {
                                                     style="font-size: 1.2rem;">
                                                 💾 Export to SillyTavern
                                             </button>
+                                            <button class="basic-button" onclick="ollamaVision.showSaveCharacterImageModal()" 
+                                                    style="font-size: 1.2rem;">
+                                                💾 Save Character Image (PNG)
+                                            </button>
                                         </div>
                                         <div class="card modal_text_extra">
                                             <div class="card-body">
@@ -4757,44 +4761,38 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
     },
 
     // Add new function to save character to file
-    saveCharacter: function() {
+    saveCharacter: async function() {
         const characterText = document.getElementById('character-output').textContent;
         if (!characterText) {
             this.updateStatus('error', 'No character to save');
             return;
         }
 
-        // Extract character name from the response
-        let characterName = 'character'; // default fallback
-        const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
-        if (nameMatch && nameMatch[1]) {
-            // Clean the name to be filesystem-friendly
-            characterName = nameMatch[1].trim()
-                .replace(/[^a-zA-Z0-9]/g, '_') // Replace non-alphanumeric chars with underscore
-                .replace(/_+/g, '_')           // Replace multiple underscores with single
-                .replace(/^_|_$/g, '');        // Remove leading/trailing underscores
+        try {
+            // Create a blob with just the character text
+            const blob = new Blob([characterText], { type: 'text/plain' });
+            
+            // Create a temporary link element
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            
+            // Generate filename with timestamp
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            a.download = `character_${timestamp}.txt`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            
+            this.updateStatus('success', 'Character saved successfully');
+        } catch (error) {
+            console.error('Error saving character:', error);
+            this.updateStatus('error', 'Failed to save character');
         }
-        
-        // Create a blob with the character text
-        const blob = new Blob([characterText], { type: 'text/plain' });
-        
-        // Create a temporary link element
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        
-        // Generate filename with character name and timestamp
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        a.download = `${characterName}_${timestamp}.txt`;
-        
-        // Trigger download
-        document.body.appendChild(a);
-        a.click();
-        
-        // Cleanup
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-        
-        this.updateStatus('success', 'Character saved successfully');
     },
 
     updateCharacterStatus: function(type, message, showSpinner = false) {
@@ -5175,7 +5173,704 @@ Format the output exactly as shown below:
         } catch (error) {
             // ... existing code ...
         }
-    }
+    },
+
+    // Add the new modal HTML and functions for character image saving
+    showSaveCharacterImageModal: function() {
+        if (!document.getElementById('saveCharacterImageModal')) {
+            const modalHtml = `
+                <div class="modal fade" id="saveCharacterImageModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Save Character Image</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="preview-container" style="max-width: 100%; height: 400px; position: relative;">
+                                    <img id="character-image-preview" class="img-fluid" 
+                                         src="${PLACEHOLDER_IMAGE}"
+                                         style="height: 100%; object-fit: contain; max-width: 100%;">
+                                </div>
+                                <div class="d-flex justify-content-center gap-3 mt-4">
+                                    <button class="basic-button" onclick="ollamaVision.uploadCharacterImage()" 
+                                            style="font-size: 1.2rem; padding: 10px 20px;">
+                                        Upload Image
+                                    </button>
+                                    <button class="basic-button" onclick="ollamaVision.pasteCharacterImage()" 
+                                            style="font-size: 1.2rem; padding: 10px 20px;">
+                                        Paste Image
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="character-image-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" id="character-image-spinner" style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span id="character-image-status-text" style="font-size: 1.2rem;"></span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" onclick="ollamaVision.saveCharacterImageWithMetadata()" 
+                                        id="save-character-image-btn" disabled>
+                                    Save Image
+                                </button>
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Add drag and drop functionality
+            const previewContainer = document.getElementById('character-image-preview').parentElement;
+            
+            previewContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                previewContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+            });
+
+            previewContainer.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                previewContainer.style.backgroundColor = '';
+            });
+
+            previewContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                previewContainer.style.backgroundColor = '';
+
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    this.handleCharacterImageUpload(file);
+                } else {
+                    this.updateCharacterImageStatus('error', 'Please drop an image file');
+                }
+            });
+        }
+
+        new bootstrap.Modal(document.getElementById('saveCharacterImageModal')).show();
+    },
+
+    uploadCharacterImage: function() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.handleCharacterImageUpload(file);
+            }
+        };
+        input.click();
+    },
+
+    pasteCharacterImage: function() {
+        // Enable paste handler
+        this.characterImagePasteHandler = (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (let item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    this.handleCharacterImageUpload(file);
+                    break;
+                }
+            }
+        };
+
+        document.addEventListener('paste', this.characterImagePasteHandler);
+        this.updateCharacterImageStatus('info', 'Press Ctrl+V to paste an image');
+    },
+
+    handleCharacterImageUpload: function(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const preview = document.getElementById('character-image-preview');
+            preview.src = e.target.result;
+            preview.dataset.imageData = e.target.result;
+            
+            // Enable the save button
+            document.getElementById('save-character-image-btn').disabled = false;
+
+            // Remove paste handler if it exists
+            if (this.characterImagePasteHandler) {
+                document.removeEventListener('paste', this.characterImagePasteHandler);
+                this.characterImagePasteHandler = null;
+            }
+        };
+        reader.readAsDataURL(file);
+    },
+
+    updateCharacterImageStatus: function(type, message, showSpinner = false) {
+        const statusBar = document.getElementById('character-image-status');
+        const statusText = document.getElementById('character-image-status-text');
+        const spinner = document.getElementById('character-image-spinner');
+        
+        if (statusBar && statusText) {
+            statusBar.style.display = 'block';
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                             type === 'success' ? 'alert-success' : 
+                             'alert-info';
+            statusBar.className = `alert ${alertClass} mt-3 text-center mx-3 mb-3`;
+            statusText.textContent = message;
+            
+            if (spinner) {
+                spinner.style.display = (type === 'info' && showSpinner) ? 'inline-block' : 'none';
+            }
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusBar.style.display = 'none';
+                }, 2000);
+            }
+        }
+    },
+
+    saveCharacterImageWithMetadata: async function() {
+        try {
+            const characterText = document.getElementById('character-output').textContent;
+            if (!characterText) {
+                this.updateCharacterImageStatus('error', 'No character data to save');
+                return;
+            }
+
+            const preview = document.getElementById('character-image-preview');
+            const imageData = preview.dataset.imageData;
+            if (!imageData) {
+                this.updateCharacterImageStatus('error', 'No image selected');
+                return;
+            }
+
+            this.updateCharacterImageStatus('info', 'Generating character details...', true);
+
+            // Get the SillyTavern data using the new function
+            const sillyTavernResult = await this.getSillyTavernData();
+            if (!sillyTavernResult.success) {
+                throw new Error('Failed to generate character data: ' + sillyTavernResult.error);
+            }
+
+            this.updateCharacterImageStatus('info', 'Processing image...', true);
+
+            // Get the original image data
+            const imgResponse = await fetch(imageData);
+            const arrayBuffer = await imgResponse.arrayBuffer();
+            const originalImageData = new Uint8Array(arrayBuffer);
+
+            // Find the IEND chunk in the original PNG
+            let pos = 8; // Skip PNG signature
+            const chunks = [];
+            
+            // Read all chunks from the original PNG
+            while (pos < originalImageData.length) {
+                const length = (originalImageData[pos] << 24) | (originalImageData[pos + 1] << 16) | 
+                             (originalImageData[pos + 2] << 8) | originalImageData[pos + 3];
+                const type = String.fromCharCode(...originalImageData.slice(pos + 4, pos + 8));
+                
+                // Skip any existing chara chunks
+                if (type !== 'IEND' && type !== 'tEXt') {
+                    // Copy non-IEND chunks
+                    chunks.push(originalImageData.slice(pos, pos + length + 12));
+                }
+                pos += length + 12;
+            }
+
+            // Create tEXt chunk with character data
+            const keyword = 'chara';
+            const encoder = new TextEncoder();
+            const keywordBytes = encoder.encode(keyword);
+
+            // Convert sillyTavernData to base64
+            const base64CharacterData = safeBase64Encode(JSON.stringify({
+                spec: "chara_card_v3",
+                spec_version: "3.0",
+                data: sillyTavernResult.data,
+                avatar: "none",
+                chat: null,
+                create_date: new Date().toISOString(),
+                creatorcomment: "\nThis card was created using OllamaVision."
+            }));
+            const characterBytes = encoder.encode(base64CharacterData);
+
+            // Use existing chunk handling code
+            const textChunkData = new Uint8Array(keywordBytes.length + 1 + characterBytes.length);
+            textChunkData.set(keywordBytes, 0);
+            textChunkData[keywordBytes.length] = 0; // null separator
+            textChunkData.set(characterBytes, keywordBytes.length + 1);
+
+            // Calculate CRC32 for tEXt chunk
+            const textChunkType = encoder.encode('tEXt');
+            const crcData = new Uint8Array(textChunkType.length + textChunkData.length);
+            crcData.set(textChunkType);
+            crcData.set(textChunkData, textChunkType.length);
+            const crc = this.calculateCRC32(crcData);
+
+            // Create complete tEXt chunk
+            const textChunk = new Uint8Array(12 + textChunkData.length);
+            // Length
+            textChunk[0] = (textChunkData.length >> 24) & 0xff;
+            textChunk[1] = (textChunkData.length >> 16) & 0xff;
+            textChunk[2] = (textChunkData.length >> 8) & 0xff;
+            textChunk[3] = textChunkData.length & 0xff;
+            // Type
+            textChunk.set(textChunkType, 4);
+            // Data
+            textChunk.set(textChunkData, 8);
+            // CRC
+            textChunk[textChunk.length - 4] = (crc >> 24) & 0xff;
+            textChunk[textChunk.length - 3] = (crc >> 16) & 0xff;
+            textChunk[textChunk.length - 2] = (crc >> 8) & 0xff;
+            textChunk[textChunk.length - 1] = crc & 0xff;
+
+            // Add tEXt chunk to chunks array
+            chunks.push(textChunk);
+
+            // Add IEND chunk
+            const iendChunk = new Uint8Array([
+                0, 0, 0, 0,             // Length (0)
+                0x49, 0x45, 0x4E, 0x44, // "IEND"
+                0xAE, 0x42, 0x60, 0x82  // CRC
+            ]);
+            chunks.push(iendChunk);
+
+            // Calculate total size and create final PNG
+            const totalSize = 8 + chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+            const finalPNG = new Uint8Array(totalSize);
+            
+            // Add PNG signature
+            finalPNG.set([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+            
+            // Add all chunks
+            let offset = 8;
+            for (const chunk of chunks) {
+                finalPNG.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            // Create blob and download
+            const blob = new Blob([finalPNG], { type: 'image/png' });
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const safeName = sillyTavernResult.data.name.replace(/[^a-zA-Z0-9]/g, '_');
+            downloadLink.download = `${safeName}_${timestamp}.png`;
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(downloadLink.href);
+
+            this.updateCharacterImageStatus('success', 'Character image saved successfully!');
+            
+            // Close the modal after a short delay
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('saveCharacterImageModal')).hide();
+            }, 1500);
+        } catch (error) {
+            console.error('Error saving character image:', error);
+            this.updateCharacterImageStatus('error', 'Failed to save character image: ' + error.message);
+        }
+    },
+
+    // Helper function to create SillyTavern data structure
+    createSillyTavernData: async function(characterText) {
+        // Extract name from the first line containing "Name:"
+        const nameMatch = characterText.match(/Name:\s*([^\n]+)/);
+        const name = nameMatch ? nameMatch[1].trim() : 'Unknown Character';
+
+        try {
+            // Get the current model and backend type
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+
+            // Send to LLM to get complete character details
+            const prompt = `Given this character description, please analyze their personality and provide:
+1. A detailed personality analysis focusing on how talkative they are (scale of 0.1 to 0.9)
+2. A system prompt that captures their essence
+3. An engaging first message
+4. 2-3 example messages showing their speech style
+5. 2-3 alternate greetings
+6. Post-history instructions for maintaining character consistency
+
+Character Description:
+${characterText}
+
+Please format your response as follows:
+Talkativeness: [0.1-0.9]
+System Prompt: [prompt]
+First Message: [message]
+Example Messages:
+[message 1]
+[message 2]
+Alternate Greetings:
+[greeting 1]
+[greeting 2]
+Post History Instructions: [instructions]`;
+
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('GenerateCharacterAsync', {
+                    model: model,
+                    backendType: backendType,
+                    prompt: prompt,
+                    temperature: 0.8,
+                    maxTokens: -1,
+                    topP: 0.7,
+                    frequencyPenalty: 0.3,
+                    presencePenalty: 0.3,
+                    repeatPenalty: 1.1,
+                    topK: 40,
+                    seed: -1,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                },
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to generate character details');
+            }
+
+            const llmResponse = response.response;
+            
+            // Extract values using regex
+            const talkativenessMatch = llmResponse.match(/Talkativeness:\s*(0\.[1-9])/);
+            const systemPromptMatch = llmResponse.match(/System Prompt:\s*([^\n]+)/);
+            const firstMessageMatch = llmResponse.match(/First Message:\s*([^\n]+)/);
+            const exampleMessagesMatch = llmResponse.match(/Example Messages:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
+            const alternateGreetingsMatch = llmResponse.match(/Alternate Greetings:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
+            const postHistoryMatch = llmResponse.match(/Post History Instructions:\s*([^\n]+)/);
+
+            return {
+                spec: "chara_card_v3",
+                spec_version: "3.0",
+                data: {
+                    name,
+                    description: characterText,
+                    personality: "",
+                    scenario: "",
+                    first_mes: firstMessageMatch ? firstMessageMatch[1].trim() : 'Hello! *waves*',
+                    mes_example: exampleMessagesMatch ? 
+                        exampleMessagesMatch[1].trim().split('\n').join('\n\n') : '',
+                    creator_notes: "",
+                    system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
+                    post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
+                    alternate_greetings: alternateGreetingsMatch ? 
+                        alternateGreetingsMatch[1].trim().split('\n').filter(g => g.trim()) : [],
+                    character_book: "",
+                    tags: [],
+                    creator: "OllamaVision",
+                    create_date: new Date().toISOString(),
+                    avatar: "none",
+                    chat: null,
+                    extensions: {
+                        talkativeness: sillyTavernData.data.extensions?.talkativeness || 0.5,
+                        fav: sillyTavernData.data.extensions?.fav || false,
+                        world: "",
+                        depth_prompt: {
+                            prompt: "",
+                            depth: 4,
+                            role: "system"
+                        }
+                    },
+                    group_only_greetings: []
+                },
+                avatar: "none",
+                chat: null,
+                create_date: sillyTavernData.data.create_date || new Date().toISOString(),
+                creatorcomment: "\nThis card was created using OllamaVision."
+            };
+        } catch (error) {
+            console.error('Error generating character details:', error);
+            // Return a basic structure if generation fails
+            return {
+                spec: "chara_card_v3",
+                spec_version: "3.0",
+                data: {
+                    name,
+                    description: characterText,
+                    personality: "",
+                    scenario: "",
+                    first_mes: 'Hello! *waves*',
+                    mes_example: '',
+                    creator_notes: "",
+                    system_prompt: "",
+                    post_history_instructions: "",
+                    alternate_greetings: [],
+                    character_book: "",
+                    tags: [],
+                    creator: "OllamaVision",
+                    create_date: new Date().toISOString(),
+                    avatar: "none",
+                    chat: null,
+                    extensions: {
+                        talkativeness: 0.5,
+                        fav: false
+                    }
+                }
+            };
+        }
+    },
+
+    // Helper function to create PNG chunks
+    createPNGChunk: function(type, data) {
+        const encoder = new TextEncoder();
+        const typeBytes = encoder.encode(type);
+        
+        // Calculate CRC32
+        const crcData = new Uint8Array(typeBytes.length + data.length);
+        crcData.set(typeBytes);
+        crcData.set(data, typeBytes.length);
+        const crc = this.calculateCRC32(crcData);
+
+        // Create chunk
+        const chunk = new Uint8Array(data.length + 12);
+        // Length
+        chunk[0] = (data.length >> 24) & 0xff;
+        chunk[1] = (data.length >> 16) & 0xff;
+        chunk[2] = (data.length >> 8) & 0xff;
+        chunk[3] = data.length & 0xff;
+        // Type
+        chunk.set(typeBytes, 4);
+        // Data
+        chunk.set(data, 8);
+        // CRC
+        chunk[chunk.length - 4] = (crc >> 24) & 0xff;
+        chunk[chunk.length - 3] = (crc >> 16) & 0xff;
+        chunk[chunk.length - 2] = (crc >> 8) & 0xff;
+        chunk[chunk.length - 1] = crc & 0xff;
+
+        return chunk;
+    },
+
+    // CRC32 calculation for PNG chunks
+    calculateCRC32: function(data) {
+        // Create CRC32 table
+        const CRC32_TABLE = new Int32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let j = 0; j < 8; j++) {
+                c = ((c & 1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+            }
+            CRC32_TABLE[i] = c;
+        }
+
+        let crc = -1;
+        for (let i = 0; i < data.length; i++) {
+            crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ data[i]) & 0xFF];
+        }
+        return ~crc;
+    },
+
+    // Add new function to get SillyTavern data without downloading
+    getSillyTavernData: async function() {
+        const characterText = document.getElementById('character-output').textContent;
+        if (!characterText) {
+            return {
+                success: false,
+                error: 'No character to export'
+            };
+        }
+
+        try {
+            // First extract all the basic info as before
+            const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
+            const sexMatch = characterText.match(/Sex:\s*([^\n\r]*)/);
+            const speciesMatch = characterText.match(/Species:\s*([^\n\r]*)/);
+            const alignmentMatch = characterText.match(/Alignment:\s*([^\n\r]*)/);
+            const classMatch = characterText.match(/Class\/Role:\s*([^\n\r]*)/);
+            const personalityMatch = characterText.match(/Personality & Traits:([^]*?)(?=Physical Description:|$)/s);
+            const physicalMatch = characterText.match(/Physical Description:([^]*?)(?=Abilities & Skills:|$)/s);
+            const abilitiesMatch = characterText.match(/Abilities & Skills:([^]*?)(?=Backstory:|$)/s);
+            const backstoryMatch = characterText.match(/Backstory:([^]*?)(?=AI Image Prompt:|$)/s);
+
+            // Create prompt for additional character elements
+            const additionalDetailsPrompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
+
+Character Information:
+${characterText}
+
+Please generate the following elements in a structured format:
+
+1. First Message (first_mes):
+- A natural, in-character greeting that introduces the character
+- Should reflect their personality and background
+- Use asterisks for actions, e.g. *adjusts armor* or *bows gracefully*
+
+2. Example Messages (mes_example):
+- 3 example messages showing how the character typically speaks and acts
+- Should demonstrate their speech patterns, mannerisms, and personality
+- Include both dialogue and actions
+- Each message should be on a new line, prefixed with "{{char}}:"
+
+3. System Prompt:
+- A concise instruction set for AI to maintain character consistency
+- Include key personality traits, speech patterns, and behavioral guidelines
+- Mention important background elements that influence their interactions
+
+4. Post-History Instructions:
+- Specific guidelines for the AI after reading chat history
+- How to maintain character development and memory
+- Key relationships or events to remember
+- How to handle continuity and character growth
+- Behavioral adjustments based on past interactions
+
+5. Alternate Greetings:
+- 3 alternative first messages
+- Each should be distinct but maintain character consistency
+- Use different situations or moods while staying true to their personality
+
+Format the output exactly as shown below:
+---START---
+<first_mes>
+[First message here]
+</first_mes>
+
+<mes_example>
+[Example messages here, one per line]
+</mes_example>
+
+<system_prompt>
+[System prompt here]
+</system_prompt>
+
+<post_history_instructions>
+[Post-history instructions here]
+</post_history_instructions>
+
+<alternate_greetings>
+[Alternative greetings here, one per line]
+</alternate_greetings>
+---END---`;
+
+            // Get the current model and backend type
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+
+            // Generate the additional elements
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('GenerateCharacterAsync', {
+                    model: model,
+                    backendType: backendType,
+                    prompt: additionalDetailsPrompt,
+                    temperature: 0.8,
+                    maxTokens: -1,
+                    topP: 0.7,
+                    frequencyPenalty: 0.3,
+                    presencePenalty: 0.3,
+                    repeatPenalty: 1.1,
+                    topK: 40,
+                    seed: -1,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                },
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to generate additional character details');
+            }
+
+            // Extract the generated elements using regex
+            const generatedText = response.response;
+            const firstMesMatch = generatedText.match(/<first_mes>\n([\s\S]*?)\n<\/first_mes>/);
+            const mesExampleMatch = generatedText.match(/<mes_example>\n([\s\S]*?)\n<\/mes_example>/);
+            const systemPromptMatch = generatedText.match(/<system_prompt>\n([\s\S]*?)\n<\/system_prompt>/);
+            const postHistoryMatch = generatedText.match(/<post_history_instructions>\n([\s\S]*?)\n<\/post_history_instructions>/);
+            const altGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
+
+            // Create the SillyTavern character object
+            const sillyTavernChar = {
+                name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : 'Unknown Character',
+                description: '',
+                personality: '',
+                scenario: '',
+                first_mes: firstMesMatch ? firstMesMatch[1].trim() : 'Hello! *I greet you with a friendly wave*',
+                mes_example: mesExampleMatch ? mesExampleMatch[1].trim() : '',
+                creator_notes: 'Created using OllamaVision Character Creator',
+                system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
+                post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
+                tags: [],
+                creator: 'OllamaVision',
+                character_version: '1.0',
+                alternate_greetings: altGreetingsMatch ? 
+                    altGreetingsMatch[1].trim().split('\n').map(g => g.trim()).filter(g => g) : []
+            };
+
+            // Build the description combining all character aspects
+            let description = '';
+            
+            // Add basic info
+            if (speciesMatch && speciesMatch[1]) {
+                description += `Species: ${speciesMatch[1].trim()}\n`;
+            }
+            if (sexMatch && sexMatch[1]) {
+                description += `Sex: ${sexMatch[1].trim()}\n`;
+            }
+            if (alignmentMatch && alignmentMatch[1]) {
+                description += `Alignment: ${alignmentMatch[1].trim()}\n`;
+            }
+            if (classMatch && classMatch[1]) {
+                description += `Class/Role: ${classMatch[1].trim()}\n\n`;
+            }
+            
+            // Add physical description
+            if (physicalMatch && physicalMatch[1]) {
+                description += 'Physical Description:\n' + physicalMatch[1].trim() + '\n\n';
+            }
+            
+            // Add abilities
+            if (abilitiesMatch && abilitiesMatch[1]) {
+                description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim();
+            }
+            
+            sillyTavernChar.description = description.trim();
+
+            // Add personality
+            if (personalityMatch && personalityMatch[1]) {
+                sillyTavernChar.personality = personalityMatch[1].trim();
+            }
+
+            // Add backstory to scenario
+            if (backstoryMatch && backstoryMatch[1]) {
+                sillyTavernChar.scenario = backstoryMatch[1].trim();
+            }
+
+            // Add some relevant tags based on the character
+            const tags = new Set(); // Use Set to avoid duplicates
+
+            // Basic attributes
+            if (speciesMatch && speciesMatch[1]) {
+                const species = speciesMatch[1].trim();
+                tags.add(species);
+            }
+            if (sexMatch && sexMatch[1]) tags.add(sexMatch[1].trim());
+            if (classMatch && classMatch[1]) tags.add(classMatch[1].trim());
+            if (alignmentMatch && alignmentMatch[1]) tags.add(alignmentMatch[1].trim());
+
+            sillyTavernChar.tags = Array.from(tags);
+
+            return {
+                success: true,
+                data: sillyTavernChar
+            };
+        } catch (error) {
+            console.error('Error creating SillyTavern data:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    },
 };
 
 // Add this event listener after initialization
@@ -5325,3 +6020,15 @@ modelSelect.addEventListener('change', async function() {
         }
     }
 });
+
+// Add this helper function to properly encode strings to base64
+function safeBase64Encode(str) {
+    // First convert the string to UTF-8
+    const utf8Bytes = new TextEncoder().encode(str);
+    // Convert UTF-8 bytes to base64
+    let base64 = '';
+    for (let i = 0; i < utf8Bytes.length; i++) {
+        base64 += String.fromCharCode(utf8Bytes[i]);
+    }
+    return btoa(base64);
+}
