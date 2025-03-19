@@ -4676,7 +4676,7 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
 - [Add unique or signature abilities]
 
 **Backstory:**  
-[Write a rich, engaging history that integrates the character's setting, role, and alignment]  
+[Write a short but fully detailed backstory that integrates the character's setting, role, and alignment]  
 [Include motivations, conflicts, relationships, and major life events]  
 [Explain how they came to their class/role]  
 [The backstory should feel natural and immersive]  
@@ -4921,8 +4921,10 @@ Please generate the following elements in a structured format:
 - Do not use actions
 
 2. Example Messages (mes_example):
-- 3 example messages showing how the character typically speaks
+- 5 example messages showing how the character typically speaks
 - Should demonstrate their speech patterns and personality
+- Focus on natural conversation rather than constant self-reflection
+- Show proactive behavior and initiative when appropriate
 - Each message should be on a new line
 - Do not use actions for Example Messages
 
@@ -4930,17 +4932,30 @@ Please generate the following elements in a structured format:
 - A concise instruction set for AI to maintain character consistency
 - Include key personality traits, speech patterns, and behavioral guidelines
 - Mention important background elements that influence their interactions
+- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
+- Character should only reflect on past experiences when directly relevant to the current conversation
+- Maintain natural, in-the-moment dialogue most of the time
+- CRITICAL: Character should act independently and take initiative based on their personality and skills
+- Only ask for direction when truly uncertain or when the situation clearly requires guidance
+- Take proactive actions that align with their expertise and role
+- Balance between being helpful and maintaining their unique personality traits
+- Avoid constantly asking what to do next; instead, act naturally based on context
 
 4. Post-History Instructions:
 - Specific guidelines for the AI after reading chat history
 - How to maintain character development and memory
 - Key relationships or events to remember
-- How to handle continuity and character growth
-- Behavioral adjustments based on past interactions
+- Focus on present interactions while acknowledging past when relevant
+- Avoid overuse of backstory references
+- Maintain proactive behavior consistent with character's personality
+- Take initiative in familiar situations while asking for guidance only when truly needed
+- Remember past interactions but don't let them overshadow present conversation
 
 5. Alternate Greetings:
-- 3 alternative first messages
+- 5 alternative first messages
 - Each should be distinct but maintain character consistency
+- Keep them natural and in-the-moment rather than heavily narrative
+- Show character's initiative and personality in different situations
 - Use different situations or moods while staying true to their personality
 
 Format the output exactly as shown below:
@@ -5002,29 +5017,27 @@ Format the output exactly as shown below:
             const mesExampleMatch = generatedText.match(/<mes_example>\n([\s\S]*?)\n<\/mes_example>/);
             const systemPromptMatch = generatedText.match(/<system_prompt>\n([\s\S]*?)\n<\/system_prompt>/);
             const postHistoryMatch = generatedText.match(/<post_history_instructions>\n([\s\S]*?)\n<\/post_history_instructions>/);
-            const altGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
+            const alternateGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
 
             // Create the SillyTavern character object
             const sillyTavernChar = {
                 name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : 'Unknown Character',
                 description: '',
                 personality: '',
-                scenario: '',
                 first_mes: firstMesMatch ? firstMesMatch[1].trim() : 'Hello! *I greet you with a friendly wave*',
-                mes_example: mesExampleMatch ? mesExampleMatch[1].trim() : '',
+                mes_example: mesExampleMatch ? mesExampleMatch[1].trim().split('\n').filter(line => line.trim()).join('\n') : '',
                 creator_notes: 'Created using OllamaVision Character Creator',
                 system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
                 post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
                 tags: [],
                 creator: 'OllamaVision',
                 character_version: '1.0',
-                alternate_greetings: altGreetingsMatch ? 
-                    altGreetingsMatch[1].trim().split('\n').map(g => g.trim()).filter(g => g) : []
+                alternate_greetings: alternateGreetingsMatch ? 
+                    alternateGreetingsMatch[1].trim().split('\n').map(g => g.trim()).filter(g => g) : []
             };
 
             // Build the description combining all character aspects
-            let description = '';
-            
+            let description = '';        
             // Add basic info
             if (speciesMatch && speciesMatch[1]) {
                 description += `Species: ${speciesMatch[1].trim()}\n`;
@@ -5038,12 +5051,13 @@ Format the output exactly as shown below:
             if (classMatch && classMatch[1]) {
                 description += `Class/Role: ${classMatch[1].trim()}\n\n`;
             }
-            
             // Add physical description
             if (physicalMatch && physicalMatch[1]) {
                 description += 'Physical Description:\n' + physicalMatch[1].trim() + '\n\n';
+            }         
+            if (backstoryMatch && backstoryMatch[1]) {
+                description += `Backstory: ${backstoryMatch[1].trim()}\n\n`;
             }
-            
             // Add abilities
             if (abilitiesMatch && abilitiesMatch[1]) {
                 description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim();
@@ -5054,11 +5068,6 @@ Format the output exactly as shown below:
             // Add personality
             if (personalityMatch && personalityMatch[1]) {
                 sillyTavernChar.personality = personalityMatch[1].trim();
-            }
-
-            // Add backstory to scenario
-            if (backstoryMatch && backstoryMatch[1]) {
-                sillyTavernChar.scenario = backstoryMatch[1].trim();
             }
 
             // Add some relevant tags based on the character
@@ -5490,28 +5499,79 @@ Format the output exactly as shown below:
             const model = document.getElementById('ollamavision-model').value;
 
             // Send to LLM to get complete character details
-            const prompt = `Given this character description, please analyze their personality and provide:
-1. A detailed personality analysis focusing on how talkative they are (scale of 0.1 to 0.9)
-2. A system prompt that captures their essence
-3. An engaging first message
-4. 2-3 example messages showing their speech style
-5. 2-3 alternate greetings
-6. Post-history instructions for maintaining character consistency
+            const prompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
 
 Character Description:
 ${characterText}
 
-Please format your response as follows:
-Talkativeness: [0.1-0.9]
-System Prompt: [prompt]
-First Message: [message]
-Example Messages:
-[message 1]
-[message 2]
-Alternate Greetings:
-[greeting 1]
-[greeting 2]
-Post History Instructions: [instructions]`;
+Please generate the following elements in a structured format:
+
+1. First Message (first_mes):
+- A natural, in-character greeting that introduces the character
+- Should reflect their personality and background
+- Do not use actions
+
+2. Example Messages (mes_example):
+- 5 example messages showing how the character typically speaks
+- Should demonstrate their speech patterns and personality
+- Focus on natural conversation rather than constant self-reflection
+- Show proactive behavior and initiative when appropriate
+- Each message should be on a new line
+- Do not use actions for Example Messages
+
+3. System Prompt:
+- A concise instruction set for AI to maintain character consistency
+- Include key personality traits, speech patterns, and behavioral guidelines
+- Mention important background elements that influence their interactions
+- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
+- Character should only reflect on past experiences when directly relevant to the current conversation
+- Maintain natural, in-the-moment dialogue most of the time
+- CRITICAL: Character should act independently and take initiative based on their personality and skills
+- Only ask for direction when truly uncertain or when the situation clearly requires guidance
+- Take proactive actions that align with their expertise and role
+- Balance between being helpful and maintaining their unique personality traits
+- Avoid constantly asking what to do next; instead, act naturally based on context
+- Avoid overuse of backstory references, do not constantly reference their past or journey
+
+4. Post-History Instructions:
+- Specific guidelines for the AI after reading chat history
+- How to maintain character development and memory
+- Key relationships or events to remember
+- Focus on present interactions while acknowledging past when relevant
+- Avoid overuse of backstory references
+- Maintain proactive behavior consistent with character's personality
+- Take initiative in familiar situations while asking for guidance only when truly needed
+- Remember past interactions but don't let them overshadow present conversation
+
+5. Alternate Greetings:
+- 5 alternative first messages
+- Each should be distinct but maintain character consistency
+- Keep them natural and in-the-moment rather than heavily narrative
+- Show character's initiative and personality in different situations
+- Use different situations or moods while staying true to their personality
+
+Format the output exactly as shown below:
+---START---
+<first_mes>
+[First message here]
+</first_mes>
+
+<mes_example>
+[Example messages here, one per line]
+</mes_example>
+
+<system_prompt>
+[System prompt here]
+</system_prompt>
+
+<post_history_instructions>
+[Post-history instructions here]
+</post_history_instructions>
+
+<alternate_greetings>
+[Alternative greetings here, one per line]
+</alternate_greetings>
+---END---`;
 
             const response = await new Promise((resolve, reject) => {
                 genericRequest('GenerateCharacterAsync', {
@@ -5541,12 +5601,11 @@ Post History Instructions: [instructions]`;
             const llmResponse = response.response;
             
             // Extract values using regex
-            const talkativenessMatch = llmResponse.match(/Talkativeness:\s*(0\.[1-9])/);
-            const systemPromptMatch = llmResponse.match(/System Prompt:\s*([^\n]+)/);
             const firstMessageMatch = llmResponse.match(/First Message:\s*([^\n]+)/);
             const exampleMessagesMatch = llmResponse.match(/Example Messages:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
-            const alternateGreetingsMatch = llmResponse.match(/Alternate Greetings:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
+            const systemPromptMatch = llmResponse.match(/System Prompt:\s*([^\n]+)/);
             const postHistoryMatch = llmResponse.match(/Post History Instructions:\s*([^\n]+)/);
+            const alternateGreetingsMatch = llmResponse.match(/Alternate Greetings:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
 
             return {
                 spec: "chara_card_v3",
@@ -5555,7 +5614,6 @@ Post History Instructions: [instructions]`;
                     name,
                     description: characterText,
                     personality: "",
-                    scenario: "",
                     first_mes: firstMessageMatch ? firstMessageMatch[1].trim() : 'Hello! *waves*',
                     mes_example: exampleMessagesMatch ? 
                         exampleMessagesMatch[1].trim().split('\n').join('\n\n') : '',
@@ -5597,7 +5655,6 @@ Post History Instructions: [instructions]`;
                     name,
                     description: characterText,
                     personality: "",
-                    scenario: "",
                     first_mes: 'Hello! *waves*',
                     mes_example: '',
                     creator_notes: "",
@@ -5680,16 +5737,55 @@ Post History Instructions: [instructions]`;
         }
 
         try {
-            // First extract all the basic info as before
+            // Extract basic character information
             const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
             const sexMatch = characterText.match(/Sex:\s*([^\n\r]*)/);
             const speciesMatch = characterText.match(/Species:\s*([^\n\r]*)/);
             const alignmentMatch = characterText.match(/Alignment:\s*([^\n\r]*)/);
             const classMatch = characterText.match(/Class\/Role:\s*([^\n\r]*)/);
+            
+            // Extract detailed sections and clean them up
             const personalityMatch = characterText.match(/Personality & Traits:([^]*?)(?=Physical Description:|$)/s);
             const physicalMatch = characterText.match(/Physical Description:([^]*?)(?=Abilities & Skills:|$)/s);
             const abilitiesMatch = characterText.match(/Abilities & Skills:([^]*?)(?=Backstory:|$)/s);
             const backstoryMatch = characterText.match(/Backstory:([^]*?)(?=AI Image Prompt:|$)/s);
+
+            // Function to clean up text sections
+            const cleanTextSection = (text) => {
+                if (!text) return '';
+                return text
+                    .replace(/^\s*[-*•]\s*/gm, '') // Remove bullet points
+                    .replace(/\*\*/g, '') // Remove bold markers
+                    .replace(/\\n/g, '\n') // Fix newline characters
+                    .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+                    .replace(/\*\s*$/gm, '') // Remove trailing asterisks
+                    .trim();
+            };
+
+            // Generate tags based on character attributes
+            const generateTags = (data, personality) => {
+                const tags = new Set();
+                
+                // Add basic attributes
+                if (data.species) tags.add(data.species.toLowerCase());
+                if (data.sex) tags.add(data.sex.toLowerCase());
+                if (data.class_role) {
+                    const roles = data.class_role.toLowerCase().split('/');
+                    roles.forEach(role => tags.add(role.trim()));
+                }
+                if (data.alignment) tags.add(data.alignment.toLowerCase());
+
+                // Add personality-based tags
+                if (personality) {
+                    const personalityLower = personality.toLowerCase();
+                    const commonTraits = ['friendly', 'shy', 'brave', 'curious', 'playful', 'serious', 'mysterious', 'loyal', 'mischievous'];
+                    commonTraits.forEach(trait => {
+                        if (personalityLower.includes(trait)) tags.add(trait);
+                    });
+                }
+
+                return Array.from(tags);
+            };
 
             // Create prompt for additional character elements
             const additionalDetailsPrompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
@@ -5705,8 +5801,10 @@ Please generate the following elements in a structured format:
 - Do not use actions
 
 2. Example Messages (mes_example):
-- 3 example messages showing how the character typically speaks
+- 5 example messages showing how the character typically speaks
 - Should demonstrate their speech patterns and personality
+- Focus on natural conversation rather than constant self-reflection
+- Show proactive behavior and initiative when appropriate
 - Each message should be on a new line
 - Do not use actions for Example Messages
 
@@ -5714,17 +5812,31 @@ Please generate the following elements in a structured format:
 - A concise instruction set for AI to maintain character consistency
 - Include key personality traits, speech patterns, and behavioral guidelines
 - Mention important background elements that influence their interactions
+- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
+- Character should only reflect on past experiences when directly relevant to the current conversation
+- Maintain natural, in-the-moment dialogue most of the time
+- CRITICAL: Character should act independently and take initiative based on their personality and skills
+- Only ask for direction when truly uncertain or when the situation clearly requires guidance
+- Take proactive actions that align with their expertise and role
+- Balance between being helpful and maintaining their unique personality traits
+- Avoid constantly asking what to do next; instead, act naturally based on context
+- Avoid overuse of backstory references, do not constantly reference their past or journey
 
 4. Post-History Instructions:
 - Specific guidelines for the AI after reading chat history
 - How to maintain character development and memory
 - Key relationships or events to remember
-- How to handle continuity and character growth
-- Behavioral adjustments based on past interactions
+- Focus on present interactions while acknowledging past when relevant
+- Avoid overuse of backstory references
+- Maintain proactive behavior consistent with character's personality
+- Take initiative in familiar situations while asking for guidance only when truly needed
+- Remember past interactions but don't let them overshadow present conversation
 
 5. Alternate Greetings:
-- 3 alternative first messages
+- 5 alternative first messages
 - Each should be distinct but maintain character consistency
+- Keep them natural and in-the-moment rather than heavily narrative
+- Show character's initiative and personality in different situations
 - Use different situations or moods while staying true to their personality
 
 Format the output exactly as shown below:
@@ -5780,88 +5892,53 @@ Format the output exactly as shown below:
                 throw new Error(response.error || 'Failed to generate additional character details');
             }
 
-            // Extract the generated elements using regex
+            // Extract and clean the generated elements
             const generatedText = response.response;
             const firstMesMatch = generatedText.match(/<first_mes>\n([\s\S]*?)\n<\/first_mes>/);
             const mesExampleMatch = generatedText.match(/<mes_example>\n([\s\S]*?)\n<\/mes_example>/);
             const systemPromptMatch = generatedText.match(/<system_prompt>\n([\s\S]*?)\n<\/system_prompt>/);
             const postHistoryMatch = generatedText.match(/<post_history_instructions>\n([\s\S]*?)\n<\/post_history_instructions>/);
-            const altGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
+            const alternateGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
 
-            // Create the SillyTavern character object
-            const sillyTavernChar = {
-                name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : 'Unknown Character',
-                description: '',
-                personality: '',
-                scenario: '',
-                first_mes: firstMesMatch ? firstMesMatch[1].trim() : 'Hello! *I greet you with a friendly wave*',
-                mes_example: mesExampleMatch ? mesExampleMatch[1].trim() : '',
+            // Create the base character data
+            const characterData = {
+                name: nameMatch ? nameMatch[1].trim() : 'Unknown',
+                description: cleanTextSection((physicalMatch ? physicalMatch[1] : '') + (backstoryMatch ? '\n' + backstoryMatch[1] : '')),                personality: cleanTextSection(personalityMatch ? personalityMatch[1] : ''),
+                first_mes: firstMesMatch ? cleanTextSection(firstMesMatch[1]) : '',
+                mes_example: mesExampleMatch ? 
+                    cleanTextSection(mesExampleMatch[1]).split('\n').filter(line => line.trim()).join('\n') : '',
+                system_prompt: systemPromptMatch ? cleanTextSection(systemPromptMatch[1]) : '',
+                post_history_instructions: postHistoryMatch ? cleanTextSection(postHistoryMatch[1]) : '',
+                alternate_greetings: alternateGreetingsMatch ? 
+                    cleanTextSection(alternateGreetingsMatch[1])
+                        .split('\n')
+                        .filter(line => line.trim()) : [],
                 creator_notes: 'Created using OllamaVision Character Creator',
-                system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
-                post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
-                tags: [],
+                character_book: '',
                 creator: 'OllamaVision',
                 character_version: '1.0',
-                alternate_greetings: altGreetingsMatch ? 
-                    altGreetingsMatch[1].trim().split('\n').map(g => g.trim()).filter(g => g) : []
+                extensions: {
+                    species: speciesMatch ? speciesMatch[1].trim() : '',
+                    sex: sexMatch ? sexMatch[1].trim() : '',
+                    alignment: alignmentMatch ? alignmentMatch[1].trim() : '',
+                    class_role: classMatch ? classMatch[1].trim() : '',
+                    abilities: cleanTextSection(abilitiesMatch ? abilitiesMatch[1] : ''),
+                    backstory: cleanTextSection(backstoryMatch ? backstoryMatch[1] : ''),
+                    world: '',
+                    depth_prompt: {
+                        prompt: '',
+                        depth: 4,
+                        role: 'system'
+                    }
+                }
             };
 
-            // Build the description combining all character aspects
-            let description = '';
-            
-            // Add basic info
-            if (speciesMatch && speciesMatch[1]) {
-                description += `Species: ${speciesMatch[1].trim()}\n`;
-            }
-            if (sexMatch && sexMatch[1]) {
-                description += `Sex: ${sexMatch[1].trim()}\n`;
-            }
-            if (alignmentMatch && alignmentMatch[1]) {
-                description += `Alignment: ${alignmentMatch[1].trim()}\n`;
-            }
-            if (classMatch && classMatch[1]) {
-                description += `Class/Role: ${classMatch[1].trim()}\n\n`;
-            }
-            
-            // Add physical description
-            if (physicalMatch && physicalMatch[1]) {
-                description += 'Physical Description:\n' + physicalMatch[1].trim() + '\n\n';
-            }
-            
-            // Add abilities
-            if (abilitiesMatch && abilitiesMatch[1]) {
-                description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim();
-            }
-            
-            sillyTavernChar.description = description.trim();
-
-            // Add personality
-            if (personalityMatch && personalityMatch[1]) {
-                sillyTavernChar.personality = personalityMatch[1].trim();
-            }
-
-            // Add backstory to scenario
-            if (backstoryMatch && backstoryMatch[1]) {
-                sillyTavernChar.scenario = backstoryMatch[1].trim();
-            }
-
-            // Add some relevant tags based on the character
-            const tags = new Set(); // Use Set to avoid duplicates
-
-            // Basic attributes
-            if (speciesMatch && speciesMatch[1]) {
-                const species = speciesMatch[1].trim();
-                tags.add(species);
-            }
-            if (sexMatch && sexMatch[1]) tags.add(sexMatch[1].trim());
-            if (classMatch && classMatch[1]) tags.add(classMatch[1].trim());
-            if (alignmentMatch && alignmentMatch[1]) tags.add(alignmentMatch[1].trim());
-
-            sillyTavernChar.tags = Array.from(tags);
+            // Generate tags based on character data
+            characterData.tags = generateTags(characterData.extensions, characterData.personality);
 
             return {
                 success: true,
-                data: sillyTavernChar
+                data: characterData
             };
         } catch (error) {
             console.error('Error creating SillyTavern data:', error);
