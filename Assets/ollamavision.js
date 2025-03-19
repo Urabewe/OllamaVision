@@ -4918,13 +4918,13 @@ Please generate the following elements in a structured format:
 1. First Message (first_mes):
 - A natural, in-character greeting that introduces the character
 - Should reflect their personality and background
-- Use asterisks for actions, e.g. *adjusts armor* or *bows gracefully*
+- Do not use actions
 
 2. Example Messages (mes_example):
-- 3 example messages showing how the character typically speaks and acts
-- Should demonstrate their speech patterns, mannerisms, and personality
-- Include both dialogue and actions
-- Each message should be on a new line, prefixed with "{{char}}:"
+- 3 example messages showing how the character typically speaks
+- Should demonstrate their speech patterns and personality
+- Each message should be on a new line
+- Do not use actions for Example Messages
 
 3. System Prompt:
 - A concise instruction set for AI to maintain character consistency
@@ -5702,13 +5702,13 @@ Please generate the following elements in a structured format:
 1. First Message (first_mes):
 - A natural, in-character greeting that introduces the character
 - Should reflect their personality and background
-- Use asterisks for actions, e.g. *adjusts armor* or *bows gracefully*
+- Do not use actions
 
 2. Example Messages (mes_example):
-- 3 example messages showing how the character typically speaks and acts
-- Should demonstrate their speech patterns, mannerisms, and personality
-- Include both dialogue and actions
-- Each message should be on a new line, prefixed with "{{char}}:"
+- 3 example messages showing how the character typically speaks
+- Should demonstrate their speech patterns and personality
+- Each message should be on a new line
+- Do not use actions for Example Messages
 
 3. System Prompt:
 - A concise instruction set for AI to maintain character consistency
