@@ -5,6 +5,85 @@ const dbVersion = 1;
 // Add this constant at the top of the file
 const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDY0MCA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0MCIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMyQTJBMkEiLz48dGV4dCB4PSIzMjAiIHk9IjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTYiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiNDRjVCMkIiPk9sbGFtYVZpc2lvbjwvdGV4dD48cGF0aCBkPSJNMzIwIDEzOEM0OTUgMTM4IDQ5NSAzNzQgMzIwIDM3NEMxNDUgMzc0IDE0NSAxMzggMzIwIDEzOFoiIGZpbGw9IiM0MDQwNDAiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIyNTYiIHI9IjY4IiBmaWxsPSIjNEE0QTRBIi8+PGNpcmNsZSBjeD0iMzIwIiBjeT0iMjU2IiByPSIzOCIgZmlsbD0iIzNCM0IzQiIvPjxjaXJjbGUgY3g9IjM0MCIgY3k9IjIzNiIgcj0iMTIiIGZpbGw9IiM1QTVBNUEiLz48dGV4dCB4PSIzMjAiIHk9IjQyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM4MDgwODAiPkRyYWcgYW5kIGRyb3Agb3IgdXNlIHRoZSBidXR0b25zIHRvIGFkZCBhbiBpbWFnZTwvdGV4dD48L3N2Zz4=';
 
+// Single prompt for the creation of extra character data
+const SILLYTAVERN_PROMPT = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
+
+Character Description:
+\${characterText}
+
+Please generate the following elements in a structured format:
+
+1. First Message (first_mes):
+- A natural, in-character greeting that introduces the character
+- Should reflect their personality and background
+- Keep actions to a minimum
+- This greeting will be used as the first message in a new chat if the character has not already met the user
+- Make this prompt in a style as if the character has never met the user before
+
+2. Example Messages (mes_example):
+- 5 example messages showing how the character typically speaks
+- Should demonstrate their speech patterns and personality
+- Focus on natural conversation rather than constant self-reflection
+- Show proactive behavior and initiative when appropriate
+- Each message should be on a new line
+- Keep actions to a minimum
+
+3. System Prompt:
+- A concise instruction set for AI to maintain character consistency
+- Include key personality traits, speech patterns, and behavioral guidelines
+- Mention important background elements that influence their interactions
+- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
+- Character should only reflect on past experiences when directly relevant to the current conversation
+- Maintain natural, in-the-moment dialogue most of the time
+- CRITICAL: Character should act independently and take initiative based on their personality and skills
+- Only ask for direction when truly uncertain or when the situation clearly requires guidance
+- Take proactive actions that align with their expertise and role
+- Balance between being helpful and maintaining their unique personality traits
+- Avoid constantly asking what to do next; instead, act naturally based on context
+- Speech goes in quotes, narration does not, actions go in between asterisks
+- Find a balance between speaking, actions, and narration
+- The system prompt should include all of these elements above
+
+4. Post-History Instructions:
+- Specific guidelines for the AI after reading chat history
+- How to maintain character development and memory
+- Key relationships or events to remember
+- Focus on present interactions while acknowledging past when relevant
+- Avoid overuse of backstory references
+- Maintain proactive behavior consistent with character's personality
+- Take initiative in familiar situations while asking for guidance only when truly needed
+- Remember past interactions but don't let them overshadow present conversation
+
+5. Alternate Greetings:
+- 5 alternative first messages
+- Each should be distinct but maintain character consistency
+- Keep them natural and the greeting should reflect the character's personality
+- Show character's initiative and personality in different situations
+- Use different situations or moods while staying true to their personality
+
+Format the output exactly as shown below:
+---START---
+<first_mes>
+[First message here]
+</first_mes>
+
+<mes_example>
+[Example messages here, one per line]
+</mes_example>
+
+<system_prompt>
+[System prompt here]
+</system_prompt>
+
+<post_history_instructions>
+[Post-history instructions here]
+</post_history_instructions>
+
+<alternate_greetings>
+[Alternative greetings here, one per line]
+</alternate_greetings>
+---END---`;
+
 // Initialize IndexedDB
 async function initDB() {
     return new Promise((resolve, reject) => {
@@ -139,10 +218,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
             
-            console.log('Utilities tab found, OllamaVision tab added');
             return;
         }
-        console.log('Utilities tab not found, something has gone very wrong!');
     }
     checkForOllamaVision();
 });
@@ -1240,9 +1317,8 @@ window.ollamaVision = {
                 
                 // Construct the full URL
                 const ollamaUrl = `${host}:${port}`;
-                
-                console.log('Attempting to connect to Ollama at:', ollamaUrl); // Debug log
-                
+            
+              
                 const response = await new Promise((resolve, reject) => {
                     genericRequest('ConnectToOllamaAsync', 
                         { 
@@ -1935,7 +2011,6 @@ window.ollamaVision = {
 
         // Load and add all saved presets
         const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
-        console.log('Found custom presets:', customPresets); // Debug log
 
         customPresets.forEach(preset => {
             const option = document.createElement('option');
@@ -2082,7 +2157,6 @@ window.ollamaVision = {
     },
 
     loadPresetManager: function() {
-        console.log('Loading preset manager...'); // Debug log
         
         const userList = document.getElementById('user-presets-list');
         
@@ -3987,7 +4061,6 @@ window.ollamaVision = {
                         (error) => reject(error)
                     );
                 });
-                console.log(`Model ${model} unloaded successfully`);
             } catch (error) {
                 console.error(`Failed to unload model: ${error}`);
             }
@@ -4777,8 +4850,11 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             a.href = URL.createObjectURL(blob);
             
             // Generate filename with timestamp
+            const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
+            const name = nameMatch ? nameMatch[1].trim() : 'Unknown Character';
+            const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            a.download = `character_${timestamp}.txt`;
+            a.download = `${safeName}_${timestamp}.txt`;
             
             // Trigger download
             document.body.appendChild(a);
@@ -4908,78 +4984,7 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             const backstoryMatch = characterText.match(/Backstory:([^]*?)(?=AI Image Prompt:|$)/s);
 
             // Create prompt for additional character elements
-            const additionalDetailsPrompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
-
-Character Information:
-${characterText}
-
-Please generate the following elements in a structured format:
-
-1. First Message (first_mes):
-- A natural, in-character greeting that introduces the character
-- Should reflect their personality and background
-- Do not use actions
-
-2. Example Messages (mes_example):
-- 5 example messages showing how the character typically speaks
-- Should demonstrate their speech patterns and personality
-- Focus on natural conversation rather than constant self-reflection
-- Show proactive behavior and initiative when appropriate
-- Each message should be on a new line
-- Do not use actions for Example Messages
-
-3. System Prompt:
-- A concise instruction set for AI to maintain character consistency
-- Include key personality traits, speech patterns, and behavioral guidelines
-- Mention important background elements that influence their interactions
-- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
-- Character should only reflect on past experiences when directly relevant to the current conversation
-- Maintain natural, in-the-moment dialogue most of the time
-- CRITICAL: Character should act independently and take initiative based on their personality and skills
-- Only ask for direction when truly uncertain or when the situation clearly requires guidance
-- Take proactive actions that align with their expertise and role
-- Balance between being helpful and maintaining their unique personality traits
-- Avoid constantly asking what to do next; instead, act naturally based on context
-
-4. Post-History Instructions:
-- Specific guidelines for the AI after reading chat history
-- How to maintain character development and memory
-- Key relationships or events to remember
-- Focus on present interactions while acknowledging past when relevant
-- Avoid overuse of backstory references
-- Maintain proactive behavior consistent with character's personality
-- Take initiative in familiar situations while asking for guidance only when truly needed
-- Remember past interactions but don't let them overshadow present conversation
-
-5. Alternate Greetings:
-- 5 alternative first messages
-- Each should be distinct but maintain character consistency
-- Keep them natural and in-the-moment rather than heavily narrative
-- Show character's initiative and personality in different situations
-- Use different situations or moods while staying true to their personality
-
-Format the output exactly as shown below:
----START---
-<first_mes>
-[First message here]
-</first_mes>
-
-<mes_example>
-[Example messages here, one per line]
-</mes_example>
-
-<system_prompt>
-[System prompt here]
-</system_prompt>
-
-<post_history_instructions>
-[Post-history instructions here]
-</post_history_instructions>
-
-<alternate_greetings>
-[Alternative greetings here, one per line]
-</alternate_greetings>
----END---`;
+            const prompt = SILLYTAVERN_PROMPT.replace('${characterText}', characterText);
 
             // Get the current model and backend type
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
@@ -4990,7 +4995,7 @@ Format the output exactly as shown below:
                 genericRequest('GenerateCharacterAsync', {
                     model: model,
                     backendType: backendType,
-                    prompt: additionalDetailsPrompt,
+                    prompt: prompt,
                     temperature: 0.8,
                     maxTokens: -1,
                     topP: 0.7,
@@ -5040,13 +5045,13 @@ Format the output exactly as shown below:
             let description = '';        
             // Add basic info
             if (speciesMatch && speciesMatch[1]) {
-                description += `Species: ${speciesMatch[1].trim()}\n`;
+                description += `Species: ${speciesMatch[1].trim()}\n\n`;
             }
             if (sexMatch && sexMatch[1]) {
-                description += `Sex: ${sexMatch[1].trim()}\n`;
+                description += `Sex: ${sexMatch[1].trim()}\n\n`;
             }
             if (alignmentMatch && alignmentMatch[1]) {
-                description += `Alignment: ${alignmentMatch[1].trim()}\n`;
+                description += `Alignment: ${alignmentMatch[1].trim()}\n\n`;
             }
             if (classMatch && classMatch[1]) {
                 description += `Class/Role: ${classMatch[1].trim()}\n\n`;
@@ -5060,7 +5065,7 @@ Format the output exactly as shown below:
             }
             // Add abilities
             if (abilitiesMatch && abilitiesMatch[1]) {
-                description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim();
+                description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim() + '\n\n';
             }
             
             sillyTavernChar.description = description.trim();
@@ -5487,195 +5492,6 @@ Format the output exactly as shown below:
         }
     },
 
-    // Helper function to create SillyTavern data structure
-    createSillyTavernData: async function(characterText) {
-        // Extract name from the first line containing "Name:"
-        const nameMatch = characterText.match(/Name:\s*([^\n]+)/);
-        const name = nameMatch ? nameMatch[1].trim() : 'Unknown Character';
-
-        try {
-            // Get the current model and backend type
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-            const model = document.getElementById('ollamavision-model').value;
-
-            // Send to LLM to get complete character details
-            const prompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
-
-Character Description:
-${characterText}
-
-Please generate the following elements in a structured format:
-
-1. First Message (first_mes):
-- A natural, in-character greeting that introduces the character
-- Should reflect their personality and background
-- Do not use actions
-
-2. Example Messages (mes_example):
-- 5 example messages showing how the character typically speaks
-- Should demonstrate their speech patterns and personality
-- Focus on natural conversation rather than constant self-reflection
-- Show proactive behavior and initiative when appropriate
-- Each message should be on a new line
-- Do not use actions for Example Messages
-
-3. System Prompt:
-- A concise instruction set for AI to maintain character consistency
-- Include key personality traits, speech patterns, and behavioral guidelines
-- Mention important background elements that influence their interactions
-- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
-- Character should only reflect on past experiences when directly relevant to the current conversation
-- Maintain natural, in-the-moment dialogue most of the time
-- CRITICAL: Character should act independently and take initiative based on their personality and skills
-- Only ask for direction when truly uncertain or when the situation clearly requires guidance
-- Take proactive actions that align with their expertise and role
-- Balance between being helpful and maintaining their unique personality traits
-- Avoid constantly asking what to do next; instead, act naturally based on context
-- Avoid overuse of backstory references, do not constantly reference their past or journey
-
-4. Post-History Instructions:
-- Specific guidelines for the AI after reading chat history
-- How to maintain character development and memory
-- Key relationships or events to remember
-- Focus on present interactions while acknowledging past when relevant
-- Avoid overuse of backstory references
-- Maintain proactive behavior consistent with character's personality
-- Take initiative in familiar situations while asking for guidance only when truly needed
-- Remember past interactions but don't let them overshadow present conversation
-
-5. Alternate Greetings:
-- 5 alternative first messages
-- Each should be distinct but maintain character consistency
-- Keep them natural and in-the-moment rather than heavily narrative
-- Show character's initiative and personality in different situations
-- Use different situations or moods while staying true to their personality
-
-Format the output exactly as shown below:
----START---
-<first_mes>
-[First message here]
-</first_mes>
-
-<mes_example>
-[Example messages here, one per line]
-</mes_example>
-
-<system_prompt>
-[System prompt here]
-</system_prompt>
-
-<post_history_instructions>
-[Post-history instructions here]
-</post_history_instructions>
-
-<alternate_greetings>
-[Alternative greetings here, one per line]
-</alternate_greetings>
----END---`;
-
-            const response = await new Promise((resolve, reject) => {
-                genericRequest('GenerateCharacterAsync', {
-                    model: model,
-                    backendType: backendType,
-                    prompt: prompt,
-                    temperature: 0.8,
-                    maxTokens: -1,
-                    topP: 0.7,
-                    frequencyPenalty: 0.3,
-                    presencePenalty: 0.3,
-                    repeatPenalty: 1.1,
-                    topK: 40,
-                    seed: -1,
-                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
-                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
-                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
-                },
-                (data) => resolve(data),
-                (error) => reject(error));
-            });
-
-            if (!response.success) {
-                throw new Error(response.error || 'Failed to generate character details');
-            }
-
-            const llmResponse = response.response;
-            
-            // Extract values using regex
-            const firstMessageMatch = llmResponse.match(/First Message:\s*([^\n]+)/);
-            const exampleMessagesMatch = llmResponse.match(/Example Messages:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
-            const systemPromptMatch = llmResponse.match(/System Prompt:\s*([^\n]+)/);
-            const postHistoryMatch = llmResponse.match(/Post History Instructions:\s*([^\n]+)/);
-            const alternateGreetingsMatch = llmResponse.match(/Alternate Greetings:\n((?:[^\n]+\n?)+?)(?=\n\w+:|\n*$)/);
-
-            return {
-                spec: "chara_card_v3",
-                spec_version: "3.0",
-                data: {
-                    name,
-                    description: characterText,
-                    personality: "",
-                    first_mes: firstMessageMatch ? firstMessageMatch[1].trim() : 'Hello! *waves*',
-                    mes_example: exampleMessagesMatch ? 
-                        exampleMessagesMatch[1].trim().split('\n').join('\n\n') : '',
-                    creator_notes: "",
-                    system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
-                    post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
-                    alternate_greetings: alternateGreetingsMatch ? 
-                        alternateGreetingsMatch[1].trim().split('\n').filter(g => g.trim()) : [],
-                    character_book: "",
-                    tags: [],
-                    creator: "OllamaVision",
-                    create_date: new Date().toISOString(),
-                    avatar: "none",
-                    chat: null,
-                    extensions: {
-                        talkativeness: sillyTavernData.data.extensions?.talkativeness || 0.5,
-                        fav: sillyTavernData.data.extensions?.fav || false,
-                        world: "",
-                        depth_prompt: {
-                            prompt: "",
-                            depth: 4,
-                            role: "system"
-                        }
-                    },
-                    group_only_greetings: []
-                },
-                avatar: "none",
-                chat: null,
-                create_date: sillyTavernData.data.create_date || new Date().toISOString(),
-                creatorcomment: "\nThis card was created using OllamaVision."
-            };
-        } catch (error) {
-            console.error('Error generating character details:', error);
-            // Return a basic structure if generation fails
-            return {
-                spec: "chara_card_v3",
-                spec_version: "3.0",
-                data: {
-                    name,
-                    description: characterText,
-                    personality: "",
-                    first_mes: 'Hello! *waves*',
-                    mes_example: '',
-                    creator_notes: "",
-                    system_prompt: "",
-                    post_history_instructions: "",
-                    alternate_greetings: [],
-                    character_book: "",
-                    tags: [],
-                    creator: "OllamaVision",
-                    create_date: new Date().toISOString(),
-                    avatar: "none",
-                    chat: null,
-                    extensions: {
-                        talkativeness: 0.5,
-                        fav: false
-                    }
-                }
-            };
-        }
-    },
-
     // Helper function to create PNG chunks
     createPNGChunk: function(type, data) {
         const encoder = new TextEncoder();
@@ -5756,9 +5572,8 @@ Format the output exactly as shown below:
                 return text
                     .replace(/^\s*[-*•]\s*/gm, '') // Remove bullet points
                     .replace(/\*\*/g, '') // Remove bold markers
-                    .replace(/\\n/g, '\n') // Fix newline characters
-                    .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
                     .replace(/\*\s*$/gm, '') // Remove trailing asterisks
+                    .replace(/([^:\n]*):\s*([^\n]*)/g, '$1: $2\n') // Ensure categories are on new lines
                     .trim();
             };
 
@@ -5788,79 +5603,7 @@ Format the output exactly as shown below:
             };
 
             // Create prompt for additional character elements
-            const additionalDetailsPrompt = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
-
-Character Information:
-${characterText}
-
-Please generate the following elements in a structured format:
-
-1. First Message (first_mes):
-- A natural, in-character greeting that introduces the character
-- Should reflect their personality and background
-- Do not use actions
-
-2. Example Messages (mes_example):
-- 5 example messages showing how the character typically speaks
-- Should demonstrate their speech patterns and personality
-- Focus on natural conversation rather than constant self-reflection
-- Show proactive behavior and initiative when appropriate
-- Each message should be on a new line
-- Do not use actions for Example Messages
-
-3. System Prompt:
-- A concise instruction set for AI to maintain character consistency
-- Include key personality traits, speech patterns, and behavioral guidelines
-- Mention important background elements that influence their interactions
-- IMPORTANT: Character should avoid constant self-reflection or repetitive references to their past/journey
-- Character should only reflect on past experiences when directly relevant to the current conversation
-- Maintain natural, in-the-moment dialogue most of the time
-- CRITICAL: Character should act independently and take initiative based on their personality and skills
-- Only ask for direction when truly uncertain or when the situation clearly requires guidance
-- Take proactive actions that align with their expertise and role
-- Balance between being helpful and maintaining their unique personality traits
-- Avoid constantly asking what to do next; instead, act naturally based on context
-- Avoid overuse of backstory references, do not constantly reference their past or journey
-
-4. Post-History Instructions:
-- Specific guidelines for the AI after reading chat history
-- How to maintain character development and memory
-- Key relationships or events to remember
-- Focus on present interactions while acknowledging past when relevant
-- Avoid overuse of backstory references
-- Maintain proactive behavior consistent with character's personality
-- Take initiative in familiar situations while asking for guidance only when truly needed
-- Remember past interactions but don't let them overshadow present conversation
-
-5. Alternate Greetings:
-- 5 alternative first messages
-- Each should be distinct but maintain character consistency
-- Keep them natural and in-the-moment rather than heavily narrative
-- Show character's initiative and personality in different situations
-- Use different situations or moods while staying true to their personality
-
-Format the output exactly as shown below:
----START---
-<first_mes>
-[First message here]
-</first_mes>
-
-<mes_example>
-[Example messages here, one per line]
-</mes_example>
-
-<system_prompt>
-[System prompt here]
-</system_prompt>
-
-<post_history_instructions>
-[Post-history instructions here]
-</post_history_instructions>
-
-<alternate_greetings>
-[Alternative greetings here, one per line]
-</alternate_greetings>
----END---`;
+            const prompt = SILLYTAVERN_PROMPT.replace('${characterText}', characterText);
 
             // Get the current model and backend type
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
@@ -5871,7 +5614,7 @@ Format the output exactly as shown below:
                 genericRequest('GenerateCharacterAsync', {
                     model: model,
                     backendType: backendType,
-                    prompt: additionalDetailsPrompt,
+                    prompt: prompt,
                     temperature: 0.8,
                     maxTokens: -1,
                     topP: 0.7,
@@ -5967,18 +5710,6 @@ document.getElementById('user-prompt').addEventListener('change', function(e) {
         }
     }
 });
-
-// Add model validation
-const validOpenAIModels = [
-    'gpt-4-vision-preview',
-    'gpt-4-1106-vision-preview',
-    'gpt-4-turbo-preview'
-];
-
-// In your analyze function
-if (backendType === 'openai' && !validOpenAIModels.includes(model)) {
-    throw new Error('Invalid OpenAI model selected');
-}
 
 // Example function to create a new preset
 function createNewPreset(presetName) {
