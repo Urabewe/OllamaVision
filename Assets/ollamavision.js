@@ -5091,7 +5091,7 @@ Scenario:`;
                             backendType: backendType,
                             prompt: scenarioPrompt,
                             temperature: 0.7,
-                            maxTokens: 150,
+                            maxTokens: -1,
                             topP: 0.7,
                             frequencyPenalty: 0.3,
                             presencePenalty: 0.3,
