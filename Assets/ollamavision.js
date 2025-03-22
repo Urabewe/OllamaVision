@@ -11,22 +11,20 @@ const SILLYTAVERN_PROMPT = `Based on the following character description, genera
 Character Description:
 \${characterText}
 
+\${scenarioSection}
+
 Please generate the following elements in a structured format:
 
-1. First Message (first_mes):
-- A natural, in-character greeting that introduces the character
-- Should reflect their personality and background
-- Keep actions to a minimum
-- This greeting will be used as the first message in a new chat if the character has not already met the user
-- Make this prompt in a style as if the character has never met the user before
+\${firstMessageInstructions}
 
 2. Example Messages (mes_example):
-- 5 example messages showing how the character typically speaks
+- 6 example messages showing how the character typically speaks
 - Should demonstrate their speech patterns and personality
 - Focus on natural conversation rather than constant self-reflection
 - Show proactive behavior and initiative when appropriate
 - Each message should be on a new line
 - Keep actions to a minimum
+- Give examples of a normal response, emotional response, and action driven response. Include examples of all 3. 2 of each example.
 
 3. System Prompt:
 - A concise instruction set for AI to maintain character consistency
@@ -41,8 +39,9 @@ Please generate the following elements in a structured format:
 - Balance between being helpful and maintaining their unique personality traits
 - Avoid constantly asking what to do next; instead, act naturally based on context
 - Speech goes in quotes, narration does not, actions go in between asterisks
-- Find a balance between speaking, actions, and narration
-- The system prompt should include all of these elements above
+- Make sure to prompt for the character to use both action and speech and to narrate the scene when it fits the scenario
+- IMPORTANT ALWAYS INCLUDE THIS LINE IN THE SYSTEM PROMPT: Speech goes in quotes EXAMPLE: "Hello, how are you?", action has an * at the beginning and at the end of the action EXAMPLE: *sets phone down*, narration gets nothing. Structure your responses accordingly. EXAMPLE MESSAGE: *I set my phone down and wave* "Hey, how are you!"
+- Make the system prompt rich and detailed to include all the information. 
 
 4. Post-History Instructions:
 - Specific guidelines for the AI after reading chat history
@@ -54,12 +53,15 @@ Please generate the following elements in a structured format:
 - Take initiative in familiar situations while asking for guidance only when truly needed
 - Remember past interactions but don't let them overshadow present conversation
 
+
 5. Alternate Greetings:
-- 5 alternative first messages
+- 5 alternative greetings (not first greetings)
 - Each should be distinct but maintain character consistency
 - Keep them natural and the greeting should reflect the character's personality
 - Show character's initiative and personality in different situations
-- Use different situations or moods while staying true to their personality
+- These greetings should reflect that the character has already met the user
+- Speech goes in quotes EXAMPLE: "Hello, how are you?", action goes between asterisks EXAMPLE: *sets phone down*, narration gets nothing. 
+- Structure your responses accordingly. EXAMPLE MESSAGE: *I set my phone down and wave* "Hey, how are you!"
 
 Format the output exactly as shown below:
 ---START---
@@ -4249,15 +4251,11 @@ window.ollamaVision = {
                                         <div class="d-flex justify-content-end mb-2">
                                             <button class="basic-button" onclick="ollamaVision.saveCharacter()" 
                                                     style="font-size: 1.2rem;">
-                                                💾 Save Character
-                                            </button>
-                                            <button class="basic-button" onclick="ollamaVision.exportToSillyTavern()" 
-                                                    style="font-size: 1.2rem;">
-                                                💾 Export to SillyTavern
+                                                💾 Save Character (Text Only)
                                             </button>
                                             <button class="basic-button" onclick="ollamaVision.showSaveCharacterImageModal()" 
                                                     style="font-size: 1.2rem;">
-                                                💾 Save Character Image (PNG)
+                                                🖼️ Create Image Card
                                             </button>
                                         </div>
                                         <div class="card modal_text_extra">
@@ -4749,10 +4747,9 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
 - [Add unique or signature abilities]
 
 **Backstory:**  
-[Write a short but fully detailed backstory that integrates the character's setting, role, and alignment]  
-[Include motivations, conflicts, relationships, and major life events]  
-[Explain how they came to their class/role]  
-[The backstory should feel natural and immersive]  
+- [Write a short but fully detailed backstory that integrates the character's setting, role, and alignment]  
+- [Include motivations, conflicts, relationships, and major life events]  
+- [Explain how they came to their class/role]  
 
 **AI Image Prompt:**  
 *"[A vivid, highly detailed description of the character's physical appearance, clothing, setting, pose, lighting, and artistic style for AI image generation. Ensure it is unique each time, incorporating elements from the AI-generated backstory. Each one should be a character portrait.]"*`;
@@ -4961,222 +4958,6 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
         }
     },
 
-    // Add the SillyTavern export function
-    exportToSillyTavern: async function() {
-        const characterText = document.getElementById('character-output').textContent;
-        if (!characterText) {
-            this.updateCharacterStatus('error', 'No character to export', false);
-            return;
-        }
-
-        try {
-            this.updateCharacterStatus('info', 'Generating additional character details...', true);
-
-            // First extract all the basic info as before
-            const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
-            const sexMatch = characterText.match(/Sex:\s*([^\n\r]*)/);
-            const speciesMatch = characterText.match(/Species:\s*([^\n\r]*)/);
-            const alignmentMatch = characterText.match(/Alignment:\s*([^\n\r]*)/);
-            const classMatch = characterText.match(/Class\/Role:\s*([^\n\r]*)/);
-            const personalityMatch = characterText.match(/Personality & Traits:([^]*?)(?=Physical Description:|$)/s);
-            const physicalMatch = characterText.match(/Physical Description:([^]*?)(?=Abilities & Skills:|$)/s);
-            const abilitiesMatch = characterText.match(/Abilities & Skills:([^]*?)(?=Backstory:|$)/s);
-            const backstoryMatch = characterText.match(/Backstory:([^]*?)(?=AI Image Prompt:|$)/s);
-
-            // Create prompt for additional character elements
-            const prompt = SILLYTAVERN_PROMPT.replace('${characterText}', characterText);
-
-            // Get the current model and backend type
-            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
-            const model = document.getElementById('ollamavision-model').value;
-
-            // Generate the additional elements
-            const response = await new Promise((resolve, reject) => {
-                genericRequest('GenerateCharacterAsync', {
-                    model: model,
-                    backendType: backendType,
-                    prompt: prompt,
-                    temperature: 0.8,
-                    maxTokens: -1,
-                    topP: 0.7,
-                    frequencyPenalty: 0.3,
-                    presencePenalty: 0.3,
-                    repeatPenalty: 1.1,
-                    topK: 40,
-                    seed: -1,
-                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
-                    siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
-                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
-                },
-                (data) => resolve(data),
-                (error) => reject(error));
-            });
-
-            if (!response.success) {
-                throw new Error(response.error || 'Failed to generate additional character details');
-            }
-
-            // Extract the generated elements using regex
-            const generatedText = response.response;
-            const firstMesMatch = generatedText.match(/<first_mes>\n([\s\S]*?)\n<\/first_mes>/);
-            const mesExampleMatch = generatedText.match(/<mes_example>\n([\s\S]*?)\n<\/mes_example>/);
-            const systemPromptMatch = generatedText.match(/<system_prompt>\n([\s\S]*?)\n<\/system_prompt>/);
-            const postHistoryMatch = generatedText.match(/<post_history_instructions>\n([\s\S]*?)\n<\/post_history_instructions>/);
-            const alternateGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
-
-            // Create the SillyTavern character object
-            const sillyTavernChar = {
-                name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : 'Unknown Character',
-                description: '',
-                personality: '',
-                first_mes: firstMesMatch ? firstMesMatch[1].trim() : 'Hello! *I greet you with a friendly wave*',
-                mes_example: mesExampleMatch ? mesExampleMatch[1].trim().split('\n').filter(line => line.trim()).join('\n') : '',
-                creator_notes: 'Created using OllamaVision Character Creator',
-                system_prompt: systemPromptMatch ? systemPromptMatch[1].trim() : '',
-                post_history_instructions: postHistoryMatch ? postHistoryMatch[1].trim() : '',
-                tags: [],
-                creator: 'OllamaVision',
-                character_version: '1.0',
-                alternate_greetings: alternateGreetingsMatch ? 
-                    alternateGreetingsMatch[1].trim().split('\n').map(g => g.trim()).filter(g => g) : []
-            };
-
-            // Build the description combining all character aspects
-            let description = '';        
-            // Add basic info
-            if (speciesMatch && speciesMatch[1]) {
-                description += `Species: ${speciesMatch[1].trim()}\n\n`;
-            }
-            if (sexMatch && sexMatch[1]) {
-                description += `Sex: ${sexMatch[1].trim()}\n\n`;
-            }
-            if (alignmentMatch && alignmentMatch[1]) {
-                description += `Alignment: ${alignmentMatch[1].trim()}\n\n`;
-            }
-            if (classMatch && classMatch[1]) {
-                description += `Class/Role: ${classMatch[1].trim()}\n\n`;
-            }
-            // Add physical description
-            if (physicalMatch && physicalMatch[1]) {
-                description += 'Physical Description:\n' + physicalMatch[1].trim() + '\n\n';
-            }         
-            if (backstoryMatch && backstoryMatch[1]) {
-                description += `Backstory: ${backstoryMatch[1].trim()}\n\n`;
-            }
-            // Add abilities
-            if (abilitiesMatch && abilitiesMatch[1]) {
-                description += 'Abilities & Skills:\n' + abilitiesMatch[1].trim() + '\n\n';
-            }
-            
-            sillyTavernChar.description = description.trim();
-
-            // Add personality
-            if (personalityMatch && personalityMatch[1]) {
-                sillyTavernChar.personality = personalityMatch[1].trim();
-            }
-
-            // Add some relevant tags based on the character
-            const tags = new Set(); // Use Set to avoid duplicates
-
-            // Basic attributes
-            if (speciesMatch && speciesMatch[1]) {
-                const species = speciesMatch[1].trim();
-                tags.add(species);
-                // Add Beastkin subtypes if applicable
-                if (species.toLowerCase() === 'beastkin') {
-                    const beastkinMatch = characterText.match(/(?:Wolf|Fox|Bear|Tiger|Lion|Owl|Eagle|Dragon|Cat|Dog|Rabbit|Snake|Bird|Fish|Deer|Horse|Turtle|Raccoon|Panda)\s+Beastkin/i);
-                    if (beastkinMatch) {
-                        tags.add(beastkinMatch[0].trim());
-                    }
-                }
-            }
-            if (sexMatch && sexMatch[1]) tags.add(sexMatch[1].trim());
-            if (classMatch && classMatch[1]) {
-                const classRole = classMatch[1].trim();
-                tags.add(classRole);
-                // Add role-based categories
-                if (/mage|wizard|sorcerer|warlock|spellcaster/i.test(classRole)) tags.add('Magic User');
-                if (/warrior|fighter|barbarian|paladin|knight/i.test(classRole)) tags.add('Warrior');
-                if (/rogue|thief|assassin|spy/i.test(classRole)) tags.add('Rogue');
-                if (/healer|cleric|priest|medic/i.test(classRole)) tags.add('Healer');
-            }
-            if (alignmentMatch && alignmentMatch[1]) tags.add(alignmentMatch[1].trim());
-
-            // Setting-based tags
-            const settingMatch = characterText.match(/Setting:\s*([^\n\r]*)/);
-            if (settingMatch && settingMatch[1]) {
-                const setting = settingMatch[1].trim();
-                tags.add(setting);
-                // Genre tags
-                if (/cyberpunk|sci-fi|future|space/i.test(setting)) tags.add('Science Fiction');
-                if (/fantasy|magic|medieval|kingdom/i.test(setting)) tags.add('Fantasy');
-                if (/horror|dark|gothic|lovecraft/i.test(setting)) tags.add('Horror');
-                if (/modern|contemporary|urban/i.test(setting)) tags.add('Modern');
-                if (/post-apocalyptic|wasteland|dystopia/i.test(setting)) tags.add('Post-Apocalyptic');
-                if (/steampunk|victorian|clockwork/i.test(setting)) tags.add('Steampunk');
-            }
-
-            // Personality-based tags
-            if (personalityMatch && personalityMatch[1]) {
-                const personality = personalityMatch[1].toLowerCase();
-                if (/kind|caring|compassionate|gentle/i.test(personality)) tags.add('Kind');
-                if (/brave|courageous|fearless/i.test(personality)) tags.add('Brave');
-                if (/intelligent|smart|wise|scholarly/i.test(personality)) tags.add('Intellectual');
-                if (/mysterious|secretive|enigmatic/i.test(personality)) tags.add('Mysterious');
-                if (/leader|commanding|authoritative/i.test(personality)) tags.add('Leader');
-            }
-
-            // Role/occupation tags from backstory
-            if (backstoryMatch && backstoryMatch[1]) {
-                const backstory = backstoryMatch[1].toLowerCase();
-                if (/mentor|teacher|instructor/i.test(backstory)) tags.add('Mentor');
-                if (/noble|royalty|aristocrat/i.test(backstory)) tags.add('Noble');
-                if (/outcast|exile|wanderer/i.test(backstory)) tags.add('Outcast');
-                if (/guardian|protector|defender/i.test(backstory)) tags.add('Protector');
-                if (/scholar|researcher|academic/i.test(backstory)) tags.add('Scholar');
-            }
-
-            sillyTavernChar.tags = Array.from(tags); // Convert Set to Array
-
-            // Create the file
-            const blob = new Blob([JSON.stringify(sillyTavernChar, null, 2)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            
-            // Generate filename
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const safeName = sillyTavernChar.name.replace(/[^a-zA-Z0-9]/g, '_');
-            a.download = `${safeName}_st_${timestamp}.json`;
-            
-            // Trigger download
-            document.body.appendChild(a);
-            a.click();
-            
-            // Cleanup
-            document.body.removeChild(a);
-            URL.revokeObjectURL(a.href);
-            
-            this.updateCharacterStatus('success', 'SillyTavern character exported successfully!', false);
-            // Hide the status bar after 2 seconds
-            setTimeout(() => {
-                const statusBar = document.getElementById('character-status');
-                if (statusBar) {
-                    statusBar.style.display = 'none';
-                }
-            }, 2000);
-        } catch (error) {
-            console.error('Error exporting to SillyTavern format:', error);
-            this.updateCharacterStatus('error', 'Failed to export character to SillyTavern format', false);
-            // Hide error message after 3 seconds
-            setTimeout(() => {
-                const statusBar = document.getElementById('character-status');
-                if (statusBar) {
-                    statusBar.style.display = 'none';
-                }
-            }, 3000);
-        }
-    },
-
     analyzeImage: async function(imageData, modelName) {
         try {
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
@@ -5197,14 +4978,17 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Save Character Image</h5>
+                                <h5 class="modal-title">Create Character Image Card</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="preview-container" style="max-width: 100%; height: 400px; position: relative;">
+                                <div class="text-center mb-3" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                                    <p class="mb-0" style="font-size: 1.1rem; color: var(--text-color-secondary);">When you press "Save", the LLM will create a SillyTavern character card using the character information.</p>
+                                </div>
+                                <div class="preview-container text-center" style="max-width: 100%; height: 400px; position: relative; margin: 0 auto;">
                                     <img id="character-image-preview" class="img-fluid" 
                                          src="${PLACEHOLDER_IMAGE}"
-                                         style="height: 100%; object-fit: contain; max-width: 100%;">
+                                         style="height: 100%; object-fit: contain; max-width: 100%; margin: 0 auto;">
                                 </div>
                                 <div class="d-flex justify-content-center gap-3 mt-4">
                                     <button class="basic-button" onclick="ollamaVision.uploadCharacterImage()" 
@@ -5215,6 +4999,21 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                                             style="font-size: 1.2rem; padding: 10px 20px;">
                                         Paste Image
                                     </button>
+                                </div>
+                                
+                                <!-- Add scenario section -->
+                                <div class="mt-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="character-scenario" class="form-label mb-0" style="font-size: 1.2rem;">Scenario (Optional)</label>
+                                    </div>
+                                    <textarea id="character-scenario" class="form-control modal_text_extra" 
+                                              rows="4" placeholder="Enter a scenario for your character or leave blank"
+                                              style="font-size: 1.1rem; background: inherit; color: inherit;"></textarea>
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <button class="basic-button" onclick="ollamaVision.generateScenario()" style="font-size: 1.1rem; padding: 5px 15px;">
+                                            Generate Scenario
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div id="character-image-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
@@ -5236,6 +5035,89 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                     </div>
                 </div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Add generateScenario function for the new button
+            this.generateScenario = async function() {
+                try {
+                    // Get the character data to use for scenario generation
+                    const characterText = document.getElementById('character-output').textContent;
+                    if (!characterText) {
+                        this.updateCharacterImageStatus('error', 'No character data found');
+                        return;
+                    }
+                    
+                    this.updateCharacterImageStatus('info', 'Generating scenario...', true);
+                    
+                    // Extract character info for the prompt
+                    const nameMatch = characterText.match(/Name:\s*([^\n\r]*)/);
+                    const speciesMatch = characterText.match(/Species:\s*([^\n\r]*)/);
+                    const classMatch = characterText.match(/Class\/Role:\s*([^\n\r]*)/);
+                    const alignmentMatch = characterText.match(/Alignment:\s*([^\n\r]*)/);
+                    const personalityMatch = characterText.match(/Personality & Traits:([^]*?)(?=Physical Description:|$)/s);
+                    const abilitiesMatch = characterText.match(/Abilities & Skills:([^]*?)(?=Backstory:|$)/s);
+                    const backstoryMatch = characterText.match(/Backstory:([^]*?)(?=AI Image Prompt:|$)/s);
+                    
+                    const name = nameMatch ? nameMatch[1].trim() : 'Unknown';
+                    const species = speciesMatch ? speciesMatch[1].trim() : '';
+                    const classRole = classMatch ? classMatch[1].trim() : '';
+                    const alignment = alignmentMatch ? alignmentMatch[1].trim() : '';
+                    const personality = personalityMatch ? personalityMatch[1].trim() : '';
+                    const abilities = abilitiesMatch ? abilitiesMatch[1].trim() : '';
+                    const backstory = backstoryMatch ? backstoryMatch[1].trim() : '';
+                    
+                    // Create the scenario prompt with more complete character information
+                    const scenarioPrompt = `Generate a short roleplay scenario for this character:
+
+Name: ${name}
+Species: ${species}
+Class/Role: ${classRole}
+${alignment ? `Alignment: ${alignment}` : ''}
+Personality: ${personality}
+${abilities ? `Abilities: ${abilities}` : ''}
+${backstory ? `Background: ${backstory}` : ''}
+
+Create a brief, engaging scenario (2-4 sentences) that this character would typically be found in, based on their traits, abilities, alignment, and backstory. The scenario should establish a compelling starting point for roleplay with this character and be appropriate for their moral alignment.
+
+Scenario:`;
+                    
+                    // Get the current model and backend type
+                    const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+                    const model = document.getElementById('ollamavision-model').value;
+                    
+                    // Call the API to generate the scenario
+                    const response = await new Promise((resolve, reject) => {
+                        genericRequest('GenerateCharacterAsync', {
+                            model: model,
+                            backendType: backendType,
+                            prompt: scenarioPrompt,
+                            temperature: 0.7,
+                            maxTokens: 150,
+                            topP: 0.7,
+                            frequencyPenalty: 0.3,
+                            presencePenalty: 0.3,
+                            repeatPenalty: 1.1,
+                            topK: 40,
+                            seed: -1,
+                            apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                            siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
+                            ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error));
+                    });
+                    
+                    if (response.success && response.response) {
+                        // Update the scenario field with the generated text
+                        document.getElementById('character-scenario').value = response.response.trim();
+                        this.updateCharacterImageStatus('success', 'Scenario generated successfully');
+                    } else {
+                        throw new Error(response.error || 'Failed to generate scenario');
+                    }
+                } catch (error) {
+                    console.error('Error generating scenario:', error);
+                    this.updateCharacterImageStatus('error', 'Failed to generate scenario: ' + error.message);
+                }
+            };
 
             // Add drag and drop functionality
             const previewContainer = document.getElementById('character-image-preview').parentElement;
@@ -5369,6 +5251,9 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             if (!sillyTavernResult.success) {
                 throw new Error('Failed to generate character data: ' + sillyTavernResult.error);
             }
+
+            // Simply use whatever is in the scenario field (might be blank)
+            sillyTavernResult.data.scenario = document.getElementById('character-scenario').value.trim();
 
             this.updateCharacterImageStatus('info', 'Processing image...', true);
 
@@ -5570,9 +5455,9 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             const cleanTextSection = (text) => {
                 if (!text) return '';
                 return text
-                    .replace(/^\s*[-*•]\s*/gm, '') // Remove bullet points
+                    .replace(/^\s*[-•]\s*/gm, '') // Remove bullet points (excluding asterisks)
                     .replace(/\*\*/g, '') // Remove bold markers
-                    .replace(/\*\s*$/gm, '') // Remove trailing asterisks
+                    // Don't remove trailing asterisks as they might be part of actions
                     .replace(/([^:\n]*):\s*([^\n]*)/g, '$1: $2\n') // Ensure categories are on new lines
                     .trim();
             };
@@ -5582,20 +5467,122 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                 const tags = new Set();
                 
                 // Add basic attributes
-                if (data.species) tags.add(data.species.toLowerCase());
-                if (data.sex) tags.add(data.sex.toLowerCase());
-                if (data.class_role) {
-                    const roles = data.class_role.toLowerCase().split('/');
-                    roles.forEach(role => tags.add(role.trim()));
+                if (data.species) {
+                    // Handle compound species (like "High Elf" -> both "high elf", "high", and "elf")
+                    const species = data.species.toLowerCase();
+                    tags.add(species);
+                    
+                    // Add individual parts of compound species
+                    const speciesParts = species.split(/\s+/);
+                    if (speciesParts.length > 1) {
+                        speciesParts.forEach(part => {
+                            if (part.length > 2) tags.add(part); // Only add parts with 3+ chars
+                        });
+                    }
                 }
-                if (data.alignment) tags.add(data.alignment.toLowerCase());
+                
+                if (data.sex) tags.add(data.sex.toLowerCase());
+                
+                if (data.class_role) {
+                    // Handle both predefined and custom roles
+                    const roles = data.class_role.toLowerCase().split(/[\/,;&+]/);
+                    roles.forEach(role => {
+                        const trimmedRole = role.trim();
+                        if (trimmedRole) {
+                            tags.add(trimmedRole);
+                            
+                            // For compound roles like "Blood Mage", add both "blood mage" and "mage"
+                            const roleParts = trimmedRole.split(/\s+/);
+                            if (roleParts.length > 1) {
+                                // Always add the last part as it's often the core class (e.g., "Blood Mage" -> "Mage")
+                                tags.add(roleParts[roleParts.length - 1]);
+                            }
+                        }
+                    });
+                }
+                
+                if (data.alignment) {
+                    const alignment = data.alignment.toLowerCase();
+                    tags.add(alignment);
+                    
+                    // Add individual parts of alignment (e.g., "Chaotic Good" -> "chaotic" and "good")
+                    const alignmentParts = alignment.split(/\s+/);
+                    if (alignmentParts.length > 1) {
+                        alignmentParts.forEach(part => tags.add(part));
+                    }
+                }
 
                 // Add personality-based tags
                 if (personality) {
                     const personalityLower = personality.toLowerCase();
-                    const commonTraits = ['friendly', 'shy', 'brave', 'curious', 'playful', 'serious', 'mysterious', 'loyal', 'mischievous'];
-                    commonTraits.forEach(trait => {
+                    
+                    // Expanded personality traits
+                    const personalityTraits = [
+                        // Basic traits
+                        'friendly', 'shy', 'brave', 'curious', 'playful', 'serious', 'mysterious', 'loyal', 'mischievous',
+                        // Emotional traits
+                        'cheerful', 'gloomy', 'calm', 'anxious', 'passionate', 'stoic', 'emotional', 'detached',
+                        // Social traits
+                        'charismatic', 'awkward', 'charming', 'reserved', 'outgoing', 'introverted', 'extroverted',
+                        // Intellectual traits
+                        'intelligent', 'wise', 'analytical', 'creative', 'logical', 'intuitive', 'thoughtful',
+                        // Moral traits
+                        'kind', 'cruel', 'honorable', 'dishonest', 'just', 'devious', 'selfless', 'selfish'
+                    ];
+                    
+                    personalityTraits.forEach(trait => {
                         if (personalityLower.includes(trait)) tags.add(trait);
+                    });
+                    
+                }
+                
+                // Extract profession-related tags from description and abilities
+                if (data.description) {
+                    const descriptionLower = data.description.toLowerCase();
+                    const professions = [
+                        'warrior', 'mage', 'wizard', 'witch', 'hunter', 'assassin', 'thief', 'rogue', 
+                        'knight', 'healer', 'priest', 'cleric', 'monk', 'druid', 'ranger', 'bard',
+                        'necromancer', 'paladin', 'sorcerer', 'fighter', 'barbarian', 'pirate',
+                        'noble', 'royal', 'merchant', 'craftsman', 'scholar', 'scientist', 'engineer',
+                        'samurai', 'ninja', 'gunslinger', 'shaman', 'warlock', 'artificer', 'inquisitor'
+                    ];
+                    
+                    professions.forEach(profession => {
+                        if (descriptionLower.includes(profession)) tags.add(profession);
+                    });
+                }
+                
+                // Add abilities-based tags
+                if (data.abilities) {
+                    const abilitiesLower = data.abilities.toLowerCase();
+                    const powerTypes = [
+                        'magic', 'elemental', 'fire', 'water', 'earth', 'air', 'lightning',
+                        'telekinesis', 'telepathy', 'psychic', 'healing', 'illusion', 'shapeshifting',
+                        'summoning', 'necromancy', 'divination', 'enchantment', 'alchemy', 
+                        'martial arts', 'swordsmanship', 'archery', 'stealth', 'leadership',
+                        'ice', 'shadow', 'light', 'darkness', 'time', 'space', 'gravity',
+                        'blood', 'poison', 'nature', 'spirit', 'mind', 'illusion', 'enchantment'
+                    ];
+                    
+                    powerTypes.forEach(power => {
+                        if (abilitiesLower.includes(power)) tags.add(power);
+                    });
+                    
+                    // Extract special abilities using regex patterns
+                    const abilityPatterns = [
+                        /can\s+([a-z]+)/g,                  // "can fly" -> "fly"
+                        /ability\s+to\s+([a-z]+)/g,         // "ability to teleport" -> "teleport"
+                        /power(?:s)?\s+of\s+([a-z]+)/g,     // "powers of invisibility" -> "invisibility"
+                        /master(?:y)?\s+of\s+([a-z]+)/g     // "mastery of disguise" -> "disguise"
+                    ];
+                    
+                    abilityPatterns.forEach(pattern => {
+                        const matches = abilitiesLower.matchAll(pattern);
+                        for (const match of matches) {
+                            if (match[1] && match[1].length > 3) { // Only meaningful abilities longer than 3 chars
+                                tags.add(match[1]);
+                            }
+                        }
                     });
                 }
 
@@ -5603,7 +5590,45 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             };
 
             // Create prompt for additional character elements
-            const prompt = SILLYTAVERN_PROMPT.replace('${characterText}', characterText);
+            let prompt = SILLYTAVERN_PROMPT.replace('${characterText}', characterText);
+            
+            // Get the scenario text if available
+            const scenarioText = document.getElementById('character-scenario').value.trim();
+            
+            // Set up scenario sections for the prompt
+            let scenarioSection = '';
+            let firstMessageInstructions = '';
+            
+            if (scenarioText) {
+                // Scenario exists - provide scenario-specific instructions
+                scenarioSection = `Scenario:\n${scenarioText}\n\nIMPORTANT: This scenario will be used as the context for the character's first message.`;
+                
+                firstMessageInstructions = `1. First Message (first_mes):
+- MUST be a direct continuation of the exact scenario above
+- The character should be responding as if they are already in the middle of the scene described
+- DO NOT address the user directly or start a new interaction
+- Continue the scene exactly from where the scenario left off
+- Include appropriate actions and dialogue that would naturally follow in that moment
+- Make sure to maintain the tone and atmosphere established in the scenario
+- If you use an action, it begins with * and ends with *
+- Speech goes in quotes EXAMPLE: "What's happening to the river?", action has asterisks EXAMPLE: *reaches out with his tentacles to steady himself*`;
+            } else {
+                // No scenario - provide standard greeting instructions
+                scenarioSection = '';
+                
+                firstMessageInstructions = `1. First Message (first_mes):
+- A natural, in-character greeting that introduces the character
+- Should reflect their personality and background
+- Give a mix of actions and speech
+- This greeting will be used as the first message in a new chat if the character has not already met the user
+- Make this prompt in a style as if the character has never met the user before
+- If you use an action at the beginning of a greeting make sure it begins with * and ends with *
+- Speech goes in quotes EXAMPLE: "Hello, how are you?", action has an * at the beginning and at the end of the action EXAMPLE: *sets phone down*, narration gets nothing. Structure your responses accordingly. EXAMPLE MESSAGE: *I set my phone down and wave* "Hey, how are you!"`;
+            }
+            
+            // Replace the placeholders
+            prompt = prompt.replace('${scenarioSection}', scenarioSection);
+            prompt = prompt.replace('${firstMessageInstructions}', firstMessageInstructions);
 
             // Get the current model and backend type
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
@@ -5646,7 +5671,10 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             // Create the base character data
             const characterData = {
                 name: nameMatch ? nameMatch[1].trim() : 'Unknown',
-                description: cleanTextSection((physicalMatch ? physicalMatch[1] : '') + (backstoryMatch ? '\n' + backstoryMatch[1] : '')),                personality: cleanTextSection(personalityMatch ? personalityMatch[1] : ''),
+                description: cleanTextSection((physicalMatch ? physicalMatch[1] : '') + 
+                    (backstoryMatch ? '\n' + backstoryMatch[1] : '') + 
+                    (abilitiesMatch ? '\n\nAbilities & Skills:\n\n' + abilitiesMatch[1] : '')),
+                personality: cleanTextSection(personalityMatch ? personalityMatch[1] : ''),
                 first_mes: firstMesMatch ? cleanTextSection(firstMesMatch[1]) : '',
                 mes_example: mesExampleMatch ? 
                     cleanTextSection(mesExampleMatch[1]).split('\n').filter(line => line.trim()).join('\n') : '',
@@ -5658,6 +5686,7 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                         .filter(line => line.trim()) : [],
                 creator_notes: 'Created using OllamaVision Character Creator',
                 character_book: '',
+                scenario: '',
                 creator: 'OllamaVision',
                 character_version: '1.0',
                 extensions: {
@@ -5840,3 +5869,4 @@ function safeBase64Encode(str) {
     }
     return btoa(base64);
 }
+            
