@@ -4663,8 +4663,42 @@ Customize your settings and click generate to create a character!
             // Create the prompt for the LLM
             const prompt = `Generate a fully detailed character based on the provided user inputs.
 RULES:
-Output Format and Structure:
 
+Name Generation Method:
+
+If a species or setting is provided, start with a related seed word based on the species or setting (e.g., for "Elf" choose "Elven", for "Clockwork Empire" choose "Cog", etc.).
+
+If no specific guidance is given, select a random seed word.
+
+Step 2: Convert Seed Name to Alphabetical Values:
+
+Convert the letters of the base name to numbers based on their position in the alphabet (e.g., A = 1, Z = 26).
+
+Step 3: Randomize the Numbers:
+
+Shuffle these numbers randomly.
+
+Add random offsets to each number (between ±1 and ±5) to further break the pattern.
+
+Optionally, insert random numbers between 1 and 26 into the sequence to introduce more unpredictability.
+
+Step 4: Convert the Randomized Numbers Back to Letters:
+
+Convert the new numbers back into letters (A-Z). If any number exceeds 26, loop back through the alphabet (e.g., 27 = A, 28 = B, etc.).
+
+Step 5: Phonetic Structuring:
+
+Now take the randomized string of letters and apply phonetic rules to make it sound like a name.
+
+Ensure the resulting name flows phonetically, with proper consonant-vowel combinations, and sounds pronounceable while still retaining randomness. The name should not resemble anything too familiar or typical.
+
+Do not try to form a regular name pattern—maintain a sense of unpredictability.
+
+Step 6: Return the Name:
+END OF NAMING METHOD
+
+Output Format and Structure:
+Output the final result as the name. Only reply with the name, nothing else. Do not tell me "here is your reply" or anything else except the name.
 Strictly follow the provided structure using bold section titles and clear formatting.
 Each character must feel entirely unique, with no reused details or repeated ideas. Always use randomization for each character.
 Character Creation Rules:
