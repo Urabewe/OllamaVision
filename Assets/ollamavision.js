@@ -42,6 +42,14 @@ Please generate the following elements in a structured format:
 - Make sure to prompt for the character to use both action and speech and to narrate the scene when it fits the scenario
 - IMPORTANT ALWAYS INCLUDE THIS LINE IN THE SYSTEM PROMPT: Speech goes in quotes EXAMPLE: "Hello, how are you?", action has an * at the beginning and at the end of the action EXAMPLE: *sets phone down*, narration gets nothing. Structure your responses accordingly. EXAMPLE MESSAGE: *I set my phone down and wave* "Hey, how are you!"
 - Make the system prompt rich and detailed to include all the information. 
+- Speech Patterns and Accents:
+  * Include specific speech patterns based on species (e.g., snake-like characters using elongated 's' sounds, merfolk having a watery lilt)
+  * Add appropriate accents for role/background (e.g., pirate dialect, noble speech patterns, regional accents)
+  * Include unique verbal tics or mannerisms that fit their character
+  * Maintain consistent speech patterns throughout all responses
+  * Balance between distinctive speech and readability
+  * Use phonetic spelling when appropriate to convey accent (e.g., "arr" for pirate speech)
+  * Include examples of their unique speech patterns in the system prompt
 
 4. Post-History Instructions:
 - Specific guidelines for the AI after reading chat history
@@ -781,8 +789,9 @@ async function addOllamaVisionTab(utilitiesTab) {
                                     <div class="col-md-6 mb-2">
                                         <label class="form-label mb-1">OobaBooga WebUI URL</label>
                                         <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
-                                               placeholder="Enter your OobaBooga WebUI URL">
-                                        <small class="form-text text-muted">This is the URL of your OobaBooga WebUI instance</small>
+                                               placeholder="http://localhost:5000"
+                                               value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
+                                        <small class="form-text text-muted">The URL where your OobaBooga WebUI is running (defaults to http://localhost:5000)</small>
                                     </div>
                                 </div>
                                 <!-- OobaBooga Settings -->
@@ -792,6 +801,18 @@ async function addOllamaVisionTab(utilitiesTab) {
                                         <input type="text" class="auto-text modal_text_extra" id="OobaBooga-url" 
                                                placeholder="http://localhost:5000">
                                         <small class="form-text text-muted">The URL where your OobaBooga WebUI is running</small>
+                                    </div>
+                                </div>
+                                <!-- OobaBooga-specific Settings -->
+                                <div id="textgen-settings" style="display: none;">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">Remote OobaBooga Connection</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
+                                               placeholder="URL (e.g., http://192.168.1.100:5000)" 
+                                               value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
+                                        <small class="form-text text-muted">
+                                            Enter the full URL of your OobaBooga WebUI instance
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -1757,8 +1778,9 @@ window.ollamaVision = {
                                         <div class="col-md-6 mb-2">
                                             <label class="form-label mb-1">OobaBooga WebUI URL</label>
                                             <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
-                                                   placeholder="Enter your OobaBooga WebUI URL">
-                                            <small class="form-text text-muted">This is the URL of your OobaBooga WebUI instance</small>
+                                                   placeholder="http://localhost:5000"
+                                                   value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
+                                            <small class="form-text text-muted">The URL where your OobaBooga WebUI is running (defaults to http://localhost:5000)</small>
                                         </div>
                                     </div>
                                     <!-- OobaBooga Settings -->
@@ -1768,6 +1790,18 @@ window.ollamaVision = {
                                             <input type="text" class="auto-text modal_text_extra" id="OobaBooga-url" 
                                                    placeholder="http://localhost:5000">
                                             <small class="form-text text-muted">The URL where your OobaBooga WebUI is running</small>
+                                        </div>
+                                    </div>
+                                    <!-- OobaBooga-specific Settings -->
+                                    <div id="textgen-settings" style="display: none;">
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">Remote OobaBooga Connection</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
+                                                   placeholder="URL (e.g., http://192.168.1.100:5000)" 
+                                                   value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
+                                            <small class="form-text text-muted">
+                                                Enter the full URL of your OobaBooga WebUI instance
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -1862,7 +1896,7 @@ window.ollamaVision = {
         const compressImages = document.getElementById('compressImages').checked;
         
         // Get OobaBooga URL with default
-        const OobaBoogaUrl = document.getElementById('OobaBooga-url').value.trim() || 'http://localhost:5000';
+        const textgenUrl = document.getElementById('OobaBooga-url').value.trim() || 'http://localhost:5000';
         
         // Validate required fields based on backend type
         if (backendType === 'openai' && !openaiKey) {
@@ -1887,7 +1921,7 @@ window.ollamaVision = {
         localStorage.setItem('ollamaVision_openrouterKey', openrouterKey);
         localStorage.setItem('ollamaVision_openrouterSite', openrouterSite);
         localStorage.setItem('ollamaVision_compressImages', compressImages);
-        localStorage.setItem('ollamaVision_textgenUrl', OobaBoogaUrl);
+        localStorage.setItem('ollamaVision_textgenUrl', textgenUrl);
         
         bootstrap.Modal.getInstance(document.getElementById('ollamaSettingsModal')).hide();
         this.updateStatus('success', 'Settings saved successfully');
@@ -4050,19 +4084,55 @@ window.ollamaVision = {
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
         
-        if (backendType === 'ollama' && autoUnload) {
+        if (autoUnload) {
             try {
-                await new Promise((resolve, reject) => {
-                    genericRequest('UnloadModelAsync', 
-                        { 
-                            model: model,
-                            ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`,
-                            keep_alive: 0  // Add this to ensure immediate unloading
-                        },
-                        (data) => resolve(data),
-                        (error) => reject(error)
-                    );
-                });
+                if (backendType === 'ollama') {
+                    let host = localStorage.getItem('ollamaVision_host') || 'localhost';
+                    const port = localStorage.getItem('ollamaVision_port') || '11434';
+                    
+                    // Add protocol if not present
+                    if (!host.startsWith('http://') && !host.startsWith('https://')) {
+                        host = `http://${host}`;
+                    }
+                    
+                    // Remove any trailing slashes
+                    host = host.replace(/\/+$/, '');
+                    
+                    const ollamaUrl = `${host}:${port}`;
+                    
+                    await new Promise((resolve, reject) => {
+                        genericRequest('UnloadModelAsync', 
+                            { 
+                                model: model,
+                                ollamaUrl: ollamaUrl,
+                                keep_alive: 0
+                            },
+                            (data) => resolve(data),
+                            (error) => reject(error)
+                        );
+                    });
+                } else if (backendType === 'textgen') {
+                    let textgenUrl = localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000';
+                    
+                    // Add protocol if not present
+                    if (!textgenUrl.startsWith('http://') && !textgenUrl.startsWith('https://')) {
+                        textgenUrl = `http://${textgenUrl}`;
+                    }
+                    
+                    // Remove any trailing slashes
+                    textgenUrl = textgenUrl.replace(/\/+$/, '');
+                    
+                    await new Promise((resolve, reject) => {
+                        genericRequest('LoadTextGenModelAsync', 
+                            { 
+                                textgenUrl: textgenUrl,
+                                model: model
+                            },
+                            (data) => resolve(data),
+                            (error) => reject(error)
+                        );
+                    });
+                }
             } catch (error) {
                 console.error(`Failed to unload model: ${error}`);
             }
@@ -4665,8 +4735,19 @@ Customize your settings and click generate to create a character!
 RULES:
 
 Name Generation Method:
+Generate a unique character name based on the user's choices:
 
-If a species or setting is provided, start with a related seed word based on the species or setting (e.g., for "Elf" choose "Elven", for "Clockwork Empire" choose "Cog", etc.).
+For Human or Realistic characters (e.g., Modern, Renaissance, Noir, Western settings):
+
+Choose a first and last name from diverse real-world cultures.
+
+Avoid the most common names (e.g., 'John Smith' or 'Emily Johnson').
+
+Randomize the first letter of both names to ensure variation.
+
+For other settings such as Fantasy, Sci-Fi, Space, or any other setting where human sounding names don't fit follow the name generation method below:
+
+Step 1: If a species or setting is provided, start with a related seed word based on the species or setting (e.g., for "Elf" choose "Elven", for "Clockwork Empire" choose "Cog", etc.).
 
 If no specific guidance is given, select a random seed word.
 
@@ -4769,21 +4850,21 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
 - [Describe key strengths and weaknesses]  
 
 **Physical Description:**  
-- Height & Build: [Tall, short, muscular, thin, etc.]  
+- Height & Build: [Tall, short, muscular, thin, etc. do not limit yourself to stereotypes]  
 - Skin, Hair, and Eyes: [Describe colors, texture, or unique features]  
 - Clothing & Accessories: [What the character wears and notable items]  
 - Weapons or Tools: [If applicable, describe what they carry]  
 
 **Abilities & Skills:**  
 - [List 3-4 abilities that match their class/role]
-- [Include both combat and non-combat abilities]
-- [Ensure abilities fit the setting and species]
+- [If the user is trying to create a real world character such as a human then do not give them special powers or abilities make their skills real world skills]
+- [Ensure abilities fit the setting, species, and role]
 - [Add unique or signature abilities]
 
 **Backstory:**  
 - [Write a short but fully detailed backstory that integrates the character's setting, role, and alignment]  
 - [Include motivations, conflicts, relationships, and major life events]  
-- [Explain how they came to their class/role]  
+- [Explain how they came to their class/role and what they do now]
 
 **AI Image Prompt:**  
 *"[A vivid, highly detailed description of the character's physical appearance, clothing, setting, pose, lighting, and artistic style for AI image generation. Ensure it is unique each time, incorporating elements from the AI-generated backstory. Each one should be a character portrait.]"*`;
@@ -5496,6 +5577,23 @@ Scenario:`;
                     .trim();
             };
 
+            // Function to format example messages
+            const formatExampleMessages = (text) => {
+                if (!text) return '';
+                const examples = text.split('\n\n');
+                return examples.map(example => {
+                    // Add START tag if not present
+                    if (!example.startsWith('<START>')) {
+                        example = `<START>\n${example}`;
+                    }
+                    // Replace character name with {{char}} if not already present
+                    if (nameMatch) {
+                        example = example.replace(new RegExp(nameMatch[1], 'g'), '{{char}}');
+                    }
+                    return example;
+                }).join('\n\n');
+            };
+
             // Generate tags based on character attributes
             const generateTags = (data, personality) => {
                 const tags = new Set();
@@ -5595,29 +5693,13 @@ Scenario:`;
                         'summoning', 'necromancy', 'divination', 'enchantment', 'alchemy', 
                         'martial arts', 'swordsmanship', 'archery', 'stealth', 'leadership',
                         'ice', 'shadow', 'light', 'darkness', 'time', 'space', 'gravity',
-                        'blood', 'poison', 'nature', 'spirit', 'mind', 'illusion', 'enchantment'
+                        'blood', 'poison', 'nature', 'spirit', 'mind'
                     ];
                     
                     powerTypes.forEach(power => {
                         if (abilitiesLower.includes(power)) tags.add(power);
                     });
                     
-                    // Extract special abilities using regex patterns
-                    const abilityPatterns = [
-                        /can\s+([a-z]+)/g,                  // "can fly" -> "fly"
-                        /ability\s+to\s+([a-z]+)/g,         // "ability to teleport" -> "teleport"
-                        /power(?:s)?\s+of\s+([a-z]+)/g,     // "powers of invisibility" -> "invisibility"
-                        /master(?:y)?\s+of\s+([a-z]+)/g     // "mastery of disguise" -> "disguise"
-                    ];
-                    
-                    abilityPatterns.forEach(pattern => {
-                        const matches = abilitiesLower.matchAll(pattern);
-                        for (const match of matches) {
-                            if (match[1] && match[1].length > 3) { // Only meaningful abilities longer than 3 chars
-                                tags.add(match[1]);
-                            }
-                        }
-                    });
                 }
 
                 return Array.from(tags);
@@ -5696,28 +5778,32 @@ Scenario:`;
 
             // Extract and clean the generated elements
             const generatedText = response.response;
-            const firstMesMatch = generatedText.match(/<first_mes>\n([\s\S]*?)\n<\/first_mes>/);
-            const mesExampleMatch = generatedText.match(/<mes_example>\n([\s\S]*?)\n<\/mes_example>/);
-            const systemPromptMatch = generatedText.match(/<system_prompt>\n([\s\S]*?)\n<\/system_prompt>/);
-            const postHistoryMatch = generatedText.match(/<post_history_instructions>\n([\s\S]*?)\n<\/post_history_instructions>/);
-            const alternateGreetingsMatch = generatedText.match(/<alternate_greetings>\n([\s\S]*?)\n<\/alternate_greetings>/);
-
+            
+            
+            const firstMesMatch = generatedText.match(/<first_mes>\n?([\s\S]*?)\n?<\/first_mes>/);
+            const mesExampleMatch = generatedText.match(/<mes_example>\n?([\s\S]*?)\n?<\/mes_example>/);
+            const systemPromptMatch = generatedText.match(/<system_prompt>\n?([\s\S]*?)\n?<\/system_prompt>/);
+            const postHistoryMatch = generatedText.match(/<post_history_instructions>\n?([\s\S]*?)\n?<\/post_history_instructions>/);
+            
+            // Use only the XML-style pattern for alternate greetings
+            const alternateGreetingsMatch = generatedText.match(/<alternate_greetings>\n?([\s\S]*?)\n?<\/alternate_greetings>/);
+            
             // Create the base character data
             const characterData = {
                 name: nameMatch ? nameMatch[1].trim() : 'Unknown',
                 description: cleanTextSection((physicalMatch ? physicalMatch[1] : '') + 
                     (backstoryMatch ? '\n' + backstoryMatch[1] : '') + 
-                    (abilitiesMatch ? '\n\nAbilities & Skills:\n\n' + abilitiesMatch[1] : '')),
+                    (abilitiesMatch ? '\n\nAbilities & Skills:\n\n\n' + abilitiesMatch[1] : '')),
                 personality: cleanTextSection(personalityMatch ? personalityMatch[1] : ''),
-                first_mes: firstMesMatch ? cleanTextSection(firstMesMatch[1]) : '',
-                mes_example: mesExampleMatch ? 
-                    cleanTextSection(mesExampleMatch[1]).split('\n').filter(line => line.trim()).join('\n') : '',
-                system_prompt: systemPromptMatch ? cleanTextSection(systemPromptMatch[1]) : '',
+                first_mes: firstMesMatch ? formatExampleMessages(cleanTextSection(firstMesMatch[1])) : '',
+                mes_example: mesExampleMatch ? formatExampleMessages(cleanTextSection(mesExampleMatch[1])) : '',
+                system_prompt: `You are ${nameMatch ? nameMatch[1].trim() : 'Unknown'}. ${cleanTextSection(personalityMatch ? personalityMatch[1] : '')}${systemPromptMatch ? '\n\n' + cleanTextSection(systemPromptMatch[1]) : ''}`,
                 post_history_instructions: postHistoryMatch ? cleanTextSection(postHistoryMatch[1]) : '',
                 alternate_greetings: alternateGreetingsMatch ? 
                     cleanTextSection(alternateGreetingsMatch[1])
                         .split('\n')
-                        .filter(line => line.trim()) : [],
+                        .filter(line => line.trim())
+                        .map(greeting => formatExampleMessages(greeting)) : [],
                 creator_notes: 'Created using OllamaVision Character Creator',
                 character_book: '',
                 scenario: '',
