@@ -653,14 +653,26 @@ namespace Urabewe.OllamaVision.WebAPI
                     };
                 }
 
+                // Get custom Ollama URL if provided, otherwise default to localhost
+                string ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+                
+                // Ensure URL has no trailing slash
+                ollamaUrl = ollamaUrl.TrimEnd('/');
+
+                // Check if keep_alive was provided directly
+                var keepAlive = data["keep_alive"]?.ToObject<int?>() ?? 0;
+
+                // Create the request with options matching how Ollama expects them
                 var requestBody = new JObject
                 {
                     ["model"] = model,
-                    ["action"] = "unload"
+                    ["prompt"] = " ", // Minimal prompt
+                    ["stream"] = false,
+                    ["keep_alive"] = "0"
                 };
 
                 var response = await client.PostAsync(
-                    "http://localhost:11434/api/pull",
+                    $"{ollamaUrl}/api/generate",
                     new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json")
                 );
                 
