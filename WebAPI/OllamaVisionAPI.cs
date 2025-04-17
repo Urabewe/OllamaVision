@@ -34,6 +34,8 @@ namespace Urabewe.OllamaVision.WebAPI
             ["Technical Details"] = "Analyze this image from a technical perspective, including camera angle, focal length, depth of field, lighting setup, composition rules (e.g., rule of thirds, leading lines), and any photographic or cinematic techniques used.",
             ["Color Palette"] = "Describe the color palette of this image in detail, listing all dominant and secondary colors, their shades and tones, and any notable patterns or color harmonies present. Avoid mentioning anything unrelated to colors.",
             ["Facial Features"] = "Provide an extremely detailed description of the subject's facial features, including skin tone, hair color, eye color, eye shape, nose shape, facial structure, beauty marks, freckles, moles, blemishes, and any other defining traits. Do not include any details beyond facial features.",
+            ["Danbooru Tags"] = "Analyze this image and provide tag descriptions in the style of Danbooru or a booru image board. Format the output as a comma-separated list of tags, using underscores between words in multi-word tags (e.g., 'blue_hair'). Focus on character traits, clothing, accessories, settings, and actions. Begin with rating tags like 'safe', 'questionable', or 'explicit' based on content. Include meta tags for art style, medium, and aesthetic. Example: 'safe, 1girl, blue_eyes, blonde_hair, dress, forest, night, standing, looking_at_viewer, tree, solo'",
+            ["Lora Natural"] = "Describe this image in detail for training a Lora model. Focus on consistent visual elements like character features, clothing styles, artistic techniques, or environmental attributes that define this particular style or subject. Be comprehensive but concise, using clear descriptive language that would help distinguish this subject or style from others. Format as a single detailed paragraph with strong, specific descriptors.",
         };
 
         private static readonly Dictionary<string, string> FUSION_PROMPTS = new Dictionary<string, string>
@@ -52,7 +54,9 @@ namespace Urabewe.OllamaVision.WebAPI
             "Artistic Style",
             "Technical Details",
             "Color Palette",
-            "Facial Features"
+            "Facial Features",
+            "Danbooru Tags",
+            "Lora Natural"
         };
 
         private static readonly string STORY_PROMPT = @"Craft a fully developed story inspired entirely by the provided image. Use the scene, characters, and mood depicted in the image as the central focus of the narrative. The story must have a clear structure, including an intriguing beginning, a compelling middle, and a satisfying resolution. Set the scene vividly, introduce the main characters and the central conflict or goal, and develop the plot with engaging challenges, interactions, and events that drive the narrative forward. Resolve the story with closure that ties together the themes and character arcs. Use rich, descriptive language to bring the scene, characters, and events to life, balancing dialogue, action, and description to create a dynamic and immersive narrative. Incorporate variety and creativity in storytelling approaches, such as comedy, fantasy, adventure, or mystery, while keeping all content appropriate and family-friendly. Avoid any offensive, controversial, or sensitive material. Do not include commentary about the image itself; focus solely on crafting a story based on the image's elements. The story should have a word count of 2,000–3,000 words and feel polished, complete, and original, with emotional resonance and creativity.";
@@ -72,6 +76,7 @@ namespace Urabewe.OllamaVision.WebAPI
             API.RegisterAPICall(GenerateCharacterAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(ConnectToTextGenAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(LoadTextGenModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(BatchCaptionImagesAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
@@ -1546,6 +1551,239 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                 {
                     ["success"] = false,
                     ["error"] = $"Parameter validation failed: {ex.Message}"
+                };
+            }
+        }
+
+        [API.APIDescription("Captions multiple images in a directory for Lora training", "Returns success status and caption details")]
+        public static async Task<JObject> BatchCaptionImagesAsync(JObject data)
+        {
+            try
+            {
+                // Extract and validate required parameters
+                var folderPath = data["folderPath"]?.ToString();
+                var captionStyle = data["captionStyle"]?.ToString() ?? "Danbooru Tags";
+                var triggerWord = data["triggerWord"]?.ToString() ?? "";
+                var model = data["model"]?.ToString();
+                var backendType = data["backendType"]?.ToString() ?? "ollama";
+                
+                if (string.IsNullOrEmpty(folderPath))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "No folder path specified"
+                    };
+                }
+
+                if (string.IsNullOrEmpty(model))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "No model specified"
+                    };
+                }
+
+                // Make sure folder exists
+                if (!Directory.Exists(folderPath))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = $"Folder not found: {folderPath}"
+                    };
+                }
+
+                // Get all images in folder
+                var imageFiles = Directory.GetFiles(folderPath, "*.*")
+                    .Where(file => {
+                        var ext = Path.GetExtension(file).ToLower();
+                        return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp" || ext == ".bmp";
+                    })
+                    .ToList();
+
+                if (imageFiles.Count == 0)
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "No image files found in the specified folder"
+                    };
+                }
+
+                // Determine which prompt to use based on captionStyle
+                string promptTemplate;
+                
+                if (captionStyle == "Danbooru Tags")
+                {
+                    promptTemplate = PRESET_PROMPTS["Danbooru Tags"];
+                }
+                else 
+                {
+                    promptTemplate = PRESET_PROMPTS["Lora Natural"];
+                }
+
+                // Set up the response with initial data
+                var progressResponse = new JObject
+                {
+                    ["success"] = true,
+                    ["total"] = imageFiles.Count,
+                    ["inProgress"] = true,
+                    ["processed"] = 0,
+                    ["successful"] = 0,
+                    ["failed"] = 0,
+                    ["results"] = new JArray()
+                };
+
+                // Process each image - but now we'll use a different approach to allow for incremental updates
+                var successCount = 0;
+                var errorCount = 0;
+                var processedCount = 0;
+
+                // Create a list for all results that will be returned at the end
+                var allResults = new JArray();
+
+                // Here's where we process the images one by one
+                foreach (var imageFile in imageFiles)
+                {
+                    try
+                    {
+                        // Extract file name and prepare caption file path
+                        var fileName = Path.GetFileNameWithoutExtension(imageFile);
+                        var captionFile = Path.Combine(folderPath, fileName + ".txt");
+                        
+                        var resultItem = new JObject
+                        {
+                            ["fileName"] = fileName
+                        };
+
+                        // Skip if caption file already exists
+                        if (File.Exists(captionFile))
+                        {
+                            resultItem["status"] = "skipped";
+                            resultItem["message"] = "Caption file already exists";
+                            allResults.Add(resultItem);
+                            continue;
+                        }
+
+                        // Read image file and convert to base64
+                        var imageBytes = File.ReadAllBytes(imageFile);
+                        var base64Image = Convert.ToBase64String(imageBytes);
+
+                        // Prepare request to analyze image
+                        var imageRequest = new JObject
+                        {
+                            ["prompt"] = promptTemplate,
+                            ["imageData"] = base64Image,
+                            ["model"] = model,
+                            ["backendType"] = backendType
+                        };
+
+                        // Copy all relevant parameters from original request
+                        foreach (var param in data.Properties())
+                        {
+                            if (param.Name != "folderPath" && param.Name != "captionStyle" && param.Name != "triggerWord" && 
+                                param.Name != "imageData" && param.Name != "prompt" && 
+                                !imageRequest.ContainsKey(param.Name))
+                            {
+                                imageRequest[param.Name] = param.Value;
+                            }
+                        }
+
+                        // Process the image
+                        var analysisResult = await AnalyzeImageAsync(imageRequest);
+                        
+                        processedCount++;
+                        
+                        if (analysisResult["success"]?.ToObject<bool>() == true)
+                        {
+                            var caption = analysisResult["response"]?.ToString();
+                            
+                            if (!string.IsNullOrEmpty(caption))
+                            {
+                                // Add trigger word if provided
+                                if (!string.IsNullOrEmpty(triggerWord))
+                                {
+                                    caption = triggerWord + ", " + caption;
+                                }
+                                
+                                // Write caption to file
+                                File.WriteAllText(captionFile, caption);
+                                
+                                resultItem["status"] = "success";
+                                resultItem["caption"] = caption;
+                                
+                                successCount++;
+                            }
+                            else
+                            {
+                                resultItem["status"] = "error";
+                                resultItem["message"] = "Empty caption generated";
+                                errorCount++;
+                            }
+                        }
+                        else
+                        {
+                            resultItem["status"] = "error";
+                            resultItem["message"] = analysisResult["error"]?.ToString() ?? "Unknown error";
+                            errorCount++;
+                        }
+
+                        // Add this result to our collection
+                        allResults.Add(resultItem);
+                        
+                        // Create an incremental update response
+                        var updateResponse = new JObject
+                        {
+                            ["success"] = true,
+                            ["total"] = imageFiles.Count,
+                            ["inProgress"] = true,
+                            ["processed"] = processedCount,
+                            ["successful"] = successCount,
+                            ["failed"] = errorCount,
+                            ["results"] = new JArray { resultItem }
+                        };
+                        
+                        // Send update through SignalR or other real-time mechanism
+                        // This is where you would need to add code to send the updateResponse
+                        // using a real-time communication method
+                        // For example: await hubContext.Clients.Client(connectionId).SendAsync("BatchCaptionUpdate", updateResponse);
+                    }
+                    catch (Exception ex)
+                    {
+                        var resultItem = new JObject
+                        {
+                            ["fileName"] = Path.GetFileNameWithoutExtension(imageFile),
+                            ["status"] = "error",
+                            ["message"] = ex.Message
+                        };
+                        
+                        allResults.Add(resultItem);
+                        errorCount++;
+                        processedCount++;
+                    }
+                }
+
+                // Return the final complete response
+                return new JObject
+                {
+                    ["success"] = true,
+                    ["total"] = imageFiles.Count,
+                    ["inProgress"] = false,
+                    ["processed"] = processedCount,
+                    ["successful"] = successCount,
+                    ["failed"] = errorCount,
+                    ["results"] = allResults
+                };
+            }
+            catch (Exception ex)
+            {
+                Logs.Error($"Error in BatchCaptionImagesAsync: {ex.Message}");
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = ex.Message
                 };
             }
         }

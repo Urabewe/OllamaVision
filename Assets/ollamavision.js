@@ -2519,6 +2519,314 @@ window.ollamaVision = {
         }
     },
 
+    showBatchCaptioner: function() {
+        if (!document.getElementById('batchCaptionerModal')) {
+            const batchCaptionerModalHtml = `
+            <div class="modal fade" id="batchCaptionerModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Batch Image Captioner</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-3" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                                <p class="mb-0" style="font-size: 1.1rem; color: var(--text-color-secondary);">This tool will generate captions for all images in a folder for Lora training.</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="lora-type" class="form-label">Lora Type</label>
+                                <select id="lora-type" class="auto-dropdown" onchange="ollamaVision.updateCaptionStyleOptions()">
+                                    <option value="style">Style Lora</option>
+                                    <option value="character">Character Lora</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="batch-caption-style" class="form-label">Caption Style</label>
+                                <select id="batch-caption-style" class="auto-dropdown">
+                                    <option value="Lora Natural">Natural Language</option>
+                                    <option value="Danbooru Tags">Danbooru Tags</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="batch-trigger-word" class="form-label">Trigger Word (Optional)</label>
+                                <input type="text" id="batch-trigger-word" class="auto-input" placeholder="Enter a trigger word">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="batch-folder-path" class="form-label">Image Folder Path</label>
+                                <div class="input-group">
+                                    <input type="text" id="batch-folder-path" class="auto-input" placeholder="Path to folder containing images">
+                                    <button class="basic-button" onclick="ollamaVision.browseFolderPath()">Browse</button>
+                                </div>
+                            </div>
+                            
+                            <div id="batch-status" class="alert alert-info mt-3 text-center" style="display: none;"></div>
+                            
+                            <div id="batch-results-container" class="mt-3" style="display: none; max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>File</th>
+                                            <th>Status</th>
+                                            <th>Caption</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batch-results-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="basic-button" id="batch-caption-btn" onclick="ollamaVision.startBatchCaptioning()">Start Captioning</button>
+                            <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', batchCaptionerModalHtml);
+        }
+    
+        // Show the modal
+        new bootstrap.Modal(document.getElementById('batchCaptionerModal')).show();
+    },
+    
+    updateCaptionStyleOptions: function() {
+        const loraType = document.getElementById('lora-type').value;
+        const captionStyleSelect = document.getElementById('batch-caption-style');
+        
+        // Clear existing options
+        captionStyleSelect.innerHTML = '';
+        
+        if (loraType === 'style') {
+            // Style Lora options
+            captionStyleSelect.innerHTML = `
+                <option value="Lora Natural">Natural Language</option>
+                <option value="Danbooru Tags">Danbooru Tags</option>
+            `;
+        } else {
+            // Character Lora options
+            captionStyleSelect.innerHTML = `
+                <option value="Danbooru Tags">Danbooru Tags</option>
+                <option value="Lora Natural">Natural Language</option>
+            `;
+        }
+    },
+    
+    browseFolderPath: function() {
+        // For Windows only at the moment
+        if (navigator.userAgent.indexOf('Windows') !== -1) {
+            // Create a file input for directory selection
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.setAttribute('webkitdirectory', '');
+            input.setAttribute('directory', '');
+            
+            // Prevent default upload behavior
+            input.addEventListener('change', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (this.files && this.files.length > 0) {
+                    // Get path information from files
+                    const file = this.files[0];
+                    let path = '';
+                    
+                    // Try different ways to get the path
+                    if (file.path) {
+                        // Electron/Node.js environment
+                        path = file.path.substring(0, file.path.lastIndexOf('\\'));
+                    } else if (file.webkitRelativePath) {
+                        // Get the folder name from webkitRelativePath
+                        const folderName = file.webkitRelativePath.split('/')[0];
+                        
+                        // Ask user for the full path but with the folder name prefilled
+                        path = prompt(
+                            "Please enter the full path to this folder:",
+                            "C:\\Users\\Travis\\Desktop\\" + folderName
+                        );
+                    }
+                    
+                    if (path) {
+                        document.getElementById('batch-folder-path').value = path;
+                    }
+                }
+                
+                // Remove the input element to prevent any upload behavior
+                this.remove();
+            });
+            
+            // Add it, click it, and immediately remove from DOM
+            document.body.appendChild(input);
+            input.click();
+        } else {
+            // macOS/Linux: Ask user to manually enter path
+            const path = prompt("Please enter the full path to your images folder:");
+            if (path) {
+                document.getElementById('batch-folder-path').value = path;
+            }
+        }
+    },
+    
+    startBatchCaptioning: function() {
+        const folderPath = document.getElementById('batch-folder-path').value.trim();
+        if (!folderPath) {
+            alert('Please select a folder containing images.');
+            return;
+        }
+    
+        // Get the current selected model
+        const model = document.getElementById('ollamavision-model').value;
+        if (!model) {
+            alert('Please select a model first.');
+            return;
+        }
+        
+        // Format folder path for the file system
+        // Replace any forward slashes with backslashes for Windows paths
+        let formattedPath = folderPath.replace(/\//g, '\\');
+        
+        const captionStyle = document.getElementById('batch-caption-style').value;
+        const triggerWord = document.getElementById('batch-trigger-word').value.trim();
+        
+        // Get current model settings the same way as other LLM Toys
+        const requestData = {
+            folderPath: formattedPath,
+            captionStyle: captionStyle,
+            triggerWord: triggerWord,
+            model: model,  // Use actual model value from dropdown
+            backendType: localStorage.getItem('ollamaVision_backendType') || 'ollama'
+        };
+        
+        // Add backend-specific parameters from the current settings
+        const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+        
+        if (backendType === 'ollama') {
+            const host = localStorage.getItem('ollamaVision_host') || 'localhost';
+            const port = localStorage.getItem('ollamaVision_port') || '11434';
+            requestData.ollamaUrl = `http://${host}:${port}`;
+        } else if (backendType === 'openai') {
+            requestData.apiKey = localStorage.getItem('ollamaVision_openaiKey');
+        } else if (backendType === 'openrouter') {
+            requestData.apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+            requestData.siteName = localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI';
+        } else if (backendType === 'textgen') {
+            const textgenHost = localStorage.getItem('ollamaVision_textgenHost') || 'localhost';
+            const textgenPort = localStorage.getItem('ollamaVision_textgenPort') || '5000';
+            requestData.textgenUrl = `http://${textgenHost}:${textgenPort}`;
+        }
+        
+        // Add current model parameters
+        requestData.temperature = ollamaVision.temperature;
+        requestData.topP = ollamaVision.topP;
+        requestData.maxTokens = ollamaVision.maxTokens;
+      
+     
+        // Add style-specific system prompts
+        if (captionStyle === "Danbooru Tags") {
+            const loraType = document.getElementById('lora-type')?.value || 'style';
+            
+            if (loraType === 'character') {
+                requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on character attributes. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'blue_hair'). Focus on character traits, physical features, clothing, accessories, expressions, and poses. Include meta tags for character type, species, and gender. Example format: \"safe, 1girl, blue_eyes, blonde_hair, dress, smiling, standing, looking_at_viewer, solo, long_hair\"";
+            } else {
+                requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags like digital_art, traditional_media, illustration_style, or artistic influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
+            }
+        } else if (captionStyle === "Lora Natural") {
+            const loraType = document.getElementById('lora-type')?.value || 'style';
+            
+            if (loraType === 'character') {
+                requestData.systemPrompt = "Describe this character in detail for training a character Lora model. Focus on consistent visual elements like facial features, hairstyle, clothing, body type, and any distinctive accessories or traits that define this specific character. Be comprehensive but concise, using clear descriptive language. Format as a single detailed paragraph with strong, specific descriptors focused on character appearance.";
+            } else {
+                requestData.systemPrompt = "Describe this image's artistic style in detail for training a style Lora model. Focus on consistent visual elements like medium, technique, brushwork, lighting, composition, color palette, and artistic influences that define this particular style. Be comprehensive but concise, using clear descriptive language that would help distinguish this style from others. Format as a single detailed paragraph with strong, specific stylistic descriptors.";
+            }
+        }
+
+        // Add trigger word to system prompt for Lora training if needed
+        if (triggerWord && (captionStyle === "Lora Natural" || captionStyle === "Danbooru Tags")) {
+            if (!requestData.systemPrompt) {
+                requestData.systemPrompt = "";
+            }
+            requestData.systemPrompt += ` If a trigger word is provided, ensure the caption starts with that word followed by a comma.`;
+        }
+        
+        console.log('Sending batch caption request with data:', requestData);
+        
+        // Disable the button and show progress
+        document.getElementById('batch-caption-btn').disabled = true;
+        document.getElementById('batch-status').textContent = 'Captioning images... This may take some time.';
+        document.getElementById('batch-status').style.display = 'block';
+        document.getElementById('batch-results-container').style.display = 'none';
+        document.getElementById('batch-results-body').innerHTML = '';
+        
+        // Start the batch captioning process
+        genericRequest('BatchCaptionImagesAsync', 
+            requestData,
+            (response) => {
+                console.log('Batch caption response:', response);
+                document.getElementById('batch-caption-btn').disabled = false;
+                
+                if (response.success) {
+                    document.getElementById('batch-status').textContent = `Completed: ${response.successful} successful, ${response.failed} failed out of ${response.total} images.`;
+                    
+                    // Prepare results table as soon as the process starts
+                    document.getElementById('batch-results-container').style.display = 'block';
+                    
+                    // Populate results table
+                    if (response.results && response.results.length > 0) {
+                        const resultsBody = document.getElementById('batch-results-body');
+                        
+                        // Clear existing results if any
+                        if (!resultsBody.dataset.isPopulating) {
+                            resultsBody.innerHTML = '';
+                        }
+                        
+                        response.results.forEach(result => {
+                            this.addBatchResultRow(result);
+                        });
+                    }
+            } else {
+                    document.getElementById('batch-status').textContent = `Error: ${response.error || 'Unknown error'}`;
+                }
+            },
+            (error) => {
+                console.error('Batch caption error:', error);
+                document.getElementById('batch-caption-btn').disabled = false;
+                document.getElementById('batch-status').textContent = `Error: ${error || 'Unknown error'}`;
+            }
+        );
+    },
+    
+    // Helper function to add a single result row to the batch results table
+    addBatchResultRow: function(result) {
+        const resultsBody = document.getElementById('batch-results-body');
+        
+        // Create a new row
+        const row = document.createElement('tr');
+        
+        // Add class based on status
+        if (result.status === 'success') {
+            row.className = 'table-success';
+        } else if (result.status === 'error') {
+            row.className = 'table-danger';
+        } else if (result.status === 'skipped') {
+            row.className = 'table-warning';
+        }
+        
+        row.innerHTML = `
+            <td>${result.fileName}</td>
+            <td>${result.status}</td>
+            <td>${result.status === 'success' ? result.caption : (result.message || '')}</td>
+        `;
+        
+        // Add the row to the table
+        resultsBody.appendChild(row);
+        
+        // Scroll to the bottom of the table
+        const container = document.getElementById('batch-results-container');
+        container.scrollTop = container.scrollHeight;
+    },
     saveModelSettings: function() {
         try {
             const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
@@ -3479,8 +3787,8 @@ window.ollamaVision = {
     uploadFusionImage: function(type) {
         const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
         this.updateStatus('info', `Click to upload ${capitalizedType} image...`);
-        const input = document.createElement('input');
-        input.type = 'file';
+                const input = document.createElement('input');
+                input.type = 'file';
         input.accept = 'image/*';
         input.onchange = (e) => {
             const file = e.target.files[0];
@@ -3806,6 +4114,11 @@ window.ollamaVision = {
                                             style="font-size: 1.2rem;">
                                         Character Creator
                                     </button>
+                                    <button class="basic-button" 
+                                            onclick="ollamaVision.showBatchCaptioner(); $('#llmToysModal').modal('hide');" 
+                                            style="font-size: 1.2rem;">
+                                        Batch Image Captioner
+                                    </button>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -3937,7 +4250,7 @@ window.ollamaVision = {
                 this.handleStoryImageUpload(file);
             }
         };
-        input.click();
+                input.click();
     },
 
     handleStoryImageUpload: function(file) {
@@ -3971,7 +4284,7 @@ window.ollamaVision = {
             if (imageFile) {
                 this.handleStoryImageUpload(imageFile);
                 document.removeEventListener('paste', pasteHandler);
-            } else {
+        } else {
                 this.updateStatus('error', 'No image found in clipboard');
             }
         };
