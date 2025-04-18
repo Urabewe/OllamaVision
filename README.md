@@ -16,6 +16,7 @@
   - [Using the Results](#-using-the-results)
   - [Quick Tips](#-quick-tips)
 - [LLM Toys Guide](#-llm-toys-guide)
+  - [Batch Captioning](#-batch-captioning)
   - [Image Fusion](#-image-fusion)
   - [Object + Subject Fusion](#-object--subject-fusion)
   - [Story Time](#-story-time)
@@ -23,7 +24,6 @@
 - [Example Outputs](#-example-outputs)
   - [Color Palette Analysis](#-color-palette-analysis)
   - [Facial Features Analysis](#-facial-features-analysis)
-- [Planned Features](#-planned-features)
 - [Acknowledgments](#-acknowledgments)
 
 ## 🌟 Features
@@ -38,6 +38,7 @@
   - OpenRouter: temperature, max_tokens, top_p, frequency_penalty, presence_penalty, repetition_penalty, top_k, min_p, top_a, seed
   - OobaBooga: Model settings are configured through OobaBooga's WebUI interface
 - Multiple preset User Prompts (Artistic Style, Facial Features, Color Palette, etc.)
+- Batch Captioning for Lora dataset preparation (generate captions for multiple images in a folder)
 - Creative LLM Toys:
   - **Image Fusion**: Combine separate analyses of style, subject, and setting into cohesive prompts
   - **Object + Subject Fusion**: Transform objects with character designs and create unique combinations
@@ -144,6 +145,26 @@
 - For best results in LLM toys keep MAXTOKENS at -1 (set by default)
 
 ## 🎮 LLM Toys Guide
+
+#### 📊 Batch Captioning
+> **⚠️ Note: This feature is experimental**
+
+Create captions for multiple images at once - perfect for training Lora models:
+
+1. Click the **"Batch Caption"** button in the LLM Toys section
+2. Select a folder containing your images (supported formats: jpg, jpeg, png, webp, bmp)
+3. Choose your caption style:
+   - **Lora Type**: Select between Style or Character Lora
+   - **Caption Format**: Choose Danbooru Tags or Natural Language descriptions
+   - For Style Loras, Natural Language typically works better
+   - For Character Loras, Danbooru Tags can be more effective
+4. Optionally add a trigger word that will be included in all captions
+5. Click **"Start Captioning"**
+6. The tool will process all images and create a corresponding .txt file with the same name as each image
+7. Images that already have caption files will be skipped
+8. View results in the table that shows success/error status for each image
+
+This feature is designed to quickly prepare datasets for Lora training by leveraging vision models to automate the captioning process.
 
 #### 🎨 Image Fusion
 1. Load your images using paste, upload, or drag & drop
@@ -259,9 +280,6 @@ Here's a showcase of OllamaVision's capabilities using different presets. Each e
 #### Generated Result
 ![Generated Portrait](https://github.com/user-attachments/assets/870048ff-8fb2-4b1b-9949-dfb190f495b1)
 </details>
-
-## 🔮 Planned Features
-- Lora captioner that saves captions in a .txt file with name of image for datasets
 
 ## 🙏 Acknowledgments
 - [mcmonkey](https://github.com/mcmonkeyprojects) for making OllamaVision official and for giving us SwarmUI
