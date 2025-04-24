@@ -2558,8 +2558,7 @@ window.ollamaVision = {
                             <div class="mb-3">
                                 <label for="batch-folder-path" class="form-label">Image Folder Path</label>
                                 <div class="input-group">
-                                    <input type="text" id="batch-folder-path" class="auto-input" placeholder="Path to folder containing images">
-                                    <button class="basic-button" onclick="ollamaVision.browseFolderPath()">Browse</button>
+                                    <input type="text" id="batch-folder-path" class="auto-input" placeholder="Enter the complete folder path where your images are stored due to security reasons.">
                                 </div>
                             </div>
                             
@@ -2613,63 +2612,8 @@ window.ollamaVision = {
                 <option value="Lora Natural">Natural Language</option>
             `;
         }
-    },
-    
-    browseFolderPath: function() {
-        // For Windows only at the moment
-        if (navigator.userAgent.indexOf('Windows') !== -1) {
-            // Create a file input for directory selection
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.setAttribute('webkitdirectory', '');
-            input.setAttribute('directory', '');
-            
-            // Prevent default upload behavior
-            input.addEventListener('change', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (this.files && this.files.length > 0) {
-                    // Get path information from files
-                    const file = this.files[0];
-                    let path = '';
-                    
-                    // Try different ways to get the path
-                    if (file.path) {
-                        // Electron/Node.js environment
-                        path = file.path.substring(0, file.path.lastIndexOf('\\'));
-                    } else if (file.webkitRelativePath) {
-                        // Get the folder name from webkitRelativePath
-                        const folderName = file.webkitRelativePath.split('/')[0];
-                        
-                        // Ask user for the full path but with the folder name prefilled
-                        path = prompt(
-                            "Please enter the full path to this folder:",
-                            "C:\\Users\\Travis\\Desktop\\" + folderName
-                        );
-                    }
-                    
-                    if (path) {
-                        document.getElementById('batch-folder-path').value = path;
-                    }
-                }
-                
-                // Remove the input element to prevent any upload behavior
-                this.remove();
-            });
-            
-            // Add it, click it, and immediately remove from DOM
-            document.body.appendChild(input);
-            input.click();
-        } else {
-            // macOS/Linux: Ask user to manually enter path
-            const path = prompt("Please enter the full path to your images folder:");
-            if (path) {
-                document.getElementById('batch-folder-path').value = path;
-            }
-        }
-    },
-    
+    },  
+   
     startBatchCaptioning: function() {
         const folderPath = document.getElementById('batch-folder-path').value.trim();
         if (!folderPath) {
@@ -2731,15 +2675,15 @@ window.ollamaVision = {
             if (loraType === 'character') {
                 requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on character attributes. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'blue_hair'). Focus on character traits, physical features, clothing, accessories, expressions, and poses. Include meta tags for character type, species, and gender. Example format: \"safe, 1girl, blue_eyes, blonde_hair, dress, smiling, standing, looking_at_viewer, solo, long_hair\"";
             } else {
-                requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags like digital_art, traditional_media, illustration_style, or artistic influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
+                requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags when necessary like: digital_art, traditional_media, illustration_style, or artistic influences, caricature, cartoon_style, exaggerated_features, vibrant_colors, high_contrast, clean_lines, bold_lines, dynamic_expression, playful_aesthetic, expressive_face, bright_lighting, character_design, stylized, comic_art, illustration_style, contemporary_art_influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
             }
         } else if (captionStyle === "Lora Natural") {
             const loraType = document.getElementById('lora-type')?.value || 'style';
             
             if (loraType === 'character') {
-                requestData.systemPrompt = "Describe this character in detail for training a character Lora model. Focus on consistent visual elements like facial features, hairstyle, clothing, body type, and any distinctive accessories or traits that define this specific character. Be comprehensive but concise, using clear descriptive language. Format as a single detailed paragraph with strong, specific descriptors focused on character appearance.";
+                requestData.systemPrompt = "You are generating captions for training a character-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that describes the visible appearance of the main character. Include details such as clothing, body type, color scheme, pose, accessories, species, gender cues, and environment if relevant. Avoid style-specific language unless it directly affects the character’s appearance. Do not interpret personality or story. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
             } else {
-                requestData.systemPrompt = "Describe this image's artistic style in detail for training a style Lora model. Focus on consistent visual elements like medium, technique, brushwork, lighting, composition, color palette, and artistic influences that define this particular style. Be comprehensive but concise, using clear descriptive language that would help distinguish this style from others. Format as a single detailed paragraph with strong, specific stylistic descriptors.";
+                requestData.systemPrompt = "You are generating captions for training a style-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that focuses on visual style, artistic techniques, color palette, lighting, mood, and overall composition. Avoid naming specific characters or interpreting narrative meaning. Describe what is visually distinctive about the style, such as brushwork, rendering, texture, or thematic patterns. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
             }
         }
 
