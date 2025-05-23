@@ -2578,6 +2578,7 @@ window.ollamaVision = {
                             </div>
                         </div>
                         <div class="modal-footer">
+                            <button type="button" class="basic-button" id="edit-prompt-btn" onclick="ollamaVision.showEditPromptModal()">Edit Caption Prompt</button>
                             <button type="button" class="basic-button" id="batch-caption-btn" onclick="ollamaVision.startBatchCaptioning()">Start Captioning</button>
                             <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
                         </div>
@@ -2591,6 +2592,131 @@ window.ollamaVision = {
         // Show the modal
         new bootstrap.Modal(document.getElementById('batchCaptionerModal')).show();
     },
+    
+    showEditPromptModal: function() {
+        const captionStyle = document.getElementById('batch-caption-style').value;
+        const loraType = document.getElementById('lora-type').value;
+        
+        // Get current prompt based on style and lora type
+        let currentPrompt = "";
+        
+        if (captionStyle === "Danbooru Tags") {
+            if (loraType === 'character') {
+                currentPrompt = localStorage.getItem('ollamaVision_danbooru_character_prompt') || 
+                    "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on character attributes. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'blue_hair'). Focus on character traits, physical features, clothing, accessories, expressions, and poses. Include meta tags for character type, species, and gender. Example format: \"safe, 1girl, blue_eyes, blonde_hair, dress, smiling, standing, looking_at_viewer, solo, long_hair\"";
+            } else {
+                currentPrompt = localStorage.getItem('ollamaVision_danbooru_style_prompt') || 
+                    "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags when necessary like: digital_art, traditional_media, illustration_style, or artistic influences, caricature, cartoon_style, exaggerated_features, vibrant_colors, high_contrast, clean_lines, bold_lines, dynamic_expression, playful_aesthetic, expressive_face, bright_lighting, character_design, stylized, comic_art, illustration_style, contemporary_art_influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
+            }
+        } else if (captionStyle === "Lora Natural") {
+            if (loraType === 'character') {
+                currentPrompt = localStorage.getItem('ollamaVision_natural_character_prompt') || 
+                    "You are generating captions for training a character-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that describes the visible appearance of the main character. Include details such as clothing, body type, color scheme, pose, accessories, species, gender cues, and environment if relevant. Avoid style-specific language unless it directly affects the character's appearance. Do not interpret personality or story. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+            } else {
+                currentPrompt = localStorage.getItem('ollamaVision_natural_style_prompt') || 
+                    "You are generating captions for training a style-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that focuses on visual style, artistic techniques, color palette, lighting, mood, and overall composition. Avoid naming specific characters or interpreting narrative meaning. Describe what is visually distinctive about the style, such as brushwork, rendering, texture, or thematic patterns. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+            }
+        }
+        
+        if (!document.getElementById('editPromptModal')) {
+            const editPromptModalHtml = `
+            <div class="modal fade" id="editPromptModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Caption Prompt Template</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-3" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                                <p class="mb-0" style="font-size: 1.1rem; color: var(--text-color-secondary);">Customize the prompt template used for generating captions.</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="custom-prompt-template" class="form-label">Prompt Template</label>
+                                <textarea id="custom-prompt-template" class="auto-input" style="min-height: 200px;"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="basic-button" id="reset-prompt-btn" onclick="ollamaVision.resetPromptTemplate()">Reset to Default</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="basic-button" id="save-prompt-btn" onclick="ollamaVision.savePromptTemplate()">Save Template</button>
+                            <button type="button" class="basic-button" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', editPromptModalHtml);
+        }
+        
+        // Fill the textarea with the current prompt
+        document.getElementById('custom-prompt-template').value = currentPrompt;
+        
+        // Show the modal
+        const batchModal = bootstrap.Modal.getInstance(document.getElementById('batchCaptionerModal'));
+        batchModal.hide();
+        
+        new bootstrap.Modal(document.getElementById('editPromptModal')).show();
+    },
+    
+    savePromptTemplate: function() {
+        const captionStyle = document.getElementById('batch-caption-style').value;
+        const loraType = document.getElementById('lora-type').value;
+        const promptTemplate = document.getElementById('custom-prompt-template').value;
+        
+        // Save to local storage with key based on style and lora type
+        if (captionStyle === "Danbooru Tags") {
+            if (loraType === 'character') {
+                localStorage.setItem('ollamaVision_danbooru_character_prompt', promptTemplate);
+            } else {
+                localStorage.setItem('ollamaVision_danbooru_style_prompt', promptTemplate);
+            }
+        } else if (captionStyle === "Lora Natural") {
+            if (loraType === 'character') {
+                localStorage.setItem('ollamaVision_natural_character_prompt', promptTemplate);
+            } else {
+                localStorage.setItem('ollamaVision_natural_style_prompt', promptTemplate);
+            }
+        }
+        
+        // Close edit prompt modal and reopen batch captioner
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editPromptModal'));
+        editModal.hide();
+        
+        new bootstrap.Modal(document.getElementById('batchCaptionerModal')).show();
+        
+        this.updateStatus('success', 'Prompt template saved successfully');
+    },
+    
+    resetPromptTemplate: function() {
+        const captionStyle = document.getElementById('batch-caption-style').value;
+        const loraType = document.getElementById('lora-type').value;
+        
+        // Get default prompt based on style and lora type
+        let defaultPrompt = "";
+        
+        if (captionStyle === "Danbooru Tags") {
+            if (loraType === 'character') {
+                defaultPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on character attributes. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'blue_hair'). Focus on character traits, physical features, clothing, accessories, expressions, and poses. Include meta tags for character type, species, and gender. Example format: \"safe, 1girl, blue_eyes, blonde_hair, dress, smiling, standing, looking_at_viewer, solo, long_hair\"";
+            } else {
+                defaultPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags when necessary like: digital_art, traditional_media, illustration_style, or artistic influences, caricature, cartoon_style, exaggerated_features, vibrant_colors, high_contrast, clean_lines, bold_lines, dynamic_expression, playful_aesthetic, expressive_face, bright_lighting, character_design, stylized, comic_art, illustration_style, contemporary_art_influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
+            }
+        } else if (captionStyle === "Lora Natural") {
+            if (loraType === 'character') {
+                defaultPrompt = "You are generating captions for training a character-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that describes the visible appearance of the main character. Include details such as clothing, body type, color scheme, pose, accessories, species, gender cues, and environment if relevant. Avoid style-specific language unless it directly affects the character's appearance. Do not interpret personality or story. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+            } else {
+                defaultPrompt = "You are generating captions for training a style-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that focuses on visual style, artistic techniques, color palette, lighting, mood, and overall composition. Avoid naming specific characters or interpreting narrative meaning. Describe what is visually distinctive about the style, such as brushwork, rendering, texture, or thematic patterns. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+            }
+        }
+        
+        // Update the textarea with the default prompt
+        document.getElementById('custom-prompt-template').value = defaultPrompt;
+    },
+
+
     
     updateCaptionStyleOptions: function() {
         const loraType = document.getElementById('lora-type').value;
@@ -2673,17 +2799,21 @@ window.ollamaVision = {
             const loraType = document.getElementById('lora-type')?.value || 'style';
             
             if (loraType === 'character') {
-                requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on character attributes. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'blue_hair'). Focus on character traits, physical features, clothing, accessories, expressions, and poses. Include meta tags for character type, species, and gender. Example format: \"safe, 1girl, blue_eyes, blonde_hair, dress, smiling, standing, looking_at_viewer, solo, long_hair\"";
+                requestData.systemPrompt = localStorage.getItem('ollamaVision_danbooru_character_prompt') || 
+                    "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on character attributes. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'blue_hair'). Focus on character traits, physical features, clothing, accessories, expressions, and poses. Include meta tags for character type, species, and gender. Example format: \"safe, 1girl, blue_eyes, blonde_hair, dress, smiling, standing, looking_at_viewer, solo, long_hair\"";
             } else {
-                requestData.systemPrompt = "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags when necessary like: digital_art, traditional_media, illustration_style, or artistic influences, caricature, cartoon_style, exaggerated_features, vibrant_colors, high_contrast, clean_lines, bold_lines, dynamic_expression, playful_aesthetic, expressive_face, bright_lighting, character_design, stylized, comic_art, illustration_style, contemporary_art_influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
+                requestData.systemPrompt = localStorage.getItem('ollamaVision_danbooru_style_prompt') || 
+                    "Create ONLY a comma-separated list of Danbooru-style tags for the image, focused on artistic style. Start with a content rating tag (safe, questionable, or explicit). Use underscores for multi-word tags (e.g., 'oil_painting'). Focus on art medium, technique, lighting, color palette, and visual aesthetic. Include meta tags when necessary like: digital_art, traditional_media, illustration_style, or artistic influences, caricature, cartoon_style, exaggerated_features, vibrant_colors, high_contrast, clean_lines, bold_lines, dynamic_expression, playful_aesthetic, expressive_face, bright_lighting, character_design, stylized, comic_art, illustration_style, contemporary_art_influences. Example format: \"safe, detailed, high_contrast, vibrant_colors, digital_art, sharp_focus, fantasy_art\"";
             }
         } else if (captionStyle === "Lora Natural") {
             const loraType = document.getElementById('lora-type')?.value || 'style';
             
             if (loraType === 'character') {
-                requestData.systemPrompt = "You are generating captions for training a character-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that describes the visible appearance of the main character. Include details such as clothing, body type, color scheme, pose, accessories, species, gender cues, and environment if relevant. Avoid style-specific language unless it directly affects the character’s appearance. Do not interpret personality or story. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+                requestData.systemPrompt = localStorage.getItem('ollamaVision_natural_character_prompt') || 
+                    "You are generating captions for training a character-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that describes the visible appearance of the main character. Include details such as clothing, body type, color scheme, pose, accessories, species, gender cues, and environment if relevant. Avoid style-specific language unless it directly affects the character's appearance. Do not interpret personality or story. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
             } else {
-                requestData.systemPrompt = "You are generating captions for training a style-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that focuses on visual style, artistic techniques, color palette, lighting, mood, and overall composition. Avoid naming specific characters or interpreting narrative meaning. Describe what is visually distinctive about the style, such as brushwork, rendering, texture, or thematic patterns. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+                requestData.systemPrompt = localStorage.getItem('ollamaVision_natural_style_prompt') || 
+                    "You are generating captions for training a style-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that focuses on visual style, artistic techniques, color palette, lighting, mood, and overall composition. Avoid naming specific characters or interpreting narrative meaning. Describe what is visually distinctive about the style, such as brushwork, rendering, texture, or thematic patterns. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
             }
         }
 

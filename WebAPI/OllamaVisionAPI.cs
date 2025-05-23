@@ -1691,6 +1691,12 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                             }
                         }
 
+                        // Make sure systemPrompt is included in each request
+                        if (data["systemPrompt"] != null && !imageRequest.ContainsKey("systemPrompt"))
+                        {
+                            imageRequest["systemPrompt"] = data["systemPrompt"];
+                        }
+
                         // Process the image
                         var analysisResult = await AnalyzeImageAsync(imageRequest);
                         
