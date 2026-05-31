@@ -67,7 +67,7 @@ namespace SwarmUI.Extensions.OllamaVision
             try
             {
                 var responseContent = response.Content.ReadAsStringAsync().Result;
-                Logs.Debug($"Raw response: {responseContent}");
+                Logs.Debug($"Raw response ({responseContent?.Length ?? 0} chars)");
                 return JObject.Parse(responseContent)["message"]?["content"]?.ToString();
             }
             catch (Exception ex)

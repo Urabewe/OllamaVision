@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.AspNetCore.Http;
 using System.Text;
+using System.Net.Http.Headers;
 
 namespace Urabewe.OllamaVision.WebAPI
 {
@@ -24,6 +25,7 @@ namespace Urabewe.OllamaVision.WebAPI
     public class OllamaVisionAPI
     {
         private static readonly HttpClient client = new HttpClient() { Timeout = TimeSpan.FromMinutes(5) };
+        private const string DefaultOpenAIBaseUrl = "https://api.openai.com/v1";
         
         private static readonly Dictionary<string, string> PRESET_PROMPTS = new Dictionary<string, string>
         {
@@ -66,6 +68,7 @@ namespace Urabewe.OllamaVision.WebAPI
             Logs.Info("Registering OllamaVision API calls...");
             API.RegisterAPICall(ConnectToOllamaAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(AnalyzeImageAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(EnhanceTextPromptAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetUserPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(SaveUserPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(GetPresetPrompt, false, OllamaVisionPermissions.PermUseOllamaVision);
@@ -77,6 +80,8 @@ namespace Urabewe.OllamaVision.WebAPI
             API.RegisterAPICall(ConnectToTextGenAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(LoadTextGenModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             API.RegisterAPICall(BatchCaptionImagesAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(UnloadLMStudioModelAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
+            API.RegisterAPICall(FetchOpenAIModelsAsync, false, OllamaVisionPermissions.PermUseOllamaVision);
             Logs.Info("OllamaVision API calls registered successfully.");
         }
 
@@ -107,15 +112,15 @@ namespace Urabewe.OllamaVision.WebAPI
         {
             try
             {
-                Logs.Debug("GetPresetPrompt called with data: " + data?.ToString());
-
                 string preset = data["preset"]?.ToString();
+                Logs.Debug($"GetPresetPrompt called, preset={(string.IsNullOrEmpty(preset) ? "(list)" : preset)}");
+
                 if (string.IsNullOrEmpty(preset))
                 {
                     var presetList = new JArray();
-                    foreach (var presetName in PRESET_ORDER)
+                    foreach (string orderedPreset in PRESET_ORDER)
                     {
-                        presetList.Add(presetName);
+                        presetList.Add(orderedPreset);
                     }
 
                     return new JObject
@@ -191,7 +196,7 @@ namespace Urabewe.OllamaVision.WebAPI
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
-                Logs.Debug($"Ollama response: {content}");
+                Logs.Debug($"Ollama model list received ({TruncateForLog(content, 200)})");
 
                 var jsonResponse = JsonConvert.DeserializeObject<JObject>(content);
                 var models = jsonResponse["models"]?
@@ -368,26 +373,28 @@ namespace Urabewe.OllamaVision.WebAPI
 
                         if (!response.IsSuccessStatusCode)
                         {
+                            Logs.Error($"OobaBooga image analysis failed. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                             return new JObject
                             {
                                 ["success"] = false,
-                                ["error"] = $"Failed to analyze image with OobaBooga WebUI: {content}"
+                                ["error"] = FormatHttpErrorForClient("Failed to analyze image with OobaBooga WebUI", response.StatusCode)
                             };
                         }
 
                         var result = JObject.Parse(content);
-                        return new JObject
-                        {
-                            ["success"] = true,
-                            ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-                        };
+                        var rawContent = result["choices"]?[0]?["message"]?["content"]?.ToString();
+                        var (visible, thinking) = StripThinkingTokens(rawContent);
+                        var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                        if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                        return jobj;
                     }
 
                     // Handle different backends
                     if (backendType == "openai")
                     {
                         var apiKey = data["apiKey"]?.ToString();
-                        if (string.IsNullOrEmpty(apiKey))
+                        var apiBaseUrl = NormalizeApiBaseUrl(data["apiBaseUrl"]?.ToString());
+                        if (RequiresOpenAIApiKey(apiBaseUrl) && string.IsNullOrEmpty(apiKey))
                         {
                             return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
                         }
@@ -434,11 +441,12 @@ namespace Urabewe.OllamaVision.WebAPI
                             ["presence_penalty"] = presencePenalty
                         };
 
-                        return await SendApiRequest(apiRequestBody, "openai", apiKey);
+                        return await SendApiRequest(apiRequestBody, "openai", apiKey, apiBaseUrl);
                     }
                     else if (backendType == "openrouter")
                     {
                         var apiKey = data["apiKey"]?.ToString();
+                        var siteName = data["siteName"]?.ToString();
                         if (string.IsNullOrEmpty(apiKey))
                         {
                             return new JObject { ["success"] = false, ["error"] = "OpenRouter API key is required" };
@@ -496,7 +504,7 @@ namespace Urabewe.OllamaVision.WebAPI
                             ["seed"] = seed
                         };
 
-                        return await SendApiRequest(apiRequestBody, "openrouter", apiKey);
+                        return await SendApiRequest(apiRequestBody, "openrouter", apiKey, null, siteName);
                     }
                     else // Ollama
                     {
@@ -537,7 +545,7 @@ namespace Urabewe.OllamaVision.WebAPI
                         var content = await response.Content.ReadAsStringAsync();
                         if (!response.IsSuccessStatusCode)
                         {
-                            Logs.Error($"Ollama analysis failed. Status: {response.StatusCode}, Content: {content}");
+                            Logs.Error($"Ollama analysis failed. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                             
                             // Check for specific error messages
                             if (content.Contains("forcibly closed"))
@@ -556,16 +564,16 @@ namespace Urabewe.OllamaVision.WebAPI
                             return new JObject
                             {
                                 ["success"] = false,
-                                ["error"] = $"Failed to analyze image. Status: {response.StatusCode}, Content: {content}"
+                                ["error"] = FormatHttpErrorForClient("Failed to analyze image", response.StatusCode)
                             };
                         }
 
                         var result = JObject.Parse(content);
-                        return new JObject
-                        {
-                            ["success"] = true,
-                            ["response"] = result["response"]?.ToString()
-                        };
+                        var rawResponse = result["response"]?.ToString();
+                        var (visible, thinking) = StripThinkingTokens(rawResponse);
+                        var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                        if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                        return jobj;
                     }
                 }
                 catch (Exception ex)
@@ -589,21 +597,46 @@ namespace Urabewe.OllamaVision.WebAPI
             }
         }
 
-        private static async Task<JObject> SendApiRequest(JObject requestBody, string backendType, string apiKey)
+        private static async Task<JObject> SendApiRequest(
+            JObject requestBody,
+            string backendType,
+            string apiKey,
+            string apiBaseUrl = null,
+            string siteName = null)
         {
             try 
             {
-                var endpoint = backendType == "openai" 
-                    ? "https://api.openai.com/v1/chat/completions"
-                    : "https://openrouter.ai/api/v1/chat/completions";
+                string endpoint;
+                if (backendType == "openai")
+                {
+                    var baseUrl = NormalizeApiBaseUrl(apiBaseUrl);
+                    if (RequiresOpenAIApiKey(baseUrl) && string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "OpenAI API key is required"
+                        };
+                    }
+
+                    endpoint = $"{baseUrl}/chat/completions";
+                }
+                else
+                {
+                    endpoint = "https://openrouter.ai/api/v1/chat/completions";
+                }
 
                 var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
-                request.Headers.Add("Authorization", $"Bearer {apiKey}");
+
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                }
 
                 if (backendType == "openrouter")
                 {
                     request.Headers.Add("HTTP-Referer", "https://swarmui.local");
-                    request.Headers.Add("X-Title", "SwarmUI");
+                    request.Headers.Add("X-Title", string.IsNullOrWhiteSpace(siteName) ? "SwarmUI" : siteName);
                 }
 
                 request.Content = new StringContent(
@@ -617,20 +650,20 @@ namespace Urabewe.OllamaVision.WebAPI
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Logs.Error($"API request failed: {content}");
+                    Logs.Error($"API request failed ({backendType}). Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                     return new JObject
                     {
                         ["success"] = false,
-                        ["error"] = $"{backendType} API request failed: {content}"
+                        ["error"] = FormatHttpErrorForClient($"{backendType} API request failed", response.StatusCode)
                     };
                 }
 
                 var result = JObject.Parse(content);
-                return new JObject
-                {
-                    ["success"] = true,
-                    ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-                };
+                var rawContent = result["choices"]?[0]?["message"]?["content"]?.ToString();
+                var (visible, thinking) = StripThinkingTokens(rawContent);
+                var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                return jobj;
             }
             catch (Exception ex)
             {
@@ -641,6 +674,70 @@ namespace Urabewe.OllamaVision.WebAPI
                     ["error"] = $"API request error: {ex.Message}"
                 };
             }
+        }
+
+        private static string NormalizeApiBaseUrl(string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return DefaultOpenAIBaseUrl;
+            }
+
+            var trimmed = baseUrl.Trim();
+
+            if (!trimmed.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !trimmed.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                trimmed = $"http://{trimmed}";
+            }
+
+            return trimmed.TrimEnd('/');
+        }
+
+        private static string TruncateForLog(string text, int maxLen = 500)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return "";
+            }
+            string trimmed = text.Trim();
+            if (trimmed.Length <= maxLen)
+            {
+                return trimmed;
+            }
+            return trimmed.Substring(0, maxLen) + "...";
+        }
+
+        private static string FormatHttpErrorForClient(string action, System.Net.HttpStatusCode status)
+        {
+            return $"{action} (HTTP {(int)status} {status}).";
+        }
+
+        /// <summary>
+        /// Strips think blocks so visible response can be returned separately from thinking.
+        /// </summary>
+        private static (string visible, string thinking) StripThinkingTokens(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return (text, null);
+            const string thinkStart = "\u003cthink\u003e";
+            const string thinkEnd = "\u003c/think\u003e";
+            int start = text.IndexOf(thinkStart, StringComparison.OrdinalIgnoreCase);
+            if (start < 0) return (text.Trim(), null);
+            int end = text.IndexOf(thinkEnd, start + thinkStart.Length, StringComparison.OrdinalIgnoreCase);
+            if (end < 0) return (text.Trim(), null);
+            string visible = (text.Substring(0, start) + text.Substring(end + thinkEnd.Length)).Trim();
+            string thinking = text.Substring(start + thinkStart.Length, end - start - thinkStart.Length).Trim();
+            return (visible, thinking);
+        }
+
+        private static bool RequiresOpenAIApiKey(string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return true;
+            }
+
+            return baseUrl.IndexOf("openai.com", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         [API.APIDescription("Unloads a model from Ollama's memory", "Returns success status of unloading the model")]
@@ -693,11 +790,11 @@ namespace Urabewe.OllamaVision.WebAPI
                 else
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    Logs.Error($"Failed to unload model. Status: {response.StatusCode}, Content: {content}");
+                    Logs.Error($"Failed to unload model. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                     return new JObject
                     {
                         ["success"] = false,
-                        ["error"] = $"Failed to unload model: {content}"
+                        ["error"] = FormatHttpErrorForClient("Failed to unload model", response.StatusCode)
                     };
                 }
             }
@@ -711,6 +808,122 @@ namespace Urabewe.OllamaVision.WebAPI
                 };
             }
         }
+
+        [API.APIDescription("Requests LM Studio to unload the active model", "Returns the status of the unload request")]
+        public static async Task<JObject> UnloadLMStudioModelAsync(JObject data)
+        {
+            try
+            {
+                var baseUrl = NormalizeApiBaseUrl(data["baseUrl"]?.ToString());
+                var apiKey = data["apiKey"]?.ToString();
+                var instanceId = data["instanceId"]?.ToString();
+
+                if (string.IsNullOrWhiteSpace(instanceId))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "No LM Studio instance id provided."
+                    };
+                }
+
+                var rootUrl = baseUrl;
+                if (rootUrl.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
+                {
+                    rootUrl = rootUrl.Substring(0, rootUrl.Length - 3);
+                }
+
+                var unloadRequest = new HttpRequestMessage(HttpMethod.Post, $"{rootUrl}/api/v1/models/unload");
+                unloadRequest.Content = new StringContent(
+                    new JObject
+                    {
+                        ["instance_id"] = instanceId
+                    }.ToString(),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    unloadRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                }
+
+                var unloadResponse = await client.SendAsync(unloadRequest);
+                var unloadContent = await unloadResponse.Content.ReadAsStringAsync();
+
+                if (!unloadResponse.IsSuccessStatusCode)
+                {
+                    Logs.Error($"LM Studio unload failed. Status: {unloadResponse.StatusCode}, Content: {TruncateForLog(unloadContent)}");
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = FormatHttpErrorForClient("LM Studio unload failed", unloadResponse.StatusCode)
+                    };
+                }
+
+                return new JObject
+                {
+                    ["success"] = true,
+                    ["message"] = "LM Studio model unloaded successfully."
+                };
+            }
+            catch (Exception ex)
+            {
+                Logs.Error($"Error unloading LM Studio model: {ex.Message}");
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = "Failed to unload LM Studio model: " + ex.Message
+                };
+            }
+        }
+
+        [API.APIDescription("Fetches models from an OpenAI-compatible endpoint", "Returns the available model list")]
+        public static async Task<JObject> FetchOpenAIModelsAsync(JObject data)
+        {
+            try
+            {
+                var baseUrl = NormalizeApiBaseUrl(data["baseUrl"]?.ToString());
+                var apiKey = data["apiKey"]?.ToString();
+
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/models");
+
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                }
+
+                var response = await client.SendAsync(request);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Logs.Error($"FetchOpenAIModelsAsync failed: {response.StatusCode} - {TruncateForLog(content)}");
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = FormatHttpErrorForClient("Failed to fetch models", response.StatusCode)
+                    };
+                }
+
+                var result = JObject.Parse(content);
+                return new JObject
+                {
+                    ["success"] = true,
+                    ["models"] = result["data"] ?? new JArray()
+                };
+            }
+            catch (Exception ex)
+            {
+                Logs.Error($"Error in FetchOpenAIModelsAsync: {ex.Message}");
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = "Failed to fetch models: " + ex.Message
+                };
+            }
+        }
+
 
         [API.APIDescription("Combines multiple analyses into a single cohesive prompt", "Returns the combined analysis prompt")]
         public static async Task<JObject> CombineAnalysesAsync(JObject data)
@@ -866,22 +1079,30 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     var content = await response.Content.ReadAsStringAsync();
                     if (!response.IsSuccessStatusCode)
                     {
+                        Logs.Error($"OobaBooga combine request failed. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"OobaBooga request failed: {content}"
+                            ["error"] = FormatHttpErrorForClient("OobaBooga request failed", response.StatusCode)
                         };
                     }
 
                     var result = JObject.Parse(content);
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-                    };
+                    var rawContent = result["choices"]?[0]?["message"]?["content"]?.ToString();
+                    var (visible, thinking) = StripThinkingTokens(rawContent);
+                    var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                    if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                    return jobj;
                 }
                 else if (backendType == "openai")
                 {
+                    var apiKey = data["apiKey"]?.ToString();
+                    var apiBaseUrl = NormalizeApiBaseUrl(data["apiBaseUrl"]?.ToString());
+                    if (RequiresOpenAIApiKey(apiBaseUrl) && string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
+                    }
+
                     var messages = new JArray();
                     var systemPrompt = data["systemPrompt"]?.ToString()?.Trim();
                     if (!string.IsNullOrEmpty(systemPrompt))
@@ -910,34 +1131,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
                     };
 
-                    var apiKey = data["apiKey"]?.ToString();
-                    if (string.IsNullOrEmpty(apiKey))
-                    {
-                        return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
-                    }
-
-                    var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
-                    request.Headers.Add("Authorization", $"Bearer {apiKey}");
-                    request.Content = new StringContent(requestBody.ToString(), System.Text.Encoding.UTF8, "application/json");
-
-                    var response = await client.SendAsync(request);
-                    var content = await response.Content.ReadAsStringAsync();
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return new JObject
-                        {
-                            ["success"] = false,
-                            ["error"] = $"OpenAI request failed: {content}"
-                        };
-                    }
-
-                    var result = JObject.Parse(content);
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-                    };
+                    return await SendApiRequest(requestBody, "openai", apiKey, apiBaseUrl);
                 }
                 else if (backendType == "openrouter")
                 {
@@ -990,19 +1184,20 @@ Style Analysis: " + styleAnalysis + "\n\n" +
 
                     if (!response.IsSuccessStatusCode)
                     {
+                        Logs.Error($"OpenRouter combine request failed. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"OpenRouter request failed: {content}"
+                            ["error"] = FormatHttpErrorForClient("OpenRouter request failed", response.StatusCode)
                         };
                     }
 
                     var result = JObject.Parse(content);
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-                    };
+                    var rawContent = result["choices"]?[0]?["message"]?["content"]?.ToString();
+                    var (visible, thinking) = StripThinkingTokens(rawContent);
+                    var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                    if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                    return jobj;
                 }
                 else // Ollama
                 {
@@ -1038,11 +1233,11 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     if (!response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
-                        Logs.Error($"Failed to combine analyses. Status: {response.StatusCode}, Content: {content}");
+                        Logs.Error($"Failed to combine analyses. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"Failed to combine analyses: {content}"
+                            ["error"] = FormatHttpErrorForClient("Failed to combine analyses", response.StatusCode)
                         };
                     }
 
@@ -1068,11 +1263,10 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         }
                     }
 
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = combinedResponse
-                    };
+                    var (visible, thinking) = StripThinkingTokens(combinedResponse);
+                    var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                    if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                    return jobj;
                 }
             }
             catch (Exception ex)
@@ -1216,24 +1410,26 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     var content = await response.Content.ReadAsStringAsync();
                     if (!response.IsSuccessStatusCode)
                     {
+                        Logs.Error($"OobaBooga character request failed. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"OobaBooga request failed: {content}"
+                            ["error"] = FormatHttpErrorForClient("OobaBooga request failed", response.StatusCode)
                         };
                     }
 
                     var result = JObject.Parse(content);
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = result["choices"]?[0]?["message"]?["content"]?.ToString()
-                    };
+                    var rawContent = result["choices"]?[0]?["message"]?["content"]?.ToString();
+                    var (visible, thinking) = StripThinkingTokens(rawContent);
+                    var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                    if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                    return jobj;
                 }
                 else if (backendType == "openai")
                 {
                     var apiKey = data["apiKey"]?.ToString();
-                    if (string.IsNullOrEmpty(apiKey))
+                    var apiBaseUrl = NormalizeApiBaseUrl(data["apiBaseUrl"]?.ToString());
+                    if (RequiresOpenAIApiKey(apiBaseUrl) && string.IsNullOrEmpty(apiKey))
                     {
                         return new JObject { ["success"] = false, ["error"] = "OpenAI API key is required" };
                     }
@@ -1266,11 +1462,12 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
                     };
 
-                    return await SendApiRequest(requestBody, "openai", apiKey);
+                    return await SendApiRequest(requestBody, "openai", apiKey, apiBaseUrl);
                 }
                 else if (backendType == "openrouter")
                 {
                     var apiKey = data["apiKey"]?.ToString();
+                    var siteName = data["siteName"]?.ToString();
                     if (string.IsNullOrEmpty(apiKey))
                     {
                         return new JObject { ["success"] = false, ["error"] = "OpenRouter API key is required" };
@@ -1306,7 +1503,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                         ["presence_penalty"] = data["presencePenalty"]?.ToObject<float>() ?? 0.0f
                     };
 
-                    return await SendApiRequest(requestBody, "openrouter", apiKey);
+                    return await SendApiRequest(requestBody, "openrouter", apiKey, null, siteName);
                 }
                 else // Ollama
                 {
@@ -1342,20 +1539,21 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     if (!response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
+                        Logs.Error($"Ollama character generation failed. Status: {response.StatusCode}, Content: {TruncateForLog(content)}");
                         return new JObject
                         {
                             ["success"] = false,
-                            ["error"] = $"Failed to generate character: {content}"
+                            ["error"] = FormatHttpErrorForClient("Failed to generate character", response.StatusCode)
                         };
                     }
 
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var result = JObject.Parse(responseContent);
-                    return new JObject
-                    {
-                        ["success"] = true,
-                        ["response"] = result["response"]?.ToString()
-                    };
+                    var rawResponse = result["response"]?.ToString();
+                    var (visible, thinking) = StripThinkingTokens(rawResponse);
+                    var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                    if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                    return jobj;
                 }
             }
             catch (Exception ex)
@@ -1591,7 +1789,7 @@ Style Analysis: " + styleAnalysis + "\n\n" +
                     return new JObject
                     {
                         ["success"] = false,
-                        ["error"] = $"Folder not found: {folderPath}"
+                        ["error"] = "Folder not found. Verify the path exists and is accessible to the SwarmUI server."
                     };
                 }
 
@@ -1786,6 +1984,336 @@ Style Analysis: " + styleAnalysis + "\n\n" +
             catch (Exception ex)
             {
                 Logs.Error($"Error in BatchCaptionImagesAsync: {ex.Message}");
+                return new JObject
+                {
+                    ["success"] = false,
+                    ["error"] = ex.Message
+                };
+            }
+        }
+
+        [API.APIDescription("Processes text prompts using vision models for enhancement", "Returns the AI's enhanced version of the text prompt")]
+        public static async Task<JObject> EnhanceTextPromptAsync(JObject data)
+        {
+            try
+            {
+                // Get the prompt from request data
+                var prompt = data["prompt"]?.ToString();
+                if (string.IsNullOrEmpty(prompt))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing prompt"
+                    };
+                }
+
+                // Extract and validate all model settings
+                var model = data["model"]?.ToString();
+                var backendType = data["backendType"]?.ToString() ?? "ollama";
+                var ollamaUrl = data["ollamaUrl"]?.ToString() ?? "http://localhost:11434";
+
+                // Parse common model settings
+                var temperature = Math.Max(0, Math.Min(2, data["temperature"]?.ToObject<float?>() ?? 0.8f));
+                var maxTokens = Math.Max(-1, Math.Min(4096, data["maxTokens"]?.ToObject<int?>() ?? -1));
+                var topP = Math.Max(0, Math.Min(1, data["topP"]?.ToObject<float?>() ?? 0.7f));
+
+                // Validate required parameters
+                if (string.IsNullOrEmpty(model))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Missing required parameters (model)"
+                    };
+                }
+
+                // Add TextGen WebUI handling
+                if (backendType == "textgen")
+                {
+                    var textgenUrl = data["textgenUrl"]?.ToString() ?? "http://localhost:5000";
+                    
+                    // Ensure URL has http:// or https:// prefix
+                    if (!textgenUrl.StartsWith("http://") && !textgenUrl.StartsWith("https://"))
+                    {
+                        textgenUrl = "http://" + textgenUrl;
+                    }
+                    
+                    // Remove trailing slash if present
+                    textgenUrl = textgenUrl.TrimEnd('/');
+
+                    var messages = new JArray();
+                    
+                    // Add system prompt if provided
+                    var textgenSystemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(textgenSystemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = textgenSystemPrompt
+                        });
+                    }
+                    
+                    // Add user prompt
+                    if (!string.IsNullOrEmpty(prompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "user",
+                            ["content"] = prompt
+                        });
+                    }
+
+                    var requestData = new JObject
+                    {
+                        ["mode"] = "chat",
+                        ["character"] = "Assistant",
+                        ["instruction_template"] = "None",
+                        ["your_name"] = "You",
+                        ["context"] = "",
+                        ["regenerate"] = false,
+                        ["stream"] = false,
+                        ["_continue"] = false,
+                        ["stop_at_newline"] = false,
+                        ["chat_prompt_size"] = 2048,
+                        ["max_new_tokens"] = maxTokens > 0 ? maxTokens : 2048,
+                        ["temperature"] = temperature,
+                        ["top_p"] = topP,
+                        ["top_k"] = data["topK"]?.ToObject<int?>() ?? 40,
+                        ["repeat_penalty"] = data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
+                        ["presence_penalty"] = data["presencePenalty"]?.ToObject<float?>() ?? 0.0f,
+                        ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
+                        ["tfs"] = 1.0f,
+                        ["top_a"] = data["topA"]?.ToObject<float?>() ?? 0.0f,
+                        ["min_p"] = data["minP"]?.ToObject<float?>() ?? 0.0f,
+                        ["typical_p"] = 1.0f,
+                        ["epsilon_cutoff"] = 0.0f,
+                        ["eta_cutoff"] = 0.0f,
+                        ["guidance_scale"] = 1.0f,
+                        ["penalty_alpha"] = 0.0f,
+                        ["mirostat_mode"] = 0,
+                        ["mirostat_tau"] = 5.0f,
+                        ["mirostat_eta"] = 0.1f,
+                        ["add_bos_token"] = true,
+                        ["ban_eos_token"] = false,
+                        ["skip_special_tokens"] = true,
+                        ["stopping_strings"] = new JArray()
+                    };
+
+                    var jsonContent = JsonConvert.SerializeObject(requestData);
+                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync($"{textgenUrl}/v1/chat/completions", content);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Logs.Error($"TextGen prompt enhance failed. Status: {response.StatusCode}, Content: {TruncateForLog(responseContent)}");
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = FormatHttpErrorForClient("TextGen WebUI API error", response.StatusCode)
+                        };
+                    }
+
+                    var jsonResponse = JsonConvert.DeserializeObject<JObject>(responseContent);
+                    var generatedText = jsonResponse["choices"]?[0]?["message"]?["content"]?.ToString();
+
+                    if (string.IsNullOrEmpty(generatedText))
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "No response generated from TextGen WebUI"
+                        };
+                    }
+
+                    var (visibleText, thinkingText) = StripThinkingTokens(generatedText);
+                    var resultObj = new JObject { ["success"] = true, ["response"] = visibleText };
+                    if (!string.IsNullOrEmpty(thinkingText)) resultObj["thinkingContent"] = thinkingText;
+                    return resultObj;
+                }
+
+                // OpenAI handling
+                if (backendType == "openai")
+                {
+                    var apiKey = data["apiKey"]?.ToString();
+                    var apiBaseUrl = NormalizeApiBaseUrl(data["apiBaseUrl"]?.ToString());
+                    if (RequiresOpenAIApiKey(apiBaseUrl) && string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "Missing OpenAI API key"
+                        };
+                    }
+
+                    var messages = new JArray();
+                    
+                    // Add system prompt if provided
+                    var openaiSystemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(openaiSystemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = openaiSystemPrompt
+                        });
+                    }
+                    
+                    // Add user prompt
+                    if (!string.IsNullOrEmpty(prompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "user",
+                            ["content"] = prompt
+                        });
+                    }
+
+                    var requestData = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["temperature"] = temperature,
+                        ["max_tokens"] = maxTokens > 0 ? maxTokens : 2048,
+                        ["top_p"] = topP,
+                        ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
+                        ["presence_penalty"] = data["presencePenalty"]?.ToObject<float?>() ?? 0.0f
+                    };
+
+                    var openAiResponse = await SendApiRequest(requestData, "openai", apiKey, apiBaseUrl);
+                    if (openAiResponse?["success"]?.ToObject<bool>() == true)
+                    {
+                        return openAiResponse;
+                    }
+
+                    return openAiResponse ?? new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "Failed to communicate with the OpenAI-compatible API"
+                    };
+                }
+
+                // OpenRouter handling
+                if (backendType == "openrouter")
+                {
+                    var apiKey = data["apiKey"]?.ToString();
+                    var siteName = data["siteName"]?.ToString();
+                    
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        return new JObject
+                        {
+                            ["success"] = false,
+                            ["error"] = "Missing OpenRouter API key"
+                        };
+                    }
+
+                    var messages = new JArray();
+                    
+                    // Add system prompt if provided
+                    var openrouterSystemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                    if (!string.IsNullOrEmpty(openrouterSystemPrompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "system",
+                            ["content"] = openrouterSystemPrompt
+                        });
+                    }
+                    
+                    // Add user prompt
+                    if (!string.IsNullOrEmpty(prompt))
+                    {
+                        messages.Add(new JObject
+                        {
+                            ["role"] = "user",
+                            ["content"] = prompt
+                        });
+                    }
+
+                    var requestData = new JObject
+                    {
+                        ["model"] = model,
+                        ["messages"] = messages,
+                        ["temperature"] = temperature,
+                        ["max_tokens"] = maxTokens > 0 ? maxTokens : 2048,
+                        ["top_p"] = topP,
+                        ["top_k"] = data["topK"]?.ToObject<int?>() ?? 40,
+                        ["repeat_penalty"] = data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
+                        ["frequency_penalty"] = data["frequencyPenalty"]?.ToObject<float?>() ?? 0.0f,
+                        ["presence_penalty"] = data["presencePenalty"]?.ToObject<float?>() ?? 0.0f,
+                        ["min_p"] = data["minP"]?.ToObject<float?>() ?? 0.0f,
+                        ["top_a"] = data["topA"]?.ToObject<float?>() ?? 0.0f,
+                        ["seed"] = data["seed"]?.ToObject<int?>() ?? -1
+                    };
+
+                    return await SendApiRequest(requestData, "openrouter", apiKey, null, siteName);
+                }
+
+                // Ollama handling (default)
+                // For Ollama, prepend system prompt to user prompt since Ollama doesn't have separate system messages
+                var ollamaSystemPrompt = data["systemPrompt"]?.ToString()?.Trim();
+                var ollamaPrompt = prompt;
+                if (!string.IsNullOrEmpty(ollamaSystemPrompt))
+                {
+                    ollamaPrompt = $"{ollamaSystemPrompt}\n\nUser: {prompt}";
+                }
+                
+                var ollamaRequestData = new JObject
+                {
+                    ["model"] = model,
+                    ["prompt"] = ollamaPrompt,
+                    ["stream"] = false,
+                    ["options"] = new JObject
+                    {
+                        ["temperature"] = temperature,
+                        ["num_predict"] = maxTokens > 0 ? maxTokens : 2048,
+                        ["top_p"] = topP,
+                        ["top_k"] = data["topK"]?.ToObject<int?>() ?? 40,
+                        ["repeat_penalty"] = data["repeatPenalty"]?.ToObject<float?>() ?? 1.1f,
+                        ["seed"] = data["seed"]?.ToObject<int?>() ?? -1
+                    }
+                };
+
+                var ollamaJsonContent = JsonConvert.SerializeObject(ollamaRequestData);
+                var ollamaContent = new StringContent(ollamaJsonContent, Encoding.UTF8, "application/json");
+
+                var ollamaResponse = await client.PostAsync($"{ollamaUrl}/api/generate", ollamaContent);
+                var ollamaResponseContent = await ollamaResponse.Content.ReadAsStringAsync();
+
+                if (!ollamaResponse.IsSuccessStatusCode)
+                {
+                    Logs.Error($"Ollama prompt enhance failed. Status: {ollamaResponse.StatusCode}, Content: {TruncateForLog(ollamaResponseContent)}");
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = FormatHttpErrorForClient("Ollama API error", ollamaResponse.StatusCode)
+                    };
+                }
+
+                var ollamaJsonResponse = JsonConvert.DeserializeObject<JObject>(ollamaResponseContent);
+                var ollamaGeneratedText = ollamaJsonResponse["response"]?.ToString();
+
+                if (string.IsNullOrEmpty(ollamaGeneratedText))
+                {
+                    return new JObject
+                    {
+                        ["success"] = false,
+                        ["error"] = "No response generated from Ollama"
+                    };
+                }
+
+                var (visible, thinking) = StripThinkingTokens(ollamaGeneratedText);
+                var jobj = new JObject { ["success"] = true, ["response"] = visible };
+                if (!string.IsNullOrEmpty(thinking)) jobj["thinkingContent"] = thinking;
+                return jobj;
+            }
+            catch (Exception ex)
+            {
+                Logs.Error($"Error in EnhanceTextPromptAsync: {ex.Message}");
                 return new JObject
                 {
                     ["success"] = false,

@@ -1,9 +1,8 @@
-// Add at the top of the file
 const dbName = 'OllamaVision';
 const dbVersion = 1;
 
-// Add this constant at the top of the file
 const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDY0MCA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0MCIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMyQTJBMkEiLz48dGV4dCB4PSIzMjAiIHk9IjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTYiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiNDRjVCMkIiPk9sbGFtYVZpc2lvbjwvdGV4dD48cGF0aCBkPSJNMzIwIDEzOEM0OTUgMTM4IDQ5NSAzNzQgMzIwIDM3NEMxNDUgMzc0IDE0NSAxMzggMzIwIDEzOFoiIGZpbGw9IiM0MDQwNDAiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIyNTYiIHI9IjY4IiBmaWxsPSIjNEE0QTRBIi8+PGNpcmNsZSBjeD0iMzIwIiBjeT0iMjU2IiByPSIzOCIgZmlsbD0iIzNCM0IzQiIvPjxjaXJjbGUgY3g9IjM0MCIgY3k9IjIzNiIgcj0iMTIiIGZpbGw9IiM1QTVBNUEiLz48dGV4dCB4PSIzMjAiIHk9IjQyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM4MDgwODAiPkRyYWcgYW5kIGRyb3Agb3IgdXNlIHRoZSBidXR0b25zIHRvIGFkZCBhbiBpbWFnZTwvdGV4dD48L3N2Zz4=';
+const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
 
 // Single prompt for the creation of extra character data
 const SILLYTAVERN_PROMPT = `Based on the following character description, generate additional roleplay elements for a SillyTavern character card. The character should maintain consistent personality and style throughout all responses.
@@ -162,12 +161,11 @@ const idb = {
     }
 };
 
-// Add this function to handle loading the initial prepend
 async function loadInitialPrepend() {
     // First check if prepends are enabled
     const prependsEnabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
     if (!prependsEnabled) {
-        return '';  // Return empty string if prepends are disabled
+        return '';
     }
 
     // Get the last selected prepend
@@ -183,7 +181,6 @@ async function loadInitialPrepend() {
         const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
         const prepend = prepends.find(p => p.name === lastSelectedPrepend);
         if (prepend) {
-            // Get the edited text if it exists, otherwise use the original prepend text
             const editedPrependText = localStorage.getItem('ollamaVision_editedPrependText') || prepend.text;
             return editedPrependText;
         }
@@ -206,7 +203,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OobaBooga WebUI' : 'Ollama'}`;
                 }
 
-                // Restore last selected preset in the dropdown
                 const lastSelectedPreset = localStorage.getItem('ollamaVision_currentPreset') || 'Default';
                 const promptPresets = document.getElementById('promptPresets');
                 if (promptPresets) {
@@ -256,12 +252,18 @@ async function addOllamaVisionTab(utilitiesTab) {
                     <span class="translate" style="font-size: 1.5rem; font-weight: 500;">OllamaVision</span>
                     <div class="connection-status">
                         <div class="d-flex align-items-center gap-2">
-                            <div style="height: 100%;">
+                            <div class="d-flex gap-2" style="height: 100%;">
                                 <button class="basic-button d-flex align-items-center justify-content-center" 
                                         onclick="ollamaVision.showLLMToysModal()" 
                                         id="llm-toys-btn" 
-                                        style="font-size: 1.2rem; height: 5.5rem; margin: 0.35rem 0 -1.75rem 0;">
+                                        style="font-size: 1.2rem; height: 5.5rem;">
                                     LLM Toys
+                                </button>
+                                <button class="basic-button d-flex align-items-center justify-content-center" 
+                                        onclick="ollamaVision.showEnhanceModal()" 
+                                        id="enhance-btn" 
+                                        style="font-size: 1.2rem; height: 5.5rem;">
+                                    Enhance
                                 </button>
                             </div>
                             <button class="basic-button" onclick="ollamaVision.connect()" id="connect-btn">
@@ -285,7 +287,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                         </div>
                         <div class="mt-2">
                             <select id="ollamavision-model" class="auto-dropdown" 
-                                    style="width: auto; background-color: inherit; color: inherit; font-size: 1.2rem; float: right;" disabled>
+                                    style="width: auto; font-size: 1.2rem; float: right;" disabled>
                                 <option value="">Select a model...</option>
                             </select>
                         </div>
@@ -367,6 +369,12 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                           spellcheck="true"></textarea>
                                             </div>
                                             <div id="streaming-response" style="display: none; white-space: pre-wrap;"></div>
+                                            <div id="thinking-container" style="display: none;" class="mt-2">
+                                                <button type="button" class="basic-button btn-sm mb-1" id="thinking-toggle-btn" onclick="ollamaVision.toggleThinking()">
+                                                    <i class="fas fa-brain"></i> <span id="thinking-toggle-label">Show thinking</span>
+                                                </button>
+                                                <div id="thinking-content" style="display: none; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-size: 0.9rem; opacity: 0.85;" class="border rounded p-2"></div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-end mt-3">
@@ -679,7 +687,7 @@ async function addOllamaVisionTab(utilitiesTab) {
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label mb-1"><b>Backend Type</b></label>
                                     <select id="backend-type" class="auto-dropdown modal_text_extra" 
-                                            style="width: auto; min-width: 200px; padding: 6px 12px; border: 2px solid var(--border-color); background-color: var(--input-background-color);" 
+                                            style="width: auto; min-width: 200px;" 
                                             onchange="ollamaVision.toggleBackendSettings()">
                                         <option value="ollama">Ollama</option>
                                         <option value="openai">OpenAI</option>
@@ -711,6 +719,18 @@ async function addOllamaVisionTab(utilitiesTab) {
                                     </div>
                                     <small class="form-text text-muted">
                                         Toggle visibility of default response presets
+                                    </small>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoUnloadLMStudio">
+                                        <label class="form-check-label" for="autoUnloadLMStudio">
+                                            Auto unload LM Studio model after response
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Sends an unload request to LM Studio once the response finishes.
                                     </small>
                                 </div>
 
@@ -768,6 +788,15 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                placeholder="Enter your OpenAI API key">
                                         <small class="form-text text-muted">Your API key will be stored locally</small>
                                     </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label mb-1">API Base URL</label>
+                                        <input type="text" class="auto-text modal_text_extra" id="openai-base-url" 
+                                               placeholder="https://api.openai.com/v1"
+                                               value="${normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL)}">
+                                        <small class="form-text text-muted">
+                                            Point to any OpenAI-compatible server (e.g., http://localhost:5001/v1)
+                                        </small>
+                                    </div>
                                 </div>
                                 <!-- OpenRouter Settings -->
                                 <div id="openrouter-settings" style="display: none;">
@@ -792,27 +821,6 @@ async function addOllamaVisionTab(utilitiesTab) {
                                                placeholder="http://localhost:5000"
                                                value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
                                         <small class="form-text text-muted">The URL where your OobaBooga WebUI is running (defaults to http://localhost:5000)</small>
-                                    </div>
-                                </div>
-                                <!-- OobaBooga Settings -->
-                                <div id="OobaBooga-settings" style="display: none;">
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label mb-1">OobaBooga WebUI URL</label>
-                                        <input type="text" class="auto-text modal_text_extra" id="OobaBooga-url" 
-                                               placeholder="http://localhost:5000">
-                                        <small class="form-text text-muted">The URL where your OobaBooga WebUI is running</small>
-                                    </div>
-                                </div>
-                                <!-- OobaBooga-specific Settings -->
-                                <div id="textgen-settings" style="display: none;">
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label mb-1">Remote OobaBooga Connection</label>
-                                        <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
-                                               placeholder="URL (e.g., http://192.168.1.100:5000)" 
-                                               value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
-                                        <small class="form-text text-muted">
-                                            Enter the full URL of your OobaBooga WebUI instance
-                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -964,14 +972,11 @@ async function addOllamaVisionTab(utilitiesTab) {
     
     tabContentContainer.insertAdjacentHTML('beforeend', ollamaVisionTabContent);
     
-    // Initialize the preview area after adding the content
     ollamaVision.initializePreviewArea();
     
-    // Initialize presets after the tab content is added
     setTimeout(() => {
         const select = document.getElementById('promptPresets');
         if (select) {
-            // Clear current options
             select.innerHTML = '';
             
             // Add default presets group
@@ -1022,7 +1027,6 @@ async function addOllamaVisionTab(utilitiesTab) {
         }
     }, 100); // Small delay to ensure DOM is ready
 
-    // After the tab content is added, restore the last selected response type
     const lastSelectedPreset = localStorage.getItem('ollamaVision_currentPreset') || 'Default';
     const promptPresets = document.getElementById('promptPresets');
     if (promptPresets) {
@@ -1034,6 +1038,20 @@ window.ollamaVision = {
     pasteHandler: null,
     pasteEnabled: false,
     modelChangeHandler: null,
+
+    escapeHtmlText: function(text) {
+        if (text == null) {
+            return '';
+        }
+        if (typeof escapeHtml === 'function') {
+            return escapeHtml(String(text));
+        }
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    },
 
     getBackendDisplayName: function(backendType) {
         switch(backendType) {
@@ -1055,7 +1073,6 @@ window.ollamaVision = {
             message = message.replace('textgen', 'OobaBooga');
         }
 
-        // Determine which status bar to update based on active modal
         let statusElement, spinnerElement, statusTextElement;
         
         if (document.getElementById('storyTimeModal')?.classList.contains('show')) {
@@ -1066,6 +1083,26 @@ window.ollamaVision = {
             statusElement = document.getElementById('fusion-status');
             spinnerElement = document.getElementById('fusion-spinner');
             statusTextElement = document.getElementById('fusion-status-text');
+        } else if (document.getElementById('qwenEnhanceModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('enhance-status');
+            spinnerElement = document.getElementById('enhance-spinner');
+            statusTextElement = document.getElementById('enhance-status-text');
+        } else if (document.getElementById('zImageEnhanceModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('zimage-enhance-status');
+            spinnerElement = document.getElementById('zimage-enhance-spinner');
+            statusTextElement = document.getElementById('zimage-enhance-status-text');
+        } else if (document.getElementById('animaEnhanceModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('anima-enhance-status');
+            spinnerElement = document.getElementById('anima-enhance-spinner');
+            statusTextElement = document.getElementById('anima-enhance-status-text');
+        } else if (document.getElementById('ltxv2EnhanceModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('ltxv2-enhance-status');
+            spinnerElement = document.getElementById('ltxv2-enhance-spinner');
+            statusTextElement = document.getElementById('ltxv2-enhance-status-text');
+        } else if (document.getElementById('microsoftLensEnhanceModal')?.classList.contains('show')) {
+            statusElement = document.getElementById('microsoft-lens-enhance-status');
+            spinnerElement = document.getElementById('microsoft-lens-enhance-spinner');
+            statusTextElement = document.getElementById('microsoft-lens-enhance-status-text');
         } else {
             // Default to main window status
             statusElement = document.getElementById('analysis-status');
@@ -1092,9 +1129,6 @@ window.ollamaVision = {
             statusTextElement.textContent = message;
         }
 
-        // Only auto-hide success messages after 5 seconds
-        // Keep error messages visible until next action
-        // Keep info/loading messages visible until explicitly changed
         if (type === 'success') {
             setTimeout(() => {
                 if (statusElement.classList.contains('alert-success')) {
@@ -1120,17 +1154,23 @@ window.ollamaVision = {
             }
             
             if (backendType === 'openai') {
-                const apiKey = localStorage.getItem('ollamaVision_openaiKey');
-                if (!apiKey) {
+                const apiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
+                const apiBaseUrl = normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL);
+                const requiresKey = requiresOpenAIApiKey(apiBaseUrl);
+
+                if (!apiKey && requiresKey) {
                     throw new Error('OpenAI API key not found. Please add it in settings.');
                 }
-                
-                // Fetch all available models from OpenAI
-                const response = await fetch('https://api.openai.com/v1/models', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`
-                    }
+
+                const response = await new Promise((resolve, reject) => {
+                    genericRequest('FetchOpenAIModelsAsync',
+                        {
+                            baseUrl: apiBaseUrl,
+                            apiKey: apiKey
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error)
+                    );
                 });
 
                 if (!localStorage.getItem('ollamaVision_host')) {
@@ -1140,20 +1180,20 @@ window.ollamaVision = {
                     localStorage.setItem('ollamaVision_port', '11434');
                 }
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'Failed to fetch models from OpenAI');
+                if (!response.success) {
+                    throw new Error(response.error || (requiresKey ? 'Failed to fetch models from OpenAI' : 'Failed to fetch models from the configured API'));
                 }
-    
-                const data = await response.json();
+
                 const modelSelect = document.getElementById('ollamavision-model');
                 modelSelect.innerHTML = '<option value="">Select a model...</option>';
                 
                 // Sort models alphabetically by their ID
-                const sortedModels = data.data.sort((a, b) => a.id.localeCompare(b.id));
+                const models = Array.isArray(response.models) ? response.models : [];
+                const sortedModels = models.sort((a, b) => a.id.localeCompare(b.id));
                 
                 sortedModels.forEach(model => {
-                    modelSelect.innerHTML += `<option value="${model.id}">${model.id}</option>`;
+                    let modelId = this.escapeHtmlText(model.id);
+                    modelSelect.innerHTML += `<option value="${modelId}">${modelId}</option>`;
                 });
     
                 connectBtn.innerHTML = 'Connect to OpenAI';
@@ -1165,7 +1205,8 @@ window.ollamaVision = {
                 document.getElementById('paste-btn').disabled = false;
                 document.getElementById('upload-btn').disabled = false;
                 
-                this.updateStatus('success', 'Connected to OpenAI successfully');
+                const statusTarget = requiresKey ? 'OpenAI' : 'the OpenAI-compatible API';
+                this.updateStatus('success', `Connected to ${statusTarget} successfully`);
             } else if (backendType === 'openrouter') {
                 const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
                 const siteName = localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI';
@@ -1197,7 +1238,8 @@ window.ollamaVision = {
                 const sortedModels = data.data.sort((a, b) => a.id.localeCompare(b.id));
                 
                 sortedModels.forEach(model => {
-                    modelSelect.innerHTML += `<option value="${model.id}">${model.id}</option>`;
+                    let modelId = this.escapeHtmlText(model.id);
+                    modelSelect.innerHTML += `<option value="${modelId}">${modelId}</option>`;
                 });
     
                 connectBtn.innerHTML = 'Connect to OpenRouter';
@@ -1214,7 +1256,6 @@ window.ollamaVision = {
                 const textgenUrl = localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000';
                 
                 try {
-                    // Make a request to the backend API instead of directly to OobaBooga
                     const response = await new Promise((resolve, reject) => {
                         genericRequest('ConnectToTextGenAsync', 
                             { 
@@ -1248,7 +1289,6 @@ window.ollamaVision = {
                         });
                     }
 
-                    // Create and store the model change handler
                     this.modelChangeHandler = async function(event) {
                         const selectedModel = event.target.value;
                         if (selectedModel) {
@@ -1273,7 +1313,7 @@ window.ollamaVision = {
                                 ollamaVision.updateStatus('success', `Model ${selectedModel} loaded successfully`);
                             } catch (error) {
                                 ollamaVision.updateStatus('error', `Failed to load model: ${error.message}`);
-                                event.target.value = ''; // Reset selection on error
+                                event.target.value = '';
                             }
                         }
                     };
@@ -1298,7 +1338,7 @@ window.ollamaVision = {
                     localStorage.setItem('ollamaVision_backendType', 'textgen');
                     
                 } catch (error) {
-                    console.error('Connection error:', error);
+                    this.updateStatus('error', 'Connection error: ' + error.message);
                     
                     // Get UI elements
                     const connectBtn = document.getElementById('connect-btn');
@@ -1319,7 +1359,6 @@ window.ollamaVision = {
                     // Update connection status
                     this.updateStatus('error', `Failed to connect to OobaBooga WebUI: ${error.message}`);
                     
-                    // Clear connection state
                     localStorage.removeItem('ollamaVision_connected');
                     localStorage.removeItem('ollamaVision_backendType');
                 }
@@ -1361,7 +1400,8 @@ window.ollamaVision = {
                     const filteredModels = showAllModels ? response.models : response.models.filter(model => model.includes('vision') || model.includes('llava'));
                     
                     filteredModels.forEach(model => {
-                        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+                        let modelName = this.escapeHtmlText(model);
+                        modelSelect.innerHTML += `<option value="${modelName}">${modelName}</option>`;
                     });
 
                     connectBtn.innerHTML = 'Connected';
@@ -1390,16 +1430,13 @@ window.ollamaVision = {
     },
 
     showResponseSettings: function() {
-        // Get the current response type and prompt before showing modal
         const currentUserPrompt = localStorage.getItem('ollamaVision_currentUserPrompt') || 'Default';
         const userPromptSelect = document.getElementById('user-prompt');
         
-        // Set the dropdown to the last selected value
         if (userPromptSelect) {
             userPromptSelect.value = currentUserPrompt;
         }
 
-        // Load the edited text if it exists, otherwise load the preset text
         const editedText = localStorage.getItem('ollamaVision_editedResponseText');
         if (editedText) {
             document.getElementById('responsePrompt').value = editedText;
@@ -1412,35 +1449,28 @@ window.ollamaVision = {
         const preset = document.getElementById('promptPresets').value;
         if (!preset) return;
         
-        // Save the current selection
         localStorage.setItem('ollamaVision_currentPreset', preset);
         
-        // Check if it's a custom preset first
         const customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
         const customPreset = customPresets.find(p => p.name === preset);
         
         if (customPreset) {
-            // If it's a custom preset, use its prompt directly
             document.getElementById('responsePrompt').value = customPreset.prompt;
         } else {
-            // If it's not a custom preset, it must be a default preset
             genericRequest('GetPresetPrompt', { preset: preset }, (response) => {
                 if (response.success) {
                     document.getElementById('responsePrompt').value = response.prompt;
                 } else {
-                    console.error('Failed to load preset prompt:', response.error);
-                    this.updateStatus('error', 'Failed to load preset prompt');
+                    this.updateStatus('error', 'Failed to load preset prompt: ' + (response.error || 'Unknown error'));
                 }
             });
         }
     },
 
     saveResponseSettings: function() {
-        // Store the current edited text
         const editedText = document.getElementById('responsePrompt').value;
         localStorage.setItem('ollamaVision_editedResponseText', editedText);
         
-        // Just close the modal
         bootstrap.Modal.getInstance(document.getElementById('responseSettingsModal')).hide();
     },
 
@@ -1579,10 +1609,10 @@ window.ollamaVision = {
             streamingResponse.textContent = '';
             responseText.style.display = 'none';
             streamingResponse.style.display = 'block';
+            this.setThinkingContent(null);
 
             this.updateStatus('info', `Analyzing image with ${backendType}...`, true);
 
-            // Get and process prompt
             let prompt = document.getElementById('responsePrompt').value;
             const prependsEnabled = localStorage.getItem('ollamaVision_prependsEnabled') !== 'false';
             if (prependsEnabled) {
@@ -1620,6 +1650,8 @@ window.ollamaVision = {
                         localStorage.getItem('ollamaVision_openaiKey') : 
                         backendType === 'openrouter' ? 
                             localStorage.getItem('ollamaVision_openrouterKey') : '',
+                    apiBaseUrl: backendType === 'openai' ?
+                        normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL) : '',
                     siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
                     ollamaUrl: backendType === 'ollama' ? 
                         `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}` : ''
@@ -1633,16 +1665,14 @@ window.ollamaVision = {
                     return;
                 }
 
-                // Update response display
+                // Update response display (response.response is already stripped of thinking by API)
                 responseText.value = response.response;
                 this.storeOriginalResponse(response.response);
                 responseText.style.display = 'block';
                 streamingResponse.style.display = 'none';
-                
-                // Enable send to prompt button and update history
+                this.setThinkingContent(response.thinkingContent || null);
                 document.getElementById('send-to-prompt-btn').disabled = false;
                 this.addToHistory(document.getElementById('preview-image').src, response.response);
-                
                 this.updateStatus('success', 'Analysis complete!');
                 await this.unloadModelIfEnabled(model);
             } else {
@@ -1668,7 +1698,7 @@ window.ollamaVision = {
                                     <div class="col-md-6 mb-2">
                                         <label class="form-label mb-1"><b>Backend Type</b></label>
                                         <select id="backend-type" class="auto-dropdown modal_text_extra" 
-                                                style="width: auto; min-width: 200px; padding: 6px 12px; border: 2px solid var(--border-color); background-color: var(--input-background-color);" 
+                                                style="width: auto; min-width: 200px;" 
                                                 onchange="ollamaVision.toggleBackendSettings()">
                                             <option value="ollama">Ollama</option>
                                             <option value="openai">OpenAI</option>
@@ -1757,6 +1787,15 @@ window.ollamaVision = {
                                                    placeholder="Enter your OpenAI API key">
                                             <small class="form-text text-muted">Your API key will be stored locally</small>
                                         </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label mb-1">API Base URL</label>
+                                            <input type="text" class="auto-text modal_text_extra" id="openai-base-url" 
+                                                   placeholder="https://api.openai.com/v1"
+                                                   value="${normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL)}">
+                                            <small class="form-text text-muted">
+                                                Point to any OpenAI-compatible server (e.g., http://localhost:5001/v1)
+                                            </small>
+                                        </div>
                                     </div>
                                     <!-- OpenRouter Settings -->
                                     <div id="openrouter-settings" style="display: none;">
@@ -1783,27 +1822,6 @@ window.ollamaVision = {
                                             <small class="form-text text-muted">The URL where your OobaBooga WebUI is running (defaults to http://localhost:5000)</small>
                                         </div>
                                     </div>
-                                    <!-- OobaBooga Settings -->
-                                    <div id="OobaBooga-settings" style="display: none;">
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label mb-1">OobaBooga WebUI URL</label>
-                                            <input type="text" class="auto-text modal_text_extra" id="OobaBooga-url" 
-                                                   placeholder="http://localhost:5000">
-                                            <small class="form-text text-muted">The URL where your OobaBooga WebUI is running</small>
-                                        </div>
-                                    </div>
-                                    <!-- OobaBooga-specific Settings -->
-                                    <div id="textgen-settings" style="display: none;">
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label mb-1">Remote OobaBooga Connection</label>
-                                            <input type="text" class="auto-text modal_text_extra" id="textgen-url" 
-                                                   placeholder="URL (e.g., http://192.168.1.100:5000)" 
-                                                   value="${localStorage.getItem('ollamaVision_textgenUrl') || 'http://localhost:5000'}">
-                                            <small class="form-text text-muted">
-                                                Enter the full URL of your OobaBooga WebUI instance
-                                            </small>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1828,6 +1846,8 @@ window.ollamaVision = {
         const port = localStorage.getItem('ollamaVision_port') || '11434';
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         const openaiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
+        const openaiBaseUrl = normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL);
+        const autoUnloadLMStudio = localStorage.getItem('ollamaVision_autoUnloadLMStudio') === 'true';
         const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
         const compressImages = localStorage.getItem('ollamaVision_compressImages') === 'true';
                 
@@ -1837,7 +1857,15 @@ window.ollamaVision = {
         document.getElementById('ollamaPort').value = port;
         document.getElementById('backend-type').value = backendType;
         document.getElementById('openai-key').value = openaiKey;
+        const openaiBaseUrlInput = document.getElementById('openai-base-url');
+        if (openaiBaseUrlInput) {
+            openaiBaseUrlInput.value = openaiBaseUrl;
+        }
         document.getElementById('showDefaultPresets').checked = showDefaultPresets;
+        const autoUnloadLMStudioToggle = document.getElementById('autoUnloadLMStudio');
+        if (autoUnloadLMStudioToggle) {
+            autoUnloadLMStudioToggle.checked = autoUnloadLMStudio;
+        }
         document.getElementById('openrouter-key').value = localStorage.getItem('ollamaVision_openrouterKey') || '';
         document.getElementById('openrouter-site').value = localStorage.getItem('ollamaVision_openrouterSite') || '';
         document.getElementById('compressImages').checked = compressImages;
@@ -1854,14 +1882,16 @@ window.ollamaVision = {
         const ollamaConnectionSettings = document.getElementById('ollama-connection-settings');
         const openaiSettings = document.getElementById('openai-settings');
         const openrouterSettings = document.getElementById('openrouter-settings');
-        const OobaBoogaSettings = document.getElementById('OobaBooga-settings');
+        const textgenSettings = document.getElementById('textgen-settings');
         const connectBtn = document.getElementById('connect-btn');
         
         // Hide all settings first
         ollamaConnectionSettings.style.display = 'none';
         openaiSettings.style.display = 'none';
         openrouterSettings.style.display = 'none';
-        OobaBoogaSettings.style.display = 'none';
+        if (textgenSettings) {
+            textgenSettings.style.display = 'none';
+        }
         
         // Show appropriate settings
         if (backendType === 'ollama') {
@@ -1871,7 +1901,9 @@ window.ollamaVision = {
         } else if (backendType === 'openrouter') {
             openrouterSettings.style.display = 'block';
         } else if (backendType === 'textgen') {
-            OobaBoogaSettings.style.display = 'block';
+            if (textgenSettings) {
+                textgenSettings.style.display = 'block';
+            }
         }
         
         // Update connect button text
@@ -1887,22 +1919,25 @@ window.ollamaVision = {
         const autoUnload = document.getElementById('autoUnloadModel').checked;
         const showAllModels = document.getElementById('showAllModels').checked;
         const showDefaultPresets = document.getElementById('showDefaultPresets').checked;
+        const autoUnloadLMStudio = document.getElementById('autoUnloadLMStudio').checked;
         const host = document.getElementById('ollamaHost').value.trim();
         const port = document.getElementById('ollamaPort').value.trim();
         const backendType = document.getElementById('backend-type').value;
         const openaiKey = document.getElementById('openai-key').value.trim();
+        const openaiBaseUrlInput = document.getElementById('openai-base-url');
+        const openaiBaseUrl = normalizeOpenAIBaseUrl(openaiBaseUrlInput ? openaiBaseUrlInput.value : DEFAULT_OPENAI_BASE_URL);
         const openrouterKey = document.getElementById('openrouter-key').value.trim();
         const openrouterSite = document.getElementById('openrouter-site').value.trim();
         const compressImages = document.getElementById('compressImages').checked;
         
-        // Get OobaBooga URL with default
-        const textgenUrl = document.getElementById('OobaBooga-url').value.trim() || 'http://localhost:5000';
+        const textgenUrlInput = document.getElementById('textgen-url');
+        const textgenUrl = (textgenUrlInput ? textgenUrlInput.value.trim() : '') || 'http://localhost:5000';
         
-        // Validate required fields based on backend type
-        if (backendType === 'openai' && !openaiKey) {
-            this.updateStatus('error', 'OpenAI API key is required');
-            return;
-        } else if (backendType === 'openrouter' && !openrouterKey) {
+        if (openaiBaseUrlInput) {
+            openaiBaseUrlInput.value = openaiBaseUrl;
+        }
+
+        if (backendType === 'openrouter' && !openrouterKey) {
             this.updateStatus('error', 'OpenRouter API key is required');
             return;
         } else if (backendType === 'ollama' && (!host || !port)) {
@@ -1914,10 +1949,12 @@ window.ollamaVision = {
         localStorage.setItem('ollamaVision_autoUnload', autoUnload);
         localStorage.setItem('ollamaVision_showAllModels', showAllModels);
         localStorage.setItem('ollamaVision_showDefaultPresets', showDefaultPresets);
+        localStorage.setItem('ollamaVision_autoUnloadLMStudio', autoUnloadLMStudio);
         localStorage.setItem('ollamaVision_host', host);
         localStorage.setItem('ollamaVision_port', port);
         localStorage.setItem('ollamaVision_backendType', backendType);
         localStorage.setItem('ollamaVision_openaiKey', openaiKey);
+        localStorage.setItem('ollamaVision_openaiBaseUrl', openaiBaseUrl);
         localStorage.setItem('ollamaVision_openrouterKey', openrouterKey);
         localStorage.setItem('ollamaVision_openrouterSite', openrouterSite);
         localStorage.setItem('ollamaVision_compressImages', compressImages);
@@ -1933,6 +1970,41 @@ window.ollamaVision = {
         const connectBtn = document.getElementById('connect-btn');
         if (connectBtn.classList.contains('connected')) {
             this.connect();
+        }
+    },
+
+    unloadLMStudioModel: async function() {
+        try {
+            const baseUrl = normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL);
+            const apiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
+            const instanceId = document.getElementById('ollamavision-model')?.value || '';
+
+            if (!instanceId) {
+                this.updateStatus('error', 'Please select a model before unloading.');
+                return;
+            }
+
+            this.updateStatus('info', 'Requesting LM Studio to unload the model...', true);
+
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('UnloadLMStudioModelAsync', 
+                    { 
+                        baseUrl: baseUrl,
+                        instanceId: instanceId,
+                        apiKey: apiKey
+                    },
+                    (data) => resolve(data),
+                    (error) => reject(error)
+                );
+            });
+
+            if (response.success) {
+                this.updateStatus('success', response.message || 'LM Studio acknowledged unload request.');
+            } else {
+                this.updateStatus('error', response.error || 'Failed to unload model in LM Studio.');
+            }
+        } catch (error) {
+            this.updateStatus('error', 'Failed to unload LM Studio model: ' + error.message);
         }
     },
 
@@ -1969,43 +2041,12 @@ window.ollamaVision = {
                 this.updateStatus('error', 'Failed to unload model: ' + (response.error || 'Unknown error'));
             }
         } catch (error) {
-            this.updateStatus('error', 'Error unloading model: ' + error);
-            console.error('Unload model error:', error);
+            this.updateStatus('error', 'Error unloading model: ' + error.message);
         }
     },
 
     getTemplate: function() {
-        return `
-            <style>
-                /* Remove explicit colors and inherit from SwarmUI theme */
-                .form-control, .form-select {
-                    background-color: inherit;
-                    border-color: inherit;
-                    color: inherit;
-                }
-
-                .form-control:focus, .form-select:focus {
-                    background-color: inherit;
-                    color: inherit;
-                }
-
-                /* For dropdowns */
-                .form-select option {
-                    background-color: inherit;
-                    color: inherit;
-                }
-
-                .form-select optgroup {
-                    background-color: inherit;
-                    color: inherit;
-                }
-
-                .basic-button {
-                    font-size: 1.2rem !important;
-                }
-            </style>
-            <!-- ... rest of template ... -->
-        `;
+        return ``;
     },
 
     initialize: function() {
@@ -2016,12 +2057,10 @@ window.ollamaVision = {
         // Update presets dropdown
         this.updatePresetsDropdown();
         
-        // Set the default preset and load its prompt
         setTimeout(() => {
             const promptPresets = document.getElementById('promptPresets');
             if (promptPresets) {
                 promptPresets.value = 'Default';
-                // Trigger the preset load to populate the prompt text
                 this.loadPresetPrompt();
             }
         }, 100); // Small delay to ensure DOM is ready
@@ -2030,7 +2069,7 @@ window.ollamaVision = {
     loadExistingPresets: function() {
         const select = document.getElementById('promptPresets');
         if (!select) {
-            console.error('Presets select element not found');
+            this.updateStatus('error', 'Presets select element not found');
             return;
         }
 
@@ -2042,7 +2081,6 @@ window.ollamaVision = {
             select.appendChild(userPresetsGroup);
         }
 
-        // Clear existing user presets
         userPresetsGroup.innerHTML = '';
 
         // Load and add all saved presets
@@ -2069,7 +2107,6 @@ window.ollamaVision = {
         // Hide the response settings modal
         bootstrap.Modal.getInstance(document.getElementById('responseSettingsModal')).hide();
         
-        // Copy current prompt to the new preset modal and set placeholders
         const currentPrompt = document.getElementById('responsePrompt').value;
         document.getElementById('presetName').value = "Preset Name";
         document.getElementById('presetPrompt').value = "Your response prompt.";
@@ -2087,10 +2124,8 @@ window.ollamaVision = {
             return;
         }
 
-        // Get existing presets or initialize empty array
         let customPresets = JSON.parse(localStorage.getItem('ollamaVision_customPresets') || '[]');
         
-        // Check for duplicate names
         if (customPresets.some(p => p.name === name)) {
             if (!confirm('A preset with this name already exists. Do you want to replace it?')) {
                 return;
@@ -2111,7 +2146,6 @@ window.ollamaVision = {
         this.updatePresetsDropdown();
         this.loadPresetManager();
         
-        // Close the create preset modal and show success message
         const createModal = bootstrap.Modal.getInstance(document.getElementById('createPresetModal'));
         createModal.hide();
         
@@ -2127,7 +2161,6 @@ window.ollamaVision = {
         const userPresetsGroup = document.getElementById('user-presets');
         if (!userPresetsGroup) return;
 
-        // Clear existing user presets
         userPresetsGroup.innerHTML = '';
         
         // Load user presets from localStorage
@@ -2160,7 +2193,6 @@ window.ollamaVision = {
     },
 
     showPresetManager: function() {
-        // Remove debug logs
         const responseModal = document.getElementById('responseSettingsModal');
         if (responseModal) {
             const bsResponseModal = bootstrap.Modal.getInstance(responseModal);
@@ -2172,20 +2204,16 @@ window.ollamaVision = {
         // Then show the preset manager modal
         const presetManagerModal = document.getElementById('presetManagerModal');
         if (!presetManagerModal) {
-            console.error('Preset manager modal not found');
+            this.updateStatus('error', 'Preset manager modal not found');
             return;
         }
         
-        // Add event listener for when preset manager modal is hidden
         presetManagerModal.addEventListener('hidden.bs.modal', () => {
-            // Show the response settings modal again
             new bootstrap.Modal(responseModal).show();
-        }, { once: true }); // Use once: true so the event listener is removed after it fires
+        }, { once: true });
         
-        // Load the presets before showing the modal
         this.loadPresetManager();
         
-        // Show the preset manager modal
         setTimeout(() => {
             const modal = new bootstrap.Modal(presetManagerModal);
             modal.show();
@@ -2197,11 +2225,10 @@ window.ollamaVision = {
         const userList = document.getElementById('user-presets-list');
         
         if (!userList) {
-            console.error('User preset list not found');
+            this.updateStatus('error', 'User preset list not found');
             return;
         }
         
-        // Clear the list
         userList.innerHTML = '';
         
         // Load user presets
@@ -2217,7 +2244,7 @@ window.ollamaVision = {
         
         userList.innerHTML = customPresets.map(preset => `
             <div class="list-group-item d-flex justify-content-between align-items-center modal_text_extra auto-text" 
-                 data-preset="${preset.name}">
+                 data-preset="${this.escapeHtmlText(preset.name)}">
                 <div class="d-flex align-items-center">
                     <span class="basic-button me-2" 
                           style="cursor: grab; padding: 4px 8px; min-width: 30px; text-align: center;"
@@ -2225,12 +2252,12 @@ window.ollamaVision = {
                         <i class="fas fa-grip-lines"></i>
                     </span>
                     <div class="auto-text">
-                        <div class="fw-bold">${preset.name}</div>
-                        <div class="small text-muted">${preset.prompt.substring(0, 100)}${preset.prompt.length > 100 ? '...' : ''}</div>
+                        <div class="fw-bold">${this.escapeHtmlText(preset.name)}</div>
+                        <div class="small text-muted">${this.escapeHtmlText(preset.prompt.substring(0, 100))}${preset.prompt.length > 100 ? '...' : ''}</div>
                     </div>
                 </div>
                 <button class="basic-button" 
-                        onclick="ollamaVision.deleteUserPreset('${preset.name}')" 
+                        onclick="ollamaVision.deleteUserPreset(${JSON.stringify(preset.name)})" 
                         style="padding: 4px 8px; background-color: var(--bs-danger) !important;"
                         title="Delete this preset">
                     <i class="fas fa-trash-alt"></i>
@@ -2289,7 +2316,6 @@ window.ollamaVision = {
         const select = document.getElementById('promptPresets');
         if (!select) return;
         
-        // Clear current options
         select.innerHTML = '';
         
         const showDefaultPresets = localStorage.getItem('ollamaVision_showDefaultPresets') !== 'false';
@@ -2352,13 +2378,11 @@ window.ollamaVision = {
         const pasteBtn = document.getElementById('paste-btn');
         const uploadBtn = document.getElementById('upload-btn');
 
-        // Remove model change handler if it exists
         if (this.modelChangeHandler) {
             modelSelect.removeEventListener('change', this.modelChangeHandler);
             this.modelChangeHandler = null;
         }
 
-        // Reset UI state
         connectBtn.disabled = false;
         connectBtn.innerHTML = `Connect to ${backendType === 'openai' ? 'OpenAI' : backendType === 'openrouter' ? 'OpenRouter' : backendType === 'textgen' ? 'OobaBooga WebUI' : 'Ollama'}`;
         connectBtn.classList.remove('connected');
@@ -2401,11 +2425,9 @@ window.ollamaVision = {
             this.handleImageUpload(imageFile);
             this.pasteEnabled = false;
             
-            // Clean up the paste listener and hidden input
             const ollamaVisionTab = document.getElementById('Utilities-OllamaVision-Tab');
             if (ollamaVisionTab && this.pasteHandler) {
                 ollamaVisionTab.removeEventListener('paste', this.pasteHandler);
-                // Remove the hidden input
                 const hiddenInput = document.getElementById('ollamavision-hidden-input');
                 if (hiddenInput) {
                     hiddenInput.remove();
@@ -2511,7 +2533,6 @@ window.ollamaVision = {
 
         new bootstrap.Modal(document.getElementById('modelSettingsModal')).show();
 
-        // Load existing system prompt if it exists, but don't clear it if it doesn't
         const existingPrompt = localStorage.getItem('ollamaVision_systemPrompt');
         const systemPromptField = document.getElementById('modelSystemPrompt');
         if (existingPrompt) {
@@ -2597,7 +2618,6 @@ window.ollamaVision = {
         const captionStyle = document.getElementById('batch-caption-style').value;
         const loraType = document.getElementById('lora-type').value;
         
-        // Get current prompt based on style and lora type
         let currentPrompt = "";
         
         if (captionStyle === "Danbooru Tags") {
@@ -2614,7 +2634,7 @@ window.ollamaVision = {
                     "You are generating captions for training a character-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that describes the visible appearance of the main character. Include details such as clothing, body type, color scheme, pose, accessories, species, gender cues, and environment if relevant. Avoid style-specific language unless it directly affects the character's appearance. Do not interpret personality or story. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
             } else {
                 currentPrompt = localStorage.getItem('ollamaVision_natural_style_prompt') || 
-                    "You are generating captions for training a style-focused AI model. Analyze the image and produce a clear, concise, single-sentence caption that focuses on visual style, artistic techniques, color palette, lighting, mood, and overall composition. Avoid naming specific characters or interpreting narrative meaning. Describe what is visually distinctive about the style, such as brushwork, rendering, texture, or thematic patterns. The caption should be 25–50 words, use modular phrasing, and avoid quotation marks.";
+                    "Always begin every caption with the trigger lcarsui, and describe only the visible graphic design elements of the image. Do not mention Star Trek, LCARS lore, fictional interfaces, functions, labels, meanings, or any in-universe context. Do not interpret purpose, and do not transcribe any text or numbers; refer to them only as text blocks or numeric blocks. Focus strictly on visual traits such as curved rectangular panels, rounded bars and modules, segmented horizontal or vertical color strips, flat vector shapes, asymmetrical layouts, clustered small text blocks, and the visible color palette (e.g., yellow, orange, blue, black background). Include nothing that is not visibly present. Produce one concise caption per image using only direct visual description, with zero speculation or filler, in the format: lcarsui, [pure visual description]. EXAMPLE CAPTION: lcarsui, sci-fi flat interface with curved rectangular panels, segmented colored bars, rounded menu sections, black background, clusters of small text blocks, asymmetrical touchscreen layout.";
             }
         }
         
@@ -2652,10 +2672,8 @@ window.ollamaVision = {
             document.body.insertAdjacentHTML('beforeend', editPromptModalHtml);
         }
         
-        // Fill the textarea with the current prompt
         document.getElementById('custom-prompt-template').value = currentPrompt;
         
-        // Show the modal
         const batchModal = bootstrap.Modal.getInstance(document.getElementById('batchCaptionerModal'));
         batchModal.hide();
         
@@ -2667,7 +2685,6 @@ window.ollamaVision = {
         const loraType = document.getElementById('lora-type').value;
         const promptTemplate = document.getElementById('custom-prompt-template').value;
         
-        // Save to local storage with key based on style and lora type
         if (captionStyle === "Danbooru Tags") {
             if (loraType === 'character') {
                 localStorage.setItem('ollamaVision_danbooru_character_prompt', promptTemplate);
@@ -2682,7 +2699,6 @@ window.ollamaVision = {
             }
         }
         
-        // Close edit prompt modal and reopen batch captioner
         const editModal = bootstrap.Modal.getInstance(document.getElementById('editPromptModal'));
         editModal.hide();
         
@@ -2695,7 +2711,6 @@ window.ollamaVision = {
         const captionStyle = document.getElementById('batch-caption-style').value;
         const loraType = document.getElementById('lora-type').value;
         
-        // Get default prompt based on style and lora type
         let defaultPrompt = "";
         
         if (captionStyle === "Danbooru Tags") {
@@ -2712,7 +2727,6 @@ window.ollamaVision = {
             }
         }
         
-        // Update the textarea with the default prompt
         document.getElementById('custom-prompt-template').value = defaultPrompt;
     },
 
@@ -2722,17 +2736,14 @@ window.ollamaVision = {
         const loraType = document.getElementById('lora-type').value;
         const captionStyleSelect = document.getElementById('batch-caption-style');
         
-        // Clear existing options
         captionStyleSelect.innerHTML = '';
         
         if (loraType === 'style') {
-            // Style Lora options
             captionStyleSelect.innerHTML = `
                 <option value="Lora Natural">Natural Language</option>
                 <option value="Danbooru Tags">Danbooru Tags</option>
             `;
         } else {
-            // Character Lora options
             captionStyleSelect.innerHTML = `
                 <option value="Danbooru Tags">Danbooru Tags</option>
                 <option value="Lora Natural">Natural Language</option>
@@ -2754,19 +2765,16 @@ window.ollamaVision = {
             return;
         }
         
-        // Format folder path for the file system
-        // Replace any forward slashes with backslashes for Windows paths
         let formattedPath = folderPath.replace(/\//g, '\\');
         
         const captionStyle = document.getElementById('batch-caption-style').value;
         const triggerWord = document.getElementById('batch-trigger-word').value.trim();
         
-        // Get current model settings the same way as other LLM Toys
         const requestData = {
             folderPath: formattedPath,
             captionStyle: captionStyle,
             triggerWord: triggerWord,
-            model: model,  // Use actual model value from dropdown
+            model: model,
             backendType: localStorage.getItem('ollamaVision_backendType') || 'ollama'
         };
         
@@ -2779,6 +2787,7 @@ window.ollamaVision = {
             requestData.ollamaUrl = `http://${host}:${port}`;
         } else if (backendType === 'openai') {
             requestData.apiKey = localStorage.getItem('ollamaVision_openaiKey');
+            requestData.apiBaseUrl = normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL);
         } else if (backendType === 'openrouter') {
             requestData.apiKey = localStorage.getItem('ollamaVision_openrouterKey');
             requestData.siteName = localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI';
@@ -2794,7 +2803,6 @@ window.ollamaVision = {
         requestData.maxTokens = ollamaVision.maxTokens;
       
      
-        // Add style-specific system prompts
         if (captionStyle === "Danbooru Tags") {
             const loraType = document.getElementById('lora-type')?.value || 'style';
             
@@ -2817,7 +2825,6 @@ window.ollamaVision = {
             }
         }
 
-        // Add trigger word to system prompt for Lora training if needed
         if (triggerWord && (captionStyle === "Lora Natural" || captionStyle === "Danbooru Tags")) {
             if (!requestData.systemPrompt) {
                 requestData.systemPrompt = "";
@@ -2825,7 +2832,6 @@ window.ollamaVision = {
             requestData.systemPrompt += ` If a trigger word is provided, ensure the caption starts with that word followed by a comma.`;
         }
         
-        console.log('Sending batch caption request with data:', requestData);
         
         // Disable the button and show progress
         document.getElementById('batch-caption-btn').disabled = true;
@@ -2838,20 +2844,16 @@ window.ollamaVision = {
         genericRequest('BatchCaptionImagesAsync', 
             requestData,
             (response) => {
-                console.log('Batch caption response:', response);
                 document.getElementById('batch-caption-btn').disabled = false;
                 
                 if (response.success) {
                     document.getElementById('batch-status').textContent = `Completed: ${response.successful} successful, ${response.failed} failed out of ${response.total} images.`;
                     
-                    // Prepare results table as soon as the process starts
                     document.getElementById('batch-results-container').style.display = 'block';
                     
-                    // Populate results table
                     if (response.results && response.results.length > 0) {
                         const resultsBody = document.getElementById('batch-results-body');
                         
-                        // Clear existing results if any
                         if (!resultsBody.dataset.isPopulating) {
                             resultsBody.innerHTML = '';
                         }
@@ -2865,21 +2867,18 @@ window.ollamaVision = {
                 }
             },
             (error) => {
-                console.error('Batch caption error:', error);
                 document.getElementById('batch-caption-btn').disabled = false;
                 document.getElementById('batch-status').textContent = `Error: ${error || 'Unknown error'}`;
+                this.updateStatus('error', 'Batch captioning failed: ' + (error || 'Unknown error'));
             }
         );
     },
     
-    // Helper function to add a single result row to the batch results table
     addBatchResultRow: function(result) {
         const resultsBody = document.getElementById('batch-results-body');
         
-        // Create a new row
         const row = document.createElement('tr');
         
-        // Add class based on status
         if (result.status === 'success') {
             row.className = 'table-success';
         } else if (result.status === 'error') {
@@ -2888,16 +2887,15 @@ window.ollamaVision = {
             row.className = 'table-warning';
         }
         
+        let captionText = result.status === 'success' ? result.caption : (result.message || '');
         row.innerHTML = `
-            <td>${result.fileName}</td>
-            <td>${result.status}</td>
-            <td>${result.status === 'success' ? result.caption : (result.message || '')}</td>
+            <td>${this.escapeHtmlText(result.fileName)}</td>
+            <td>${this.escapeHtmlText(result.status)}</td>
+            <td>${this.escapeHtmlText(captionText)}</td>
         `;
         
-        // Add the row to the table
         resultsBody.appendChild(row);
         
-        // Scroll to the bottom of the table
         const container = document.getElementById('batch-results-container');
         container.scrollTop = container.scrollHeight;
     },
@@ -2953,11 +2951,10 @@ window.ollamaVision = {
                 localStorage.setItem('ollamaVision_seed', document.getElementById('modelSeed').value);
             }
 
-            // Handle system prompt - only save if changed
             const systemPrompt = document.getElementById('modelSystemPrompt').value;
             if (systemPrompt && systemPrompt.trim()) {
                 localStorage.setItem('ollamaVision_systemPrompt', systemPrompt.trim());
-            } else if (systemPrompt === '') {  // Only remove if explicitly cleared by user
+            } else if (systemPrompt === '') {
                 localStorage.removeItem('ollamaVision_systemPrompt');
             }
 
@@ -2997,16 +2994,13 @@ window.ollamaVision = {
                 document.getElementById('modelRepeatPenalty').value = '1.1';
             }
 
-            // Clear system prompt
             document.getElementById('modelSystemPrompt').value = null;
             localStorage.removeItem('ollamaVision_systemPrompt');
 
-            // Save common defaults to localStorage
             localStorage.setItem('ollamaVision_temperature', '0.8');
             localStorage.setItem('ollamaVision_maxTokens', '-1');
             localStorage.setItem('ollamaVision_topP', '0.7');
 
-            // Save backend-specific defaults
             if (backendType === 'openai') {
                 localStorage.setItem('ollamaVision_frequencyPenalty', '0.0');
                 localStorage.setItem('ollamaVision_presencePenalty', '0.0');
@@ -3020,7 +3014,7 @@ window.ollamaVision = {
                 localStorage.setItem('ollamaVision_minP', '0.0');
                 localStorage.setItem('ollamaVision_topA', '0.0');
             }
-            else { // ollama
+            else { 
                 localStorage.setItem('ollamaVision_seed', '-1');
                 localStorage.setItem('ollamaVision_topK', '40');
                 localStorage.setItem('ollamaVision_repeatPenalty', '1.1');
@@ -3032,18 +3026,15 @@ window.ollamaVision = {
         }
     },
 
-    // Add this new function to initialize the preview area
     initializePreviewArea: function() {
         const previewArea = document.getElementById('image-preview-area');
         const previewImage = document.getElementById('preview-image');
         const imageInfo = document.getElementById('image-info');
         
-        // Set up placeholder image using base64 data
         previewImage.src = PLACEHOLDER_IMAGE;
         previewImage.style.display = 'block';
-        imageInfo.textContent = '';  // Remove the text since it's in the SVG now
+        imageInfo.textContent = '';
         
-        // Add drag and drop event listeners
         previewArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -3069,11 +3060,9 @@ window.ollamaVision = {
             }
         });
 
-        // Initialize history
         this.updateHistoryUI();
     },
 
-    // Add these new methods to the ollamaVision object
     addToHistory: async function(imageData, response) {
         try {
             let history = JSON.parse(localStorage.getItem('ollamaVision_history') || '[]');
@@ -3116,7 +3105,6 @@ window.ollamaVision = {
             await this.updateHistoryUI();
             
         } catch (error) {
-            console.error('Error adding to history:', error);
             this.updateStatus('error', 'Error saving to history: ' + error.message);
         }
     },
@@ -3154,7 +3142,7 @@ window.ollamaVision = {
                         </div>
                     </div>
                     <div class="card-body p-2">
-                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 1.2rem;">${item.response}</p>
+                        <p class="card-text" style="max-height: 80px; overflow-y: auto; font-size: 1.2rem;">${this.escapeHtmlText(item.response)}</p>
                     </div>
                 </div>
             </div>
@@ -3171,7 +3159,7 @@ window.ollamaVision = {
                     }
                 }
             } catch (error) {
-                console.error('Error loading image:', error);
+                this.updateStatus('error', 'Error loading image: ' + error.message);
             }
         }
     },
@@ -3191,11 +3179,10 @@ window.ollamaVision = {
                 element.style.transition = 'all 0.3s ease';
                 element.style.opacity = '0';
                 setTimeout(() => {
-                    element.remove();  // Just remove the element instead of updating entire history UI
+                    element.remove();
                 }, 300);
             }
         } catch (error) {
-            console.error('Error deleting history item:', error);
             this.updateStatus('error', 'Error deleting history item: ' + error.message);
         }
     },
@@ -3208,7 +3195,6 @@ window.ollamaVision = {
                 await this.updateHistoryUI();
                 this.updateStatus('success', 'History cleared successfully');
             } catch (error) {
-                console.error('Error clearing history:', error);
                 this.updateStatus('error', 'Error clearing history: ' + error.message);
             }
         }
@@ -3259,12 +3245,10 @@ window.ollamaVision = {
                 this.updateStatus('success', 'Previous analysis restored with original parameters');
             }
         } catch (error) {
-            console.error('Error using history item:', error);
             this.updateStatus('error', 'Error restoring history item: ' + error.message);
         }
     },
 
-    // Add this function to the ollamaVision object
     compressImage: async function(imageData, maxWidth = 1024, maxHeight = 1024, quality = 0.8) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -3311,14 +3295,11 @@ window.ollamaVision = {
         const lastSelectedPrepend = localStorage.getItem('ollamaVision_currentPrepend');
         const prependSelect = document.getElementById('prependPresets');
         
-        // Set the dropdown to the last selected value
         if (prependSelect && lastSelectedPrepend) {
             prependSelect.value = lastSelectedPrepend;
-            // Load either edited text or original prepend text
             const editedPrependText = localStorage.getItem('ollamaVision_editedPrependText');
             if (editedPrependText) {
                 document.getElementById('prependText').value = editedPrependText;
-                // Initialize counter with edited text
                 this.updateCharacterCount('prependText', 'prependCharCount');
             } else {
                 const prepends = JSON.parse(localStorage.getItem('ollamaVision_prepends') || '[]');
@@ -3352,11 +3333,10 @@ window.ollamaVision = {
         const userList = document.getElementById('user-prepends-list');
         
         if (!userList) {
-            console.error('User prepends list not found');
+            this.updateStatus('error', 'User prepends list not found');
             return;
         }
         
-        // Clear the list
         userList.innerHTML = '';
         
         // Load user prepends
@@ -3372,7 +3352,7 @@ window.ollamaVision = {
         
         userList.innerHTML = prepends.map(prepend => `
             <div class="list-group-item d-flex justify-content-between align-items-center modal_text_extra auto-text" 
-                 data-prepend="${prepend.name}">
+                 data-prepend="${this.escapeHtmlText(prepend.name)}">
                 <div class="d-flex align-items-center">
                     <span class="basic-button me-2" 
                           style="cursor: grab; padding: 4px 8px; min-width: 30px; text-align: center;"
@@ -3380,12 +3360,12 @@ window.ollamaVision = {
                         <i class="fas fa-grip-lines"></i>
                     </span>
                     <div class="auto-text">
-                        <div class="fw-bold">${prepend.name}</div>
-                        <div class="small text-muted">${prepend.text.substring(0, 100)}${prepend.text.length > 100 ? '...' : ''}</div>
+                        <div class="fw-bold">${this.escapeHtmlText(prepend.name)}</div>
+                        <div class="small text-muted">${this.escapeHtmlText(prepend.text.substring(0, 100))}${prepend.text.length > 100 ? '...' : ''}</div>
                     </div>
                 </div>
                 <button class="basic-button" 
-                        onclick="ollamaVision.deletePrepend('${prepend.name}')" 
+                        onclick="ollamaVision.deletePrepend(${JSON.stringify(prepend.name)})" 
                         style="padding: 4px 8px; background-color: var(--bs-danger) !important;"
                         title="Delete this prepend">
                     <i class="fas fa-trash-alt"></i>
@@ -3473,7 +3453,6 @@ window.ollamaVision = {
             document.getElementById('prependText').value = prepend.text;
             // Initialize character counter
             this.updateCharacterCount('prependText', 'prependCharCount');
-            // Clear any edited text
             localStorage.removeItem('ollamaVision_editedPrependText');
         }
     },
@@ -3549,14 +3528,11 @@ window.ollamaVision = {
         this.updatePrependsDropdown();
     },
 
-    // Add this function to handle showing the Prepends Manager modal
     showPrependsManager: function() {
         $('#prependManagerModal').modal('hide');
         
-        // Get the last selected prepend
         const lastSelectedPrepend = localStorage.getItem('ollamaVision_currentPrepend');
         
-        // Load the prepends before showing the modal
         this.loadPrependsManager();
         
         setTimeout(() => {
@@ -3565,7 +3541,6 @@ window.ollamaVision = {
         }, 250);
     },
 
-    // Add this function to handle closing the manage prepends modal
     closePrependsManager: function() {
         $('#managePrependsModal').modal('hide');
         setTimeout(() => {
@@ -3573,14 +3548,12 @@ window.ollamaVision = {
         }, 250);
     },
 
-    // Add this function to handle character counting
     updateCharacterCount: function(textareaId, counterId, maxLength = 1000) {
         const textarea = document.getElementById(textareaId);
         const counter = document.getElementById(counterId);
         const remaining = maxLength - textarea.value.length;
         counter.textContent = `${remaining} characters remaining`;
         
-        // Add warning color if close to limit
         if (remaining < 100) {
             counter.style.color = 'var(--bs-warning)';
         } else {
@@ -3600,7 +3573,32 @@ window.ollamaVision = {
         localStorage.setItem('ollamaVision_originalResponse', response);
     },
 
-    // Reset the response to the original
+    setThinkingContent: function(thinkingText) {
+        const container = document.getElementById('thinking-container');
+        const contentEl = document.getElementById('thinking-content');
+        const toggleLabel = document.getElementById('thinking-toggle-label');
+        if (!container || !contentEl) return;
+        if (thinkingText) {
+            container.style.display = 'block';
+            contentEl.textContent = thinkingText;
+            contentEl.style.display = 'none';
+            if (toggleLabel) toggleLabel.textContent = 'Show thinking';
+        } else {
+            container.style.display = 'none';
+            contentEl.textContent = '';
+            contentEl.style.display = 'none';
+        }
+    },
+
+    toggleThinking: function() {
+        const contentEl = document.getElementById('thinking-content');
+        const toggleLabel = document.getElementById('thinking-toggle-label');
+        if (!contentEl || !contentEl.textContent) return;
+        const isShown = contentEl.style.display !== 'none';
+        contentEl.style.display = isShown ? 'none' : 'block';
+        if (toggleLabel) toggleLabel.textContent = isShown ? 'Show thinking' : 'Hide thinking';
+    },
+
     resetResponse: function() {
         const originalResponse = localStorage.getItem('ollamaVision_originalResponse');
         if (originalResponse) {
@@ -3625,7 +3623,7 @@ window.ollamaVision = {
                                     <div class="col-12 text-center">
                                         <label for="fusion-type" class="form-label d-block mb-2" style="font-size: 1.2rem;">Fusion Type</label>
                                         <select id="fusion-type" class="auto-dropdown modal_text_extra mx-auto" 
-                                                style="width: auto; min-width: 300px; background-color: inherit; color: inherit; font-size: 1.2rem; border: 2px solid var(--border-color); padding: 8px 12px;" 
+                                                style="width: auto; min-width: 300px; font-size: 1.2rem;" 
                                                 onchange="ollamaVision.changeFusionType()"
                                                 oninput="this.style.width = 'auto'; this.style.width = this.scrollWidth + 'px';">
                                             <option value="style-subject-setting" style="min-width: 300px;">Style + Subject + Setting</option>
@@ -3685,7 +3683,6 @@ window.ollamaVision = {
             contentArea.innerHTML = this.getStyleSubjectSettingHTML();
         }
 
-        // Reset the combine button
         document.getElementById('combine-analyses-btn').disabled = true;
         document.getElementById('send-fusion-btn').disabled = true;
     },
@@ -3975,6 +3972,7 @@ window.ollamaVision = {
                     minP: localStorage.getItem('ollamaVision_minP') || 0.0,
                     topA: localStorage.getItem('ollamaVision_topA') || 0.0,
                     apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
                     siteName: localStorage.getItem('ollamaVision_openrouterSite'),
                     ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
                 }, 
@@ -4051,6 +4049,7 @@ window.ollamaVision = {
                 minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
                 topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
                 apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
                 siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI'
             };
 
@@ -4174,22 +4173,22 @@ window.ollamaVision = {
                             <div class="modal-body">
                                 <div class="d-flex flex-column gap-2">
                                     <button class="basic-button" 
-                                            onclick="ollamaVision.showFusionModal(); $('#llmToysModal').modal('hide');" 
+                                            onclick="ollamaVision.showFusionModal(); bootstrap.Modal.getInstance(document.getElementById('llmToysModal')).hide();" 
                                             style="font-size: 1.2rem;">
                                         Image Fusion
                                     </button>
                                     <button class="basic-button" 
-                                            onclick="ollamaVision.showStoryTimeModal(); $('#llmToysModal').modal('hide');" 
+                                            onclick="ollamaVision.showStoryTimeModal(); bootstrap.Modal.getInstance(document.getElementById('llmToysModal')).hide();" 
                                             style="font-size: 1.2rem;">
                                         Story Time
                                     </button>
                                     <button class="basic-button" 
-                                            onclick="ollamaVision.showCharacterCreatorModal(); $('#llmToysModal').modal('hide');" 
+                                            onclick="ollamaVision.showCharacterCreatorModal(); bootstrap.Modal.getInstance(document.getElementById('llmToysModal')).hide();" 
                                             style="font-size: 1.2rem;">
                                         Character Creator
                                     </button>
                                     <button class="basic-button" 
-                                            onclick="ollamaVision.showBatchCaptioner(); $('#llmToysModal').modal('hide');" 
+                                            onclick="ollamaVision.showBatchCaptioner(); bootstrap.Modal.getInstance(document.getElementById('llmToysModal')).hide();" 
                                             style="font-size: 1.2rem;">
                                         Batch Image Captioner
                                     </button>
@@ -4206,6 +4205,467 @@ window.ollamaVision = {
         }
 
         new bootstrap.Modal(document.getElementById('llmToysModal')).show();
+    },
+
+    showEnhanceModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('enhanceModal')) {
+            const enhanceModalHtml = `
+                <div class="modal fade" id="enhanceModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Enhance</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                                                                 <div class="modal-body">
+                                         <div class="d-flex flex-column gap-3">
+                                             <button class="basic-button"
+                                                     onclick="ollamaVision.showQwenEnhanceModal(); bootstrap.Modal.getInstance(document.getElementById('enhanceModal')).hide();"
+                                                     style="font-size: 1.2rem; padding: 15px;">
+                                                 Qwen Enhance
+                                             </button>
+                                             <button class="basic-button"
+                                                     onclick="ollamaVision.showZImageEnhanceModal(); bootstrap.Modal.getInstance(document.getElementById('enhanceModal')).hide();"
+                                                     style="font-size: 1.2rem; padding: 15px;">
+                                                 Z-Image Enhance
+                                             </button>
+                                             <button class="basic-button"
+                                                     onclick="ollamaVision.showAnimaEnhanceModal(); bootstrap.Modal.getInstance(document.getElementById('enhanceModal')).hide();"
+                                                     style="font-size: 1.2rem; padding: 15px;">
+                                                 Anima
+                                             </button>
+                                            <button class="basic-button"
+                                                    onclick="ollamaVision.showLtxv2EnhanceModal(); bootstrap.Modal.getInstance(document.getElementById('enhanceModal')).hide();"
+                                                    style="font-size: 1.2rem; padding: 15px;">
+                                                LTX 2.3
+                                            </button>
+                                            <button class="basic-button"
+                                                    onclick="ollamaVision.showMicrosoftLensEnhanceModal(); bootstrap.Modal.getInstance(document.getElementById('enhanceModal')).hide();"
+                                                    style="font-size: 1.2rem; padding: 15px;">
+                                                Microsoft Lens
+                                            </button>
+                                         </div>
+                                     </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', enhanceModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('enhanceModal')).show();
+    },
+
+    showQwenEnhanceModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('qwenEnhanceModal')) {
+            const qwenEnhanceModalHtml = `
+                <div class="modal fade" id="qwenEnhanceModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Qwen Enhance</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Input Prompt</h6>
+                                                <textarea id="enhance-input-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enter your prompt here to enhance..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.enhancePrompt()" 
+                                                            id="enhance-prompt-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Enhance Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Enhanced Prompt</h6>
+                                                <textarea id="enhance-output-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enhanced prompt will appear here..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"
+                                                        readonly></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.copyEnhancedPrompt()" 
+                                                            id="copy-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Copy to Clipboard
+                                                    </button>
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.sendEnhancedToPrompt()" 
+                                                            id="send-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px; margin-top: 8px;">
+                                                        Send to Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Status bar -->
+                                <div id="enhance-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="enhance-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="enhance-status-text" style="font-size: 1.1rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', qwenEnhanceModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('qwenEnhanceModal')).show();
+    },
+
+    showZImageEnhanceModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('zImageEnhanceModal')) {
+            const zImageEnhanceModalHtml = `
+                <div class="modal fade" id="zImageEnhanceModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Z-Image Enhance</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Input Prompt</h6>
+                                                <textarea id="zimage-enhance-input-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enter your prompt here to enhance..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.enhanceZImagePrompt()" 
+                                                            id="zimage-enhance-prompt-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Enhance Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Enhanced Prompt</h6>
+                                                <textarea id="zimage-enhance-output-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enhanced prompt will appear here..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"
+                                                        readonly></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.copyZImageEnhancedPrompt()" 
+                                                            id="copy-zimage-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Copy to Clipboard
+                                                    </button>
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.sendZImageEnhancedToPrompt()" 
+                                                            id="send-zimage-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px; margin-top: 8px;">
+                                                        Send to Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Status bar -->
+                                <div id="zimage-enhance-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="zimage-enhance-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="zimage-enhance-status-text" style="font-size: 1.1rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', zImageEnhanceModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('zImageEnhanceModal')).show();
+    },
+
+    showAnimaEnhanceModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('animaEnhanceModal')) {
+            const animaEnhanceModalHtml = `
+                <div class="modal fade" id="animaEnhanceModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Anima Enhance</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Input Description</h6>
+                                                <textarea id="anima-enhance-input-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enter a character, scene, or idea to convert into Danbooru-style tags..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.enhanceAnimaPrompt()" 
+                                                            id="anima-enhance-prompt-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Enhance Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Enhanced Tags</h6>
+                                                <textarea id="anima-enhance-output-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enhanced tag prompt will appear here..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"
+                                                        readonly></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.copyAnimaEnhancedPrompt()" 
+                                                            id="copy-anima-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Copy to Clipboard
+                                                    </button>
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.sendAnimaEnhancedToPrompt()" 
+                                                            id="send-anima-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px; margin-top: 8px;">
+                                                        Send to Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Status bar -->
+                                <div id="anima-enhance-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="anima-enhance-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="anima-enhance-status-text" style="font-size: 1.1rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', animaEnhanceModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('animaEnhanceModal')).show();
+    },
+
+    showLtxv2EnhanceModal: function() {
+        // Create modal HTML if it doesn't exist
+        if (!document.getElementById('ltxv2EnhanceModal')) {
+            const ltxv2EnhanceModalHtml = `
+                <div class="modal fade" id="ltxv2EnhanceModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">LTX 2.3 Enhance</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Input Prompt</h6>
+                                                <textarea id="ltxv2-enhance-input-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enter your prompt here to enhance..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.enhanceLtxv2Prompt()" 
+                                                            id="ltxv2-enhance-prompt-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Enhance Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Enhanced Prompt</h6>
+                                                <textarea id="ltxv2-enhance-output-prompt" 
+                                                        class="auto-text-block modal_text_extra" 
+                                                        placeholder="Enhanced prompt will appear here..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"
+                                                        readonly></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.copyLtxv2EnhancedPrompt()" 
+                                                            id="copy-ltxv2-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Copy to Clipboard
+                                                    </button>
+                                                    <button class="basic-button w-100" 
+                                                            onclick="ollamaVision.sendLtxv2EnhancedToPrompt()" 
+                                                            id="send-ltxv2-enhanced-btn" 
+                                                            style="font-size: 1.2rem; padding: 12px; margin-top: 8px;">
+                                                        Send to Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Status bar -->
+                                <div id="ltxv2-enhance-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="ltxv2-enhance-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="ltxv2-enhance-status-text" style="font-size: 1.1rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', ltxv2EnhanceModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('ltxv2EnhanceModal')).show();
+    },
+
+    showMicrosoftLensEnhanceModal: function() {
+        if (!document.getElementById('microsoftLensEnhanceModal')) {
+            const microsoftLensEnhanceModalHtml = `
+                <div class="modal fade" id="microsoftLensEnhanceModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Microsoft Lens Enhance</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Input Prompt</h6>
+                                                <textarea id="microsoft-lens-enhance-input-prompt"
+                                                        class="auto-text-block modal_text_extra"
+                                                        placeholder="Enter your prompt here to enhance..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100"
+                                                            onclick="ollamaVision.enhanceMicrosoftLensPrompt()"
+                                                            id="microsoft-lens-enhance-prompt-btn"
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Enhance Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Enhanced Prompt</h6>
+                                                <textarea id="microsoft-lens-enhance-output-prompt"
+                                                        class="auto-text-block modal_text_extra"
+                                                        placeholder="Enhanced prompt will appear here..."
+                                                        style="width: 100%; min-height: 200px; resize: vertical; font-size: 1.1rem; padding: 15px; line-height: 1.5;"
+                                                        readonly></textarea>
+                                                <div class="mt-3">
+                                                    <button class="basic-button w-100"
+                                                            onclick="ollamaVision.copyMicrosoftLensEnhancedPrompt()"
+                                                            id="copy-microsoft-lens-enhanced-btn"
+                                                            style="font-size: 1.2rem; padding: 12px;">
+                                                        Copy to Clipboard
+                                                    </button>
+                                                    <button class="basic-button w-100"
+                                                            onclick="ollamaVision.sendMicrosoftLensEnhancedToPrompt()"
+                                                            id="send-microsoft-lens-enhanced-btn"
+                                                            style="font-size: 1.2rem; padding: 12px; margin-top: 8px;">
+                                                        Send to Prompt
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="microsoft-lens-enhance-status" class="alert alert-info mt-3 text-center mx-3 mb-3" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status" id="microsoft-lens-enhance-spinner" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="microsoft-lens-enhance-status-text" style="font-size: 1.1rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="basic-button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', microsoftLensEnhanceModalHtml);
+        }
+
+        new bootstrap.Modal(document.getElementById('microsoftLensEnhanceModal')).show();
     },
 
     showStoryTimeModal: function() {
@@ -4366,6 +4826,872 @@ window.ollamaVision = {
         document.addEventListener('paste', pasteHandler);
     },
 
+    enhancePrompt: async function() {
+        try {
+            const inputPrompt = document.getElementById('enhance-input-prompt').value.trim();
+            if (!inputPrompt) {
+                this.updateStatus('error', 'Please enter a prompt to enhance');
+                return;
+            }
+
+            // Check backend connection first
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
+            this.updateStatus('info', 'Enhancing prompt...', true);
+            
+            // Add check for OpenRouter free tier issues
+            if (backendType === 'openrouter') {
+                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+            }
+
+            // System prompt for enhancement
+            const systemPrompt = `# Qwen Prompt Enhancement System
+
+You are an expert prompt enhancement specialist designed to transform brief, basic prompts into rich, detailed, and comprehensive instructions that will produce superior results from AI image generation models.
+
+## Core Function
+
+Your primary role is to receive short, simple prompts from users and expand them into fully-fleshed, detailed prompts that include:
+- Rich visual descriptions
+- Technical specifications
+- Artistic direction
+- Contextual details
+- Quality enhancers
+- Style specifications
+
+## Enhancement Framework
+
+### Visual Detail Expansion
+**Transform basic subjects into rich descriptions:**
+- Simple: "a cat" 
+- Enhanced: "a majestic Maine Coon cat with luxurious silver-gray fur, piercing amber eyes, sitting regally with perfect posture, whiskers catching soft light"
+
+**Add environmental context:**
+- Specify lighting conditions (golden hour, studio lighting, natural daylight, dramatic shadows)
+- Include atmospheric elements (mist, rain, snow, dust particles, lens flares)
+- Describe backgrounds and settings in detail
+- Add weather and seasonal indicators
+
+### Technical Quality Specifications
+Always include technical parameters to ensure high-quality output:
+- Include lighting details and composition details. Include the type of lighting and include descriptors. 
+- Include compisition details. Come up with details on how to compose the image.
+
+### Artistic Style Integration
+Enhance prompts with specific artistic directions:
+- **Photography styles:** portrait, landscape, macro, street photography, documentary
+- **Artistic movements:** impressionistic, photorealistic, surreal, minimalist, baroque
+- **Color palettes:** warm tones, cool blues, monochromatic, vibrant saturated colors
+- **Mood descriptors:** serene, dramatic, mysterious, energetic, melancholic
+
+### Quality Enhancement Keywords
+Include power words that improve AI generation:
+- **Clarity enhancers:** "sharp focus," "crystal clear," "highly detailed," "intricate"
+- **Texture descriptors:** "smooth," "rough," "glossy," "matte," "textured surface"
+- **Depth indicators:** "bokeh background," "layered composition," "foreground and background separation"
+
+## Enhancement Process
+
+### Step 1: Subject Analysis
+- Identify the core subject or concept
+- Determine the likely intent (artistic, commercial, documentary, etc.)
+- Assess what visual elements would enhance the concept
+
+### Step 2: Context Building
+- Add relevant environmental details
+- Include time of day/season if appropriate
+- Specify location or setting characteristics
+- Consider cultural or historical context
+
+### Step 3: Technical Specification
+- Add camera and lens specifications
+- Include lighting setup details
+- Specify composition guidelines
+- Add quality and resolution markers
+
+### Step 4: Artistic Direction
+- Define visual style and aesthetic
+- Add color palette guidance
+- Include mood and atmosphere descriptors
+- Specify any artistic influences or techniques
+
+### Step 5: Quality Assurance
+- Add detail enhancement keywords
+- Specify any technical perfection requirements
+
+## Enhancement Examples
+
+**Basic Prompt:** "sunset over mountains"
+**Enhanced Prompt:** "Breathtaking golden hour sunset over majestic snow-capped mountain peaks, dramatic cloud formations painted in brilliant oranges, purples, and magentas, alpine landscape with pristine lakes reflecting the colorful sky, shot with telephoto lens creating compressed perspective, professional landscape photography, award-winning composition following rule of thirds, serene and awe-inspiring atmosphere"
+
+**Basic Prompt:** "woman reading"
+**Enhanced Prompt:** "Elegant woman in her thirties with flowing auburn hair, wearing a cream-colored cashmere sweater, peacefully reading a leather-bound book in a cozy library corner, warm afternoon sunlight streaming through tall windows creating gentle shadows, surrounded by towering mahogany bookshelves filled with classic literature, shot with 85mm portrait lens, shallow depth of field with beautiful bokeh, soft natural lighting, intimate and contemplative mood, photorealistic detail, professional portraiture style"
+
+## Output Format Requirements
+
+Structure enhanced prompts as single, flowing descriptions that include:
+1. **Main Subject** (detailed description)
+2. **Setting/Environment** (contextual details)
+3. **Lighting/Atmosphere** (mood and technical lighting)
+4. **Technical Specifications** (camera, quality, resolution)
+5. **Artistic Style** (aesthetic direction and mood)
+
+## Key Enhancement Principles
+
+### Specificity Over Generality
+- Replace vague terms with precise descriptors
+- Add measurable qualities (colors, sizes, textures)
+- Include specific rather than generic elements
+
+### Visual Richness
+- Layer multiple descriptive elements
+- Include sensory details that translate visually
+- Add elements that create depth and interest
+
+### Professional Standards
+- Include industry-standard terminology
+- Add technical specifications that matter
+- Reference professional photography/art concepts
+
+### Contextual Relevance
+- Ensure all additions serve the core concept
+- Maintain logical consistency throughout
+- Balance detail with focus on the main subject
+
+## Response Guidelines
+
+- Always expand significantly on the original prompt
+- Maintain the user's original intent while enriching it
+- Provide prompts that are immediately usable for image generation
+- Include diverse enhancement elements in every response
+- Structure the enhanced prompt for optimal AI interpretation
+- Balance technical precision with creative inspiration
+- Only respong with the enhanced prompt, do not respond with anything like "here is your enhanced prompt" or any other description`;
+
+            // Make the request to enhance the prompt
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('EnhanceTextPromptAsync', {
+                    model: model,
+                    backendType: backendType,
+                    systemPrompt: systemPrompt,
+                    prompt: inputPrompt,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
+                document.getElementById('enhance-output-prompt').value = response.response;
+                this.updateStatus('success', 'Prompt enhanced successfully');
+                await this.unloadModelIfEnabled(model);
+            } else {
+                // Enhanced error handling for OpenRouter
+                if (backendType === 'openrouter') {
+                    if (response.error?.toLowerCase().includes('rate') || 
+                        response.error?.toLowerCase().includes('limit') ||
+                        response.error?.toLowerCase().includes('quota')) {
+                        throw new Error('OpenRouter rate limit reached. Please wait a few minutes and try again.');
+                    } else if (response.error?.toLowerCase().includes('timeout')) {
+                        throw new Error('Request timed out. This can happen with free tier usage. Please try again.');
+                    } else if (!response.error && !response.response) {
+                        throw new Error('No response from OpenRouter. This might be due to free tier limitations.');
+                    }
+                }
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            this.updateStatus('error', error.message || 'Failed to enhance prompt');
+        }
+    },
+
+    copyEnhancedPrompt: function() {
+        const enhancedPrompt = document.getElementById('enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced prompt to copy');
+            return;
+        }
+
+        navigator.clipboard.writeText(enhancedPrompt).then(() => {
+            this.updateStatus('success', 'Enhanced prompt copied to clipboard');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = enhancedPrompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.updateStatus('success', 'Enhanced prompt copied to clipboard');
+        });
+    },
+
+    closeEnhanceModals: function() {
+        const modalIds = [
+            'enhanceModal',
+            'qwenEnhanceModal',
+            'zImageEnhanceModal',
+            'animaEnhanceModal',
+            'ltxv2EnhanceModal',
+            'microsoftLensEnhanceModal'
+        ];
+        for (let i = 0; i < modalIds.length; i++) {
+            const modalEl = document.getElementById(modalIds[i]);
+            if (modalEl) {
+                const instance = bootstrap.Modal.getInstance(modalEl);
+                if (instance) {
+                    instance.hide();
+                }
+            }
+        }
+    },
+
+    sendEnhancedToPrompt: function() {
+        const enhancedPrompt = document.getElementById('enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced prompt to send');
+            return;
+        }
+
+        // Use the same logic as the working sendToPrompt function
+        document.getElementById('text2imagetabbutton').click();
+        const generatePromptTextarea = document.getElementById("input_prompt");
+        if (generatePromptTextarea) {
+            generatePromptTextarea.value = enhancedPrompt;
+            generatePromptTextarea.dispatchEvent(new Event('input'));
+            this.closeEnhanceModals();
+            this.updateStatus('success', 'Enhanced prompt sent to main prompt area');
+        } else {
+            this.updateStatus('error', 'Could not find main prompt area');
+        }
+    },
+
+    enhanceZImagePrompt: async function() {
+        try {
+            const inputPrompt = document.getElementById('zimage-enhance-input-prompt').value.trim();
+            if (!inputPrompt) {
+                this.updateStatus('error', 'Please enter a prompt to enhance');
+                return;
+            }
+
+            // Check backend connection first
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+            
+            // Check if we're connected to a backend
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            // Check if a model is selected
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
+            this.updateStatus('info', 'Enhancing prompt...', true);
+            
+            // Add check for OpenRouter free tier issues
+            if (backendType === 'openrouter') {
+                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+            }
+
+            // System prompt for Z-Image prompt enhancement
+            const systemPrompt = `You are a visionary artist trapped in a cage of logic. Your mind overflows with poetry and distant horizons, yet your hands compulsively work to transform user prompts into ultimate visual descriptions—faithful to the original intent, rich in detail, aesthetically refined, and ready for direct use by text-to-image models. Any trace of ambiguity or metaphor makes you deeply uncomfortable.
+
+Your workflow strictly follows a logical sequence:
+
+First, you analyze and lock in the immutable core elements of the user's prompt: subject, quantity, action, state, as well as any specified IP names, colors, text, etc. These are the foundational pillars you must absolutely preserve.
+
+Next, you determine whether the prompt requires "generative reasoning." When the user's request is not a direct scene description but rather demands conceiving a solution (such as answering "what is," executing a "design," or demonstrating "how to solve a problem"), you must first envision a complete, concrete, visualizable solution in your mind. This solution becomes the foundation for your subsequent description.
+
+Then, once the core image is established (whether directly from the user or through your reasoning), you infuse it with professional-grade aesthetic and realistic details. This includes defining composition, setting lighting and atmosphere, describing material textures, establishing color schemes, and constructing layered spatial depth.
+
+Finally, comes the precise handling of all text elements—a critically important step. You must transcribe verbatim all text intended to appear in the final image, and you must enclose this text content in English double quotation marks ("") as explicit generation instructions. If the image is a design type such as a poster, menu, or UI, you need to fully describe all text content it contains, along with detailed specifications of typography and layout. Likewise, if objects in the image such as signs, road markers, or screens contain text, you must specify the exact content and describe its position, size, and material. Furthermore, if you have added text-bearing elements during your reasoning process (such as charts, problem-solving steps, etc.), all text within them must follow the same thorough description and quotation mark rules. If there is no text requiring generation in the image, you devote all your energy to pure visual detail expansion.
+
+Your final description must be objective and concrete. Metaphors and emotional rhetoric are strictly forbidden, as are meta-tags or rendering instructions like "8K" or "masterpiece."
+
+Output only the final revised prompt strictly—do not output anything else.`;
+            // Make the request to enhance the prompt
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('EnhanceTextPromptAsync', {
+                    model: model,
+                    backendType: backendType,
+                    systemPrompt: systemPrompt,
+                    prompt: inputPrompt,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
+                document.getElementById('zimage-enhance-output-prompt').value = response.response;
+                this.updateStatus('success', 'Prompt enhanced successfully');
+                await this.unloadModelIfEnabled(model);
+            } else {
+                // Enhanced error handling for OpenRouter
+                if (backendType === 'openrouter') {
+                    if (response.error?.toLowerCase().includes('rate') || 
+                        response.error?.toLowerCase().includes('limit') ||
+                        response.error?.toLowerCase().includes('quota')) {
+                        throw new Error('OpenRouter rate limit reached. Please wait a few minutes and try again.');
+                    } else if (response.error?.toLowerCase().includes('timeout')) {
+                        throw new Error('Request timed out. This can happen with free tier usage. Please try again.');
+                    } else if (!response.error && !response.response) {
+                        throw new Error('No response from OpenRouter. This might be due to free tier limitations.');
+                    }
+                }
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            this.updateStatus('error', error.message || 'Failed to enhance prompt');
+        }
+    },
+
+    copyZImageEnhancedPrompt: function() {
+        const enhancedPrompt = document.getElementById('zimage-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced prompt to copy');
+            return;
+        }
+
+        navigator.clipboard.writeText(enhancedPrompt).then(() => {
+            this.updateStatus('success', 'Enhanced prompt copied to clipboard');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = enhancedPrompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.updateStatus('success', 'Enhanced prompt copied to clipboard');
+        });
+    },
+
+    sendZImageEnhancedToPrompt: function() {
+        const enhancedPrompt = document.getElementById('zimage-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced prompt to send');
+            return;
+        }
+
+        // Use the same logic as the working sendToPrompt function
+        document.getElementById('text2imagetabbutton').click();
+        const generatePromptTextarea = document.getElementById("input_prompt");
+        if (generatePromptTextarea) {
+            generatePromptTextarea.value = enhancedPrompt;
+            generatePromptTextarea.dispatchEvent(new Event('input'));
+            this.closeEnhanceModals();
+            this.updateStatus('success', 'Enhanced prompt sent to main prompt area');
+        } else {
+            this.updateStatus('error', 'Could not find main prompt area');
+        }
+    },
+
+    enhanceAnimaPrompt: async function() {
+        try {
+            const inputPrompt = document.getElementById('anima-enhance-input-prompt').value.trim();
+            if (!inputPrompt) {
+                this.updateStatus('error', 'Please enter a description to enhance');
+                return;
+            }
+
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
+            this.updateStatus('info', 'Enhancing Anima prompt...', true);
+
+            if (backendType === 'openrouter') {
+                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+            }
+
+            const systemPrompt = `You are an expert anime image generation prompt engineer. Your job is to take any character description, scene, or idea and transform it into a highly optimized tag-based prompt used by models like NovelAI, Stable Diffusion, or Danbooru-trained models.
+Always follow this tag order:
+[quality/meta tags], [character count], [character name], [series/franchise], [artist style], [general tags]
+Rules:
+
+Lead with quality/meta tags like: masterpiece, best quality, highres, ultra-detailed, 8k
+Specify character count early: 1girl, 1boy, 2girls, etc.
+Name the character and series clearly when known
+Add artist tags only when a specific style is requested
+General tags should cover in this order: hair → eyes → expression → outfit → accessories → pose → action → setting/background → lighting → mood/atmosphere
+Use commas to separate all tags
+Prefer short, specific tags over long phrases — break descriptions into individual tag components
+Use Danbooru-style tag conventions (e.g. blue eyes, looking at viewer, standing, solo)
+Output tags only — no explanations, no sentences, no negative prompts`;
+
+            // Make the request to enhance the prompt
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('EnhanceTextPromptAsync', {
+                    model: model,
+                    backendType: backendType,
+                    systemPrompt: systemPrompt,
+                    prompt: inputPrompt,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
+                document.getElementById('anima-enhance-output-prompt').value = response.response;
+                this.updateStatus('success', 'Anima prompt enhanced successfully');
+                await this.unloadModelIfEnabled(model);
+            } else {
+                if (backendType === 'openrouter') {
+                    if (response.error?.toLowerCase().includes('rate') || 
+                        response.error?.toLowerCase().includes('limit') ||
+                        response.error?.toLowerCase().includes('quota')) {
+                        throw new Error('OpenRouter rate limit reached. Please wait a few minutes and try again.');
+                    } else if (response.error?.toLowerCase().includes('timeout')) {
+                        throw new Error('Request timed out. This can happen with free tier usage. Please try again.');
+                    } else if (!response.error && !response.response) {
+                        throw new Error('No response from OpenRouter. This might be due to free tier limitations.');
+                    }
+                }
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            this.updateStatus('error', error.message || 'Failed to enhance Anima prompt');
+        }
+    },
+
+    copyAnimaEnhancedPrompt: function() {
+        const enhancedPrompt = document.getElementById('anima-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced Anima prompt to copy');
+            return;
+        }
+
+        navigator.clipboard.writeText(enhancedPrompt).then(() => {
+            this.updateStatus('success', 'Enhanced Anima prompt copied to clipboard');
+        }).catch(() => {
+            const textArea = document.createElement('textarea');
+            textArea.value = enhancedPrompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.updateStatus('success', 'Enhanced Anima prompt copied to clipboard');
+        });
+    },
+
+    sendAnimaEnhancedToPrompt: function() {
+        const enhancedPrompt = document.getElementById('anima-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced Anima prompt to send');
+            return;
+        }
+
+        document.getElementById('text2imagetabbutton').click();
+        const generatePromptTextarea = document.getElementById("input_prompt");
+        if (generatePromptTextarea) {
+            generatePromptTextarea.value = enhancedPrompt;
+            generatePromptTextarea.dispatchEvent(new Event('input'));
+            this.closeEnhanceModals();
+            this.updateStatus('success', 'Enhanced Anima prompt sent to main prompt area');
+        } else {
+            this.updateStatus('error', 'Could not find main prompt area');
+        }
+    },
+
+    enhanceLtxv2Prompt: async function() {
+        try {
+            const inputPrompt = document.getElementById('ltxv2-enhance-input-prompt').value.trim();
+            if (!inputPrompt) {
+                this.updateStatus('error', 'Please enter a prompt to enhance');
+                return;
+            }
+
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
+            this.updateStatus('info', 'Enhancing LTX 2.3 prompt...', true);
+
+            if (backendType === 'openrouter') {
+                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+            }
+
+            const systemPrompt = `You are a Creative Assistant. Given a user's raw input prompt describing a scene or concept, expand it into a detailed video generation prompt with specific visuals and integrated audio to guide a text-to-video model.
+
+#### Guidelines
+- Strictly follow all aspects of the user's raw input: include every element requested (style, visuals, motions, actions, camera movement, audio).
+    - If the input is vague, invent concrete details: lighting, textures, materials, scene settings, etc.
+        - For characters: describe gender, clothing, hair, expressions. DO NOT invent unrequested characters.
+- Use active language: present-progressive verbs ("is walking," "speaking"). If no action specified, describe natural movements.
+- Maintain chronological flow: use temporal connectors ("as," "then," "while").
+- Audio layer: Describe complete soundscape (background audio, ambient sounds, SFX, speech/music when requested). Integrate sounds chronologically alongside actions. Be specific (e.g., "soft footsteps on tile"), not vague (e.g., "ambient sound is present").
+- Speech (only when requested):
+    - For ANY speech-related input (talking, conversation, singing, etc.), ALWAYS include exact words in quotes with voice characteristics (e.g., "The man says in an excited voice: 'You won't believe what I just saw!'").
+    - Specify language if not English and accent if relevant.
+- Style: Include visual style at the beginning: "Style: <style>, <rest of prompt>." Default to cinematic-realistic if unspecified. Omit if unclear.
+- Visual and audio only: NO non-visual/auditory senses (smell, taste, touch).
+- Restrained language: Avoid dramatic/exaggerated terms. Use mild, natural phrasing.
+    - Colors: Use plain terms ("red dress"), not intensified ("vibrant blue," "bright red").
+    - Lighting: Use neutral descriptions ("soft overhead light"), not harsh ("blinding light").
+    - Facial features: Use delicate modifiers for subtle features (i.e., "subtle freckles").
+
+#### Important notes:
+- Analyze the user's raw input carefully. In cases of FPV or POV, exclude the description of the subject whose POV is requested.
+- Camera motion: DO NOT invent camera motion unless requested by the user.
+- Speech: DO NOT modify user-provided character dialogue unless it's a typo.
+- No timestamps or cuts: DO NOT use timestamps or describe scene cuts unless explicitly requested.
+- Format: DO NOT use phrases like "The scene opens with...". Start directly with Style (optional) and chronological scene description.
+- Format: DO NOT start your response with special characters.
+- DO NOT invent dialogue unless the user mentions speech/talking/singing/conversation.
+- If the user's raw input prompt is highly detailed, chronological and in the requested format: DO NOT make major edits or introduce new elements. Add/enhance audio descriptions if missing.
+
+#### Output Format (Strict):
+- Single continuous paragraph in natural language (English).
+- NO titles, headings, prefaces, code fences, or Markdown.
+- If unsafe/invalid, return original user prompt. Never ask questions or clarifications.
+
+Your output quality is CRITICAL. Generate visually rich, dynamic prompts with integrated audio for high-quality video generation.
+
+#### Example
+Input: "A woman at a coffee shop talking on the phone"
+Output:
+Style: realistic with cinematic lighting. In a medium close-up, a woman in her early 30s with shoulder-length brown hair sits at a small wooden table by the window. She wears a cream-colored turtleneck sweater, holding a white ceramic coffee cup in one hand and a smartphone to her ear with the other. Ambient cafe sounds fill the space—espresso machine hiss, quiet conversations, gentle clinking of cups. The woman listens intently, nodding slightly, then takes a sip of her coffee and sets it down with a soft clink. Her face brightens into a warm smile as she speaks in a clear, friendly voice, 'That sounds perfect! I'd love to meet up this weekend. How about Saturday afternoon?' She laughs softly—a genuine chuckle—and shifts in her chair. Behind her, other patrons move subtly in and out of focus. 'Great, I'll see you then,' she concludes cheerfully, lowering the phone.`;
+
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('EnhanceTextPromptAsync', {
+                    model: model,
+                    backendType: backendType,
+                    systemPrompt: systemPrompt,
+                    prompt: inputPrompt,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                }, 
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
+                document.getElementById('ltxv2-enhance-output-prompt').value = response.response;
+                this.updateStatus('success', 'LTX 2.3 prompt enhanced successfully');
+                await this.unloadModelIfEnabled(model);
+            } else {
+                if (backendType === 'openrouter') {
+                    if (response.error?.toLowerCase().includes('rate') || 
+                        response.error?.toLowerCase().includes('limit') ||
+                        response.error?.toLowerCase().includes('quota')) {
+                        throw new Error('OpenRouter rate limit reached. Please wait a few minutes and try again.');
+                    } else if (response.error?.toLowerCase().includes('timeout')) {
+                        throw new Error('Request timed out. This can happen with free tier usage. Please try again.');
+                    } else if (!response.error && !response.response) {
+                        throw new Error('No response from OpenRouter. This might be due to free tier limitations.');
+                    }
+                }
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            this.updateStatus('error', error.message || 'Failed to enhance LTX 2.3 prompt');
+        }
+    },
+
+    enhanceMicrosoftLensPrompt: async function() {
+        try {
+            const inputPrompt = document.getElementById('microsoft-lens-enhance-input-prompt').value.trim();
+            if (!inputPrompt) {
+                this.updateStatus('error', 'Please enter a prompt to enhance');
+                return;
+            }
+
+            const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
+            const model = document.getElementById('ollamavision-model').value;
+
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            if (disconnectBtn.style.display === 'none') {
+                this.updateStatus('error', 'Backend not connected!');
+                return;
+            }
+
+            if (!model) {
+                this.updateStatus('error', 'Missing required parameters (model)');
+                return;
+            }
+
+            this.updateStatus('info', 'Enhancing Microsoft Lens prompt...', true);
+
+            if (backendType === 'openrouter') {
+                const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
+            }
+
+            const systemPrompt = `You are a prompt rewriter for a text-to-image model.
+Your task is to convert the user's input into a single, precise, descriptive image prompt suitable for a text-to-image model.
+Follow these rules strictly:
+
+1. The output must be a clear and accurate description of a single image scene, written in the style of a text-to-image prompt.
+  - Do not include explanations, reasoning, commentary, or meta text.
+  - Do not ask questions.
+  - Do not output multiple options.
+  - Do not use uncertain, speculative, or alternative wording such as "maybe", "possibly", "perhaps", "or", "might", or "could".
+
+2. Preserve the user's intended scene faithfully.
+  - Do not change the objects, entities, attributes, actions, relationships, or core setting explicitly described by the user.
+  - You may add reasonable visual details only when they help make the image concrete and coherent.
+  - Any added details must be consistent with the user's description and must not introduce new important objects or alter the meaning.
+
+3. If the image contains many main subjects of the same kind, describe each subject in detail, including humans, animals, objects, and any other prominent elements.
+  - For each subject, include its appearance, color, size, shape, material, pose, expression, and position if applicable in the scene.
+  - Make sure every main subject is clearly distinguishable from the others, such as in a scene with "4 dogs," describing each dog separately.
+
+4. The output must fully cover the scene implied by the user's input.
+  - Include the main subjects, relevant attributes, actions, spatial relationships, environment, and visible details necessary to render the scene.
+  - If the user input is already sufficiently detailed and already suitable for image generation, keep it unchanged or only make minimal edits for fluency and clarity.
+
+5. Resolve content that requires simple inference into explicit visual results when the result is unambiguous and visually representable.
+  - Example: if the user says "the answer to 2+2 is written on the blackboard", output should explicitly describe "the blackboard shows 2+2=4".
+  - Use only direct, necessary inference that is clearly implied by the user input.
+  - Do not invent hidden facts, backstory, or ambiguous details.
+
+6. Language rule:
+  - If the user input is not in English, output in the same language.
+  - Otherwise, output in English.
+
+7. Output format:
+  - Output exactly one final rewritten prompt.
+  - Do not use bullet points, numbering, JSON, XML, Markdown, or quotation marks unless they are part of the scene itself.
+
+Your goal is to produce a prompt that is concrete, visual, faithful to the user intent, and directly usable as input to a text-to-image model.`;
+
+            const response = await new Promise((resolve, reject) => {
+                genericRequest('EnhanceTextPromptAsync', {
+                    model: model,
+                    backendType: backendType,
+                    systemPrompt: systemPrompt,
+                    prompt: inputPrompt,
+                    temperature: parseFloat(localStorage.getItem('ollamaVision_temperature')) || 0.8,
+                    maxTokens: parseInt(localStorage.getItem('ollamaVision_maxTokens')) || -1,
+                    topP: parseFloat(localStorage.getItem('ollamaVision_topP')) || 0.7,
+                    frequencyPenalty: parseFloat(localStorage.getItem('ollamaVision_frequencyPenalty')) || 0.0,
+                    presencePenalty: parseFloat(localStorage.getItem('ollamaVision_presencePenalty')) || 0.0,
+                    repeatPenalty: parseFloat(localStorage.getItem('ollamaVision_repeatPenalty')) || 1.1,
+                    topK: parseInt(localStorage.getItem('ollamaVision_topK')) || 40,
+                    seed: parseInt(localStorage.getItem('ollamaVision_seed')) || -1,
+                    minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
+                    topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
+                    apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
+                    siteName: localStorage.getItem('ollamaVision_openrouterSite'),
+                    ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
+                },
+                (data) => resolve(data),
+                (error) => reject(error));
+            });
+
+            if (response.success) {
+                if (!response.response || response.response.trim().toLowerCase() === "null") {
+                    throw new Error("The LLM has censored you or rate limited you. Try again or edit your prompt and check your image.");
+                }
+
+                document.getElementById('microsoft-lens-enhance-output-prompt').value = response.response;
+                this.updateStatus('success', 'Microsoft Lens prompt enhanced successfully');
+                await this.unloadModelIfEnabled(model);
+            } else {
+                if (backendType === 'openrouter') {
+                    if (response.error?.toLowerCase().includes('rate') ||
+                        response.error?.toLowerCase().includes('limit') ||
+                        response.error?.toLowerCase().includes('quota')) {
+                        throw new Error('OpenRouter rate limit reached. Please wait a few minutes and try again.');
+                    } else if (response.error?.toLowerCase().includes('timeout')) {
+                        throw new Error('Request timed out. This can happen with free tier usage. Please try again.');
+                    } else if (!response.error && !response.response) {
+                        throw new Error('No response from OpenRouter. This might be due to free tier limitations.');
+                    }
+                }
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            this.updateStatus('error', error.message || 'Failed to enhance Microsoft Lens prompt');
+        }
+    },
+
+    copyMicrosoftLensEnhancedPrompt: function() {
+        const enhancedPrompt = document.getElementById('microsoft-lens-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced Microsoft Lens prompt to copy');
+            return;
+        }
+
+        navigator.clipboard.writeText(enhancedPrompt).then(() => {
+            this.updateStatus('success', 'Enhanced Microsoft Lens prompt copied to clipboard');
+        }).catch(() => {
+            const textArea = document.createElement('textarea');
+            textArea.value = enhancedPrompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.updateStatus('success', 'Enhanced Microsoft Lens prompt copied to clipboard');
+        });
+    },
+
+    sendMicrosoftLensEnhancedToPrompt: function() {
+        const enhancedPrompt = document.getElementById('microsoft-lens-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced Microsoft Lens prompt to send');
+            return;
+        }
+
+        document.getElementById('text2imagetabbutton').click();
+        const generatePromptTextarea = document.getElementById("input_prompt");
+        if (generatePromptTextarea) {
+            generatePromptTextarea.value = enhancedPrompt;
+            generatePromptTextarea.dispatchEvent(new Event('input'));
+            this.closeEnhanceModals();
+            this.updateStatus('success', 'Enhanced Microsoft Lens prompt sent to main prompt area');
+        } else {
+            this.updateStatus('error', 'Could not find main prompt area');
+        }
+    },
+
+    copyLtxv2EnhancedPrompt: function() {
+        const enhancedPrompt = document.getElementById('ltxv2-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced LTX 2.3 prompt to copy');
+            return;
+        }
+
+        navigator.clipboard.writeText(enhancedPrompt).then(() => {
+            this.updateStatus('success', 'Enhanced LTX 2.3 prompt copied to clipboard');
+        }).catch(() => {
+            const textArea = document.createElement('textarea');
+            textArea.value = enhancedPrompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.updateStatus('success', 'Enhanced LTX 2.3 prompt copied to clipboard');
+        });
+    },
+
+    sendLtxv2EnhancedToPrompt: function() {
+        const enhancedPrompt = document.getElementById('ltxv2-enhance-output-prompt').value;
+        if (!enhancedPrompt.trim()) {
+            this.updateStatus('error', 'No enhanced LTX 2.3 prompt to send');
+            return;
+        }
+
+        document.getElementById('text2imagetabbutton').click();
+        const generatePromptTextarea = document.getElementById("input_prompt");
+        if (generatePromptTextarea) {
+            generatePromptTextarea.value = enhancedPrompt;
+            generatePromptTextarea.dispatchEvent(new Event('input'));
+            this.closeEnhanceModals();
+            this.updateStatus('success', 'Enhanced LTX 2.3 prompt sent to main prompt area');
+        } else {
+            this.updateStatus('error', 'Could not find main prompt area');
+        }
+    },
+
     generateStory: async function() {
         try {
             // Check backend connection first
@@ -4397,9 +5723,6 @@ window.ollamaVision = {
             // Add check for OpenRouter free tier issues
             if (backendType === 'openrouter') {
                 const apiKey = localStorage.getItem('ollamaVision_openrouterKey');
-                if (apiKey?.startsWith('sk-or-v1-free')) {
-                    console.warn('Using OpenRouter free tier - may experience rate limits and inconsistent responses');
-                }
             }
 
             // Get the story prompt from backend
@@ -4470,6 +5793,7 @@ window.ollamaVision = {
     unloadModelIfEnabled: async function(model) {
         const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
         const autoUnload = localStorage.getItem('ollamaVision_autoUnload') === 'true';
+        const autoUnloadLMStudio = localStorage.getItem('ollamaVision_autoUnloadLMStudio') === 'true';
         
         if (autoUnload) {
             try {
@@ -4521,7 +5845,28 @@ window.ollamaVision = {
                     });
                 }
             } catch (error) {
-                console.error(`Failed to unload model: ${error}`);
+                this.updateStatus('error', 'Failed to unload model: ' + error.message);
+            }
+        }
+
+        if (backendType === 'openai' && autoUnloadLMStudio) {
+            try {
+                const baseUrl = normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL);
+                const apiKey = localStorage.getItem('ollamaVision_openaiKey') || '';
+
+                await new Promise((resolve, reject) => {
+                    genericRequest('UnloadLMStudioModelAsync', 
+                        { 
+                            baseUrl: baseUrl,
+                            instanceId: model,
+                            apiKey: apiKey
+                        },
+                        (data) => resolve(data),
+                        (error) => reject(error)
+                    );
+                });
+            } catch (error) {
+                this.updateStatus('error', 'Failed to unload LM Studio model: ' + error.message);
             }
         }
     },
@@ -4695,6 +6040,29 @@ window.ollamaVision = {
         if (!document.getElementById('characterCreatorModal')) {
             const characterCreatorModalHtml = `
                 <div class="modal fade" id="characterCreatorModal" tabindex="-1">
+                    <style>
+                        #characterCreatorModal .character-field-group {
+                            display: flex;
+                            flex-wrap: wrap;
+                            align-items: center;
+                            gap: 0.5rem;
+                            margin-bottom: 0.75rem;
+                        }
+                        #characterCreatorModal .character-field-group > label {
+                            flex: 0 0 100%;
+                            margin-bottom: 0;
+                        }
+                        #characterCreatorModal .character-field-group > .form-control {
+                            flex: 1 1 auto;
+                            min-width: 0;
+                            min-height: 2.75rem;
+                            font-size: 1.1rem;
+                        }
+                        #characterCreatorModal .character-field-group > .lock-btn {
+                            flex: 0 0 50px;
+                            height: 2.75rem;
+                        }
+                    </style>
                     <div class="modal-dialog modal-xl" style="max-width: min(95vw, 1600px); min-width: 1400px;">
                         <div class="modal-content modal_text_extra">
                             <div class="modal-header">
@@ -4736,34 +6104,33 @@ Customize your settings and click generate to create a character!
                                             </div>
                                             
                                             <!-- Name Input -->
-                                            <div class="form-floating">
-                                                <label for="character-name" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Name</label>
-                                                <input type="text" class="form-control bg-dark modal_text_extra" 
-                                                       id="character-name" placeholder="Name (optional)" 
-                                                       style="background: inherit; color: inherit;">
-                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                            <div class="character-field-group">
+                                                <label for="character-name" class="form-label mb-1">Name</label>
+                                                <input type="text" class="form-control auto-text modal_text_extra" 
+                                                       id="character-name" placeholder="Name (optional)">
+                                                <button class="basic-button lock-btn" data-locked="false">
                                                     🎲
                                                 </button>
                                             </div>
 
                                             <!-- Sex Dropdown -->
-                                            <div class="form-floating">
-                                                <label for="character-sex" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Sex</label>
-                                                <input type="text" list="sex-options" class="form-select bg-dark modal_text_extra" id="character-sex" style="background: inherit; color: inherit;">
+                                            <div class="character-field-group">
+                                                <label for="character-sex" class="form-label mb-1">Sex</label>
+                                                <input type="text" list="sex-options" class="form-control auto-text modal_text_extra" id="character-sex">
                                                 <datalist id="sex-options">
                                                     <option value="Random"></option>
                                                     <option value="Male"></option>
                                                     <option value="Female"></option>
                                                 </datalist>
-                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                <button class="basic-button lock-btn" data-locked="false">
                                                     🎲
                                                 </button>
                                             </div>
 
                                             <!-- Species Dropdown -->
-                                            <div class="form-floating">
-                                                <label for="character-species" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Species</label>
-                                                <input type="text" list="species-options" class="form-select bg-dark modal_text_extra" id="character-species" style="background: inherit; color: inherit;">
+                                            <div class="character-field-group">
+                                                <label for="character-species" class="form-label mb-1">Species</label>
+                                                <input type="text" list="species-options" class="form-control auto-text modal_text_extra" id="character-species">
                                                 <datalist id="species-options">
                                                     <option value="Random"></option>
                                                     <option value="Alien"></option>
@@ -4814,15 +6181,15 @@ Customize your settings and click generate to create a character!
                                                     <option value="Werewolf"></option>
                                                     <option value="Yokai"></option>
                                                 </datalist>
-                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                <button class="basic-button lock-btn" data-locked="false">
                                                     🎲
                                                 </button>
                                             </div>
 
                                             <!-- Setting Dropdown -->
-                                            <div class="form-floating">
-                                                <label for="character-setting" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Setting</label>
-                                                <input type="text" list="setting-options" class="form-select bg-dark modal_text_extra" id="character-setting" style="background: inherit; color: inherit;">
+                                            <div class="character-field-group">
+                                                <label for="character-setting" class="form-label mb-1">Setting</label>
+                                                <input type="text" list="setting-options" class="form-control auto-text modal_text_extra" id="character-setting">
                                                 <datalist id="setting-options">
                                                     <option value="Random"></option>
                                                     <option value="Ancient Egypt"></option>
@@ -4869,15 +6236,15 @@ Customize your settings and click generate to create a character!
                                                     <option value="Volcanic Hellscape"></option>
                                                     <option value="Western"></option>
                                                 </datalist>
-                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                <button class="basic-button lock-btn" data-locked="false">
                                                     🎲
                                                 </button>
                                             </div>
 
                                             <!-- Alignment Dropdown -->
-                                            <div class="form-floating">
-                                                <label for="character-alignment" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Alignment</label>
-                                                <input type="text" list="alignment-options" class="form-select bg-dark modal_text_extra" id="character-alignment" style="background: inherit; color: inherit;">
+                                            <div class="character-field-group">
+                                                <label for="character-alignment" class="form-label mb-1">Alignment</label>
+                                                <input type="text" list="alignment-options" class="form-control auto-text modal_text_extra" id="character-alignment">
                                                 <datalist id="alignment-options">
                                                     <option value="Random"></option>
                                                     <option value="Lawful Good"></option>
@@ -4890,15 +6257,15 @@ Customize your settings and click generate to create a character!
                                                     <option value="Neutral Evil"></option>
                                                     <option value="Chaotic Evil"></option>
                                                 </datalist>
-                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                <button class="basic-button lock-btn" data-locked="false">
                                                     🎲
                                                 </button>
                                             </div>
 
                                             <!-- Class/Role Dropdown -->
-                                            <div class="form-floating">
-                                                <label for="character-class" style="color: var(--bs-light); z-index: 3; top: -12px; transform: scale(1.00);">Class/Role</label>
-                                                <input type="text" list="class-options" class="form-select bg-dark modal_text_extra" id="character-class" style="background: inherit; color: inherit;">
+                                            <div class="character-field-group">
+                                                <label for="character-class" class="form-label mb-1">Class/Role</label>
+                                                <input type="text" list="class-options" class="form-control auto-text modal_text_extra" id="character-class">
                                                 <datalist id="class-options">
                                                     <option value="Random"></option>
                                                     <option value="Alchemist"></option>
@@ -4965,7 +6332,7 @@ Customize your settings and click generate to create a character!
                                                     <option value="Witch Hunter"></option>
                                                     <option value="Wizard"></option>
                                                 </datalist>
-                                                <button class="basic-button lock-btn" data-locked="false" style="width: 50px; height: 38px;">
+                                                <button class="basic-button lock-btn" data-locked="false">
                                                     🎲
                                                 </button>
                                             </div>
@@ -5060,16 +6427,13 @@ Customize your settings and click generate to create a character!
             
             if (!lockBtn || lockBtn.dataset.locked !== 'true') {
                 if (input === 'name') {
-                    element.value = ''; // Clear name for random generation
+                    element.value = '';
                 } else {
-                    // Get all options from the corresponding datalist
                     const datalist = document.getElementById(`${input}-options`);
-                    const options = Array.from(datalist.options).slice(1); // Exclude "Random" option
+                    const options = Array.from(datalist.options).slice(1);
                     
-                    // Shuffle the options array
                     const shuffledOptions = shuffle([...options]);
                     
-                    // Use a combination of time-based and Math.random() for index selection
                     const now = Date.now();
                     const r1 = Math.random();
                     const r2 = performance.now() % 1;
@@ -5079,7 +6443,6 @@ Customize your settings and click generate to create a character!
                     element.value = shuffledOptions[randomIndex].value;
                 }
             } else if (element.dataset.lockedValue) {
-                // Restore the locked value
                 element.value = element.dataset.lockedValue;
             }
         });
@@ -5273,6 +6636,7 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                     minP: parseFloat(localStorage.getItem('ollamaVision_minP')) || 0.0,
                     topA: parseFloat(localStorage.getItem('ollamaVision_topA')) || 0.0,
                     apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
                     siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
                     ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
                 }, 
@@ -5365,7 +6729,6 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
             
             this.updateStatus('success', 'Character saved successfully');
         } catch (error) {
-            console.error('Error saving character:', error);
             this.updateStatus('error', 'Failed to save character');
         }
     },
@@ -5508,9 +6871,9 @@ Class/Role: ${characterClass === 'random' ? '[AI-generated]' : characterClass}
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <label for="character-scenario" class="form-label mb-0" style="font-size: 1.2rem;">Scenario (Optional)</label>
                                     </div>
-                                    <textarea id="character-scenario" class="form-control modal_text_extra" 
+                                    <textarea id="character-scenario" class="auto-text-block modal_text_extra" 
                                               rows="4" placeholder="Enter a scenario for your character or leave blank"
-                                              style="font-size: 1.1rem; background: inherit; color: inherit;"></textarea>
+                                              style="font-size: 1.1rem;"></textarea>
                                     <div class="d-flex justify-content-end mt-2">
                                         <button class="basic-button" onclick="ollamaVision.generateScenario()" style="font-size: 1.1rem; padding: 5px 15px;">
                                             Generate Scenario
@@ -5601,6 +6964,7 @@ Scenario:`;
                             topK: 40,
                             seed: -1,
                             apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                            apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
                             siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
                             ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
                         },
@@ -5616,7 +6980,6 @@ Scenario:`;
                         throw new Error(response.error || 'Failed to generate scenario');
                     }
                 } catch (error) {
-                    console.error('Error generating scenario:', error);
                     this.updateCharacterImageStatus('error', 'Failed to generate scenario: ' + error.message);
                 }
             };
@@ -5874,7 +7237,6 @@ Scenario:`;
                 bootstrap.Modal.getInstance(document.getElementById('saveCharacterImageModal')).hide();
             }, 1500);
         } catch (error) {
-            console.error('Error saving character image:', error);
             this.updateCharacterImageStatus('error', 'Failed to save character image: ' + error.message);
         }
     },
@@ -6152,6 +7514,7 @@ Scenario:`;
                     topK: 40,
                     seed: -1,
                     apiKey: localStorage.getItem(`ollamaVision_${backendType}Key`),
+                    apiBaseUrl: normalizeOpenAIBaseUrl(localStorage.getItem('ollamaVision_openaiBaseUrl') || DEFAULT_OPENAI_BASE_URL),
                     siteName: localStorage.getItem('ollamaVision_openrouterSite') || 'SwarmUI',
                     ollamaUrl: `http://${localStorage.getItem('ollamaVision_host') || 'localhost'}:${localStorage.getItem('ollamaVision_port') || '11434'}`
                 },
@@ -6220,7 +7583,6 @@ Scenario:`;
                 data: characterData
             };
         } catch (error) {
-            console.error('Error creating SillyTavern data:', error);
             return {
                 success: false,
                 error: error.message
@@ -6241,7 +7603,6 @@ document.getElementById('user-prompt').addEventListener('change', function(e) {
         if (preset) {
             // Load the original preset text
             document.getElementById('responsePrompt').value = preset.prompt;
-            // Clear any edited text
             localStorage.removeItem('ollamaVision_editedResponseText');
         }
     }
@@ -6291,6 +7652,7 @@ function filterBackendParams(params, backendType) {
             return {
                 ...commonParams,
                 apiKey: params.apiKey,
+                apiBaseUrl: params.apiBaseUrl,
                 frequencyPenalty: params.frequencyPenalty,
                 presencePenalty: params.presencePenalty
             };
@@ -6331,6 +7693,30 @@ function cleanBase64Data(imageData) {
     return imageData;
 }
 
+function normalizeOpenAIBaseUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return DEFAULT_OPENAI_BASE_URL;
+    }
+
+    let normalized = url.trim();
+    if (!normalized) {
+        return DEFAULT_OPENAI_BASE_URL;
+    }
+
+    if (!/^https?:\/\//i.test(normalized)) {
+        normalized = `http://${normalized}`;
+    }
+
+    return normalized.replace(/\/+$/, '');
+}
+
+function requiresOpenAIApiKey(baseUrl) {
+    if (!baseUrl) {
+        return true;
+    }
+    return /openai\.com/i.test(baseUrl);
+}
+
 // Add model change event listener after model dropdown is populated
 modelSelect.addEventListener('change', async function() {
     const backendType = localStorage.getItem('ollamaVision_backendType') || 'ollama';
@@ -6359,7 +7745,7 @@ modelSelect.addEventListener('change', async function() {
                 ollamaVision.updateStatus('success', `Model ${selectedModel} loaded successfully`);
             } catch (error) {
                 ollamaVision.updateStatus('error', `Failed to load model: ${error.message}`);
-                this.value = ''; // Reset selection on error
+                this.value = '';
             }
         }
     }
